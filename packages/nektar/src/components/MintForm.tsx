@@ -3,7 +3,7 @@ import { Button } from "./Button";
 import { useNamepsaceClient, LISTEN_NAME } from "./useNamespaceClient";
 import { normalize } from "viem/ens";
 import { SyncLoader } from "react-spinners";
-import { add, debounce } from "lodash";
+import { debounce } from "lodash";
 import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
