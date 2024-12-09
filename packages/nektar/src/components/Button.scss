@@ -1,0 +1,36 @@
+.nektar-btn {
+  outline: none;
+  padding: 8px 25px;
+  color: #000;
+  background: rgb(101, 253, 235, 0.05);
+  border: 1px solid $lightblue;
+  border-radius: 8px;
+  color: $lightblue;
+  height: 50px;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.1s linear;
+
+  &:hover {
+    border: 2px solid $lightblue;
+  }
+
+  &:focus {
+    border: 2px solid $lightblue;
+  }
+
+  &.disabled {
+    cursor: default;
+    border: 1px solid $border;
+    color: $border;
+    background-color: transparent;
+
+    &:hover {
+      border: 1px solid $border;
+    }
+
+    &:focus {
+        border: 1px solid $border;
+    }
+  }
+}
