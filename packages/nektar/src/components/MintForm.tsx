@@ -21,7 +21,7 @@ const BASE_COIN = 2147492101;
 const ETH_COIN = 60;
 
 export const MintForm = () => {
-  const [label, setLabel] = useState("register");
+  const [label, setLabel] = useState("");
   const { address, chainId } = useAccount();
   const { openConnectModal } = useConnectModal();
   const {
