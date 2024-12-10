@@ -12,7 +12,6 @@ export const TopNavigation = () => {
       <div className="col-lg-6 logo">
         <img
           width={150}
-          style={{ background: "white" }}
           src={nektarLogo}
           alt="Nektar Logo"
         ></img>
