@@ -11,6 +11,8 @@ import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 const myTheme = merge(lightTheme(), {
   colors: {
     accentColor: "#65fdfd",
+    profileActionHover: "red",
+    profileAction: "grey",
     modalBackground: "rgba(0, 0, 0, 0.8)",
     modalBorder: "#1FE5B5",
     modalText: "white",

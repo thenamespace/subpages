@@ -4,6 +4,7 @@
   background-color: black;
 
   .page-content-wrapper {
+    width: 450px;
     &.animate {
       padding: 1px;
       background-color: $lightblue;
@@ -98,5 +99,18 @@
 @keyframes bg-spin {
   to {
     --border-angle: 1turn;
+  }
+}
+
+@media (max-width: 600px) {
+  .mint-page {
+    .mint-page-container {
+      .page-content-wrapper {
+        width: 100%;
+      }
+      .page-content {
+        width: 100%;
+      }
+    }
   }
 }
