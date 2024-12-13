@@ -19,7 +19,6 @@ enum RegistrationStep {
 
 const uniswapSwapUrl =
   "https://app.uniswap.org/swap?inputCurrency=ETH&outputCurrency=0x6e6b7adfc7db9feeb8896418ac3422966f65d0a5&value=0.0001";
-const tokenName = "Nektar NET";
 const defaultAvatar = "https://avatars.namespace.ninja/nektar.png";
 
 const BASE_COIN = 2147492101;
