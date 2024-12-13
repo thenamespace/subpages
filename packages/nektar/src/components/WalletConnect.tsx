@@ -21,8 +21,8 @@ const myTheme = merge(lightTheme(), {
 } as Theme);
 
 const config = getDefaultConfig({
-  appName: "My RainbowKit App",
-  projectId: "YOUR_PROJECT_ID",
+  appName: "Nektar",
+  projectId: "fabc875b8041989e6261604d826f1a8e",
   chains: [mainnet, base],
 });
 
