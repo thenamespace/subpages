@@ -17,6 +17,11 @@ enum RegistrationStep {
   COMPLETE = 2,
 }
 
+const uniswapSwapUrl =
+  "https://app.uniswap.org/swap?inputCurrency=ETH&outputCurrency=0x6e6b7adfc7db9feeb8896418ac3422966f65d0a5&value=0.0001";
+const tokenName = "Nektar NET";
+const defaultAvatar = "https://avatars.namespace.ninja/nektar.png";
+
 const BASE_COIN = 2147492101;
 const ETH_COIN = 60;
 
@@ -32,6 +37,7 @@ export const MintForm = () => {
     waitForTx,
   } = useNamepsaceClient();
   const [mintError, setMintError] = useState<string>("");
+  const [isNoBalanceErr, setIsNoBalanceErr] = useState(false);
   const [txHash, setTxHash] = useState<Hash>();
   const { switchChainAsync } = useSwitchChain();
   const [indicators, setIndicators] = useState<{
@@ -113,7 +119,6 @@ export const MintForm = () => {
         coinType: BASE_COIN,
       },
     ];
-
     try {
       setMintIndicator({ btnLabel: "Waiting for wallet", waiting: true });
       const params = await mintParameters({
@@ -122,7 +127,12 @@ export const MintForm = () => {
         expiryInYears: 1,
         records: {
           addresses: addresses,
-          texts: [],
+          texts: [
+            {
+              key: "avatar",
+              value: defaultAvatar,
+            },
+          ],
         },
         subnameOwner: address,
         token: token.accessToken,
@@ -149,7 +159,7 @@ export const MintForm = () => {
 
   const parseError = (errMessage: string) => {
     if (errMessage.includes("MINTER_NOT_TOKEN_OWNER")) {
-      setMintError("You don't have enought tokens for minting!");
+      setIsNoBalanceErr(true);
     } else {
       setMintError("Unknown error ocurred. Check console for more info");
     }
@@ -167,7 +177,11 @@ export const MintForm = () => {
   return (
     <div className="mint-page">
       <div className="mint-page-container d-flex align-items-center justify-content-center">
-        <div className={`page-content-wrapper ${registrationStep === 2 ? "animate" : ""}`}>
+        <div
+          className={`page-content-wrapper ${
+            registrationStep === 2 ? "animate" : ""
+          }`}
+        >
           <div className="page-content d-flex flex-column">
             {registrationStep === 0 && (
               <>
@@ -221,6 +235,17 @@ export const MintForm = () => {
                     />
                   </div>
                 )}
+                {isNoBalanceErr && (
+                  <div className="error-msg d-flex align-items-center justify-content-between">
+                    <div>
+                      Minimum balance of <a href={uniswapSwapUrl} target="_blank" className="uniswap-link">1 NET coin</a> required. 
+                    </div>
+                    <FaX
+                      style={{ cursor: "pointer" }}
+                      onClick={() => setIsNoBalanceErr(false)}
+                    />
+                  </div>
+                )}
               </>
             )}
             {registrationStep === 1 && (
@@ -268,10 +293,14 @@ export const MintForm = () => {
                     Check on ENS
                   </a>
                 </div>
-                <Button onClick={() => {
-                    setLabel("")
-                    setRegistrationStep(0)
-                }}>Great!</Button>
+                <Button
+                  onClick={() => {
+                    setLabel("");
+                    setRegistrationStep(0);
+                  }}
+                >
+                  Great!
+                </Button>
               </div>
             )}
           </div>
