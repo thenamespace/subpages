@@ -1,0 +1,18 @@
+.pizza-container {
+    background-color: $red;
+    width: 100vw;
+    height: calc(100vh - 95px);
+    padding: 25px;
+    display: flex;
+    align-items: start;
+    justify-content: center;
+
+    .pizza-content {
+        width: 100%;
+        max-width: 1080px;
+        min-height: 500px;
+        background-color: white;
+        border-radius: 25px;
+        margin: auto;
+    }
+}
