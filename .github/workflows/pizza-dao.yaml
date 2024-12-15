@@ -1,4 +1,4 @@
-name: Build & Deploy Nektar Dapp
+name: Build & Deploy PizzaDAO Dapp
 
 on: 
   workflow_dispatch:
