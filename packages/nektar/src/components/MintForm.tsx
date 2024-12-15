@@ -10,6 +10,7 @@ import { Hash } from "viem";
 import { AddressRecord } from "namespace-sdk/dist/clients";
 import { base } from "viem/chains";
 import { FaX } from "react-icons/fa6";
+import nektarLogo from "../assets/nektar-icon.png";
 
 enum RegistrationStep {
   START = 0,
@@ -17,9 +18,8 @@ enum RegistrationStep {
   COMPLETE = 2,
 }
 
-const uniswapSwapUrl =
-  "https://app.uniswap.org/swap?inputCurrency=ETH&outputCurrency=0x6e6b7adfc7db9feeb8896418ac3422966f65d0a5&value=0.0001";
-const tokenName = "Nektar NET";
+const balancerFiUrl =
+  "https://balancer.fi/pools/ethereum/v2/0x7cb1756e25c41eb921b2c9039f1f368f85e469950002000000000000000006e8/swap";
 const defaultAvatar = "https://avatars.namespace.ninja/nektar.png";
 
 const BASE_COIN = 2147492101;
@@ -186,6 +186,9 @@ export const MintForm = () => {
             {registrationStep === 0 && (
               <>
                 <div className="text-center">
+                  <div className="avatar-placeholder mb-2 d-flex align-items-center justify-content-center">
+                  <img width={100} src={nektarLogo}></img>
+                  </div>
                   <p className="m-0" style={{ color: "grey" }}>
                     Register your subname
                   </p>
@@ -238,7 +241,7 @@ export const MintForm = () => {
                 {isNoBalanceErr && (
                   <div className="error-msg d-flex align-items-center justify-content-between">
                     <div>
-                      Minimum balance of <a href={uniswapSwapUrl} target="_blank" className="uniswap-link">1 NET coin</a> required. 
+                      Minimum balance of <a href={balancerFiUrl} target="_blank" className="uniswap-link">1 NET coin</a> required. 
                     </div>
                     <FaX
                       style={{ cursor: "pointer" }}
