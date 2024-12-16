@@ -1,27 +1,26 @@
 import { createNamespaceClient, Listing, MintRequest, MintTransactionParameters } from "namespace-sdk"
 import { Address, Hash, namehash } from "viem"
-import { base } from "viem/chains"
+import { baseSepolia } from "viem/chains"
 import { usePublicClient, useSignTypedData, useWalletClient } from "wagmi"
 
 export const LISTEN_NAME: Listing = {
-    fullName: "degencasino.eth",
-    label: "degencasino",
-    network: "mainnet",
-    node: namehash("degencasino.eth"),
+    fullName: "pizzzaa.eth",
+    label: "pizzzaa",
+    network: "sepolia",
+    node: namehash("pizzzaa.eth"),
     listingType: "l2",
-    registryNetwork: "base"
+    registryNetwork: "baseSepolia"
 }
 
 const client = createNamespaceClient({
-    chainId: base.id,
-    mintSource: "nektar.namespace.ninja",
-    mode: "production",
+    chainId: baseSepolia.id,
+    mintSource: "pizzadao.namespace.ninja",
 })
 
 export const useNamepsaceClient = () => {
 
-    const publicClient = usePublicClient({chainId: base.id})
-    const { data: walletClient } = useWalletClient({ chainId: base.id })
+    const publicClient = usePublicClient({chainId: baseSepolia.id})
+    const { data: walletClient } = useWalletClient({ chainId: baseSepolia.id })
     const { signTypedDataAsync } = useSignTypedData()
 
     const checkAvailable = async (label: string) => {
@@ -49,6 +48,10 @@ export const useNamepsaceClient = () => {
         return walletClient!.writeContract(request);
     }
 
+    const simulateMint = async(label: string, minter: Address) => {
+        return client.getMintDetails(LISTEN_NAME, label, minter )
+    }
+
     const waitForTx = async (hash: Hash) => {
         await publicClient!.waitForTransactionReceipt({hash, confirmations: 2})
     }
@@ -58,6 +61,7 @@ export const useNamepsaceClient = () => {
         executeTx,
         checkAvailable,
         mintParameters,
-        generateAuthToken
+        generateAuthToken,
+        simulateMint
     }
 }

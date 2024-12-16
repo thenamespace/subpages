@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "./Button";
 import { useNamepsaceClient, LISTEN_NAME } from "./useNamespaceClient";
 import { normalize } from "viem/ens";
@@ -11,7 +11,8 @@ import { AddressRecord } from "namespace-sdk/dist/clients";
 import { base } from "viem/chains";
 import { FaX } from "react-icons/fa6";
 import { PageContainer } from "./PageContainer";
-import pizzaContainer from "../assets/pizza-container.png";
+import { getChain } from "namespace-sdk";
+import { shortedString } from "./Utils";
 
 enum RegistrationStep {
   START = 0,
@@ -19,14 +20,14 @@ enum RegistrationStep {
   COMPLETE = 2,
 }
 
-const uniswapSwapUrl =
-  "https://app.uniswap.org/swap?inputCurrency=ETH&outputCurrency=0x6e6b7adfc7db9feeb8896418ac3422966f65d0a5&value=0.0001";
-const defaultAvatar = "https://avatars.namespace.ninja/nektar.png";
+const defaultAvatar = "https://avatars.namespace.ninja/pizzadao.png";
 
 const BASE_COIN = 2147492101;
 const ETH_COIN = 60;
 
 export const MintForm = () => {
+  const listingChainId =
+    getChain(LISTEN_NAME.registryNetwork || LISTEN_NAME.network).id || base.id;
   const [label, setLabel] = useState("");
   const { address, chainId } = useAccount();
   const { openConnectModal } = useConnectModal();
@@ -36,9 +37,11 @@ export const MintForm = () => {
     generateAuthToken,
     executeTx,
     waitForTx,
+    simulateMint
   } = useNamepsaceClient();
   const [mintError, setMintError] = useState<string>("");
   const [isNoBalanceErr, setIsNoBalanceErr] = useState(false);
+  const [requiresVerifiedMinter, setRequiresVerifiedMinter] = useState(false);
   const [txHash, setTxHash] = useState<Hash>();
   const { switchChainAsync } = useSwitchChain();
   const [indicators, setIndicators] = useState<{
@@ -55,6 +58,18 @@ export const MintForm = () => {
   const [registrationStep, setRegistrationStep] = useState(
     RegistrationStep.START
   );
+
+  useEffect(() => {
+    
+    if (address) {
+      simulateMint(Math.random().toString(), address).then(res => {
+        if (res.requiresVerifiedMinter) {
+          setRequiresVerifiedMinter(true);
+        }
+      })
+    }
+
+  },[address])
 
   const handleUpdateLabel = (value: string) => {
     const _value = value.toLocaleLowerCase();
@@ -95,19 +110,20 @@ export const MintForm = () => {
       return;
     }
 
-    if (chainId !== base.id) {
-      await switchChainAsync({ chainId: base.id });
+    if (chainId !== listingChainId) {
+      await switchChainAsync({ chainId: listingChainId });
     }
 
     let token;
-
-    try {
-      setMintIndicator({ btnLabel: "Waiting for wallet", waiting: true });
-      token = await generateAuthToken(address);
-    } catch (err) {
-      return;
-    } finally {
-      setMintIndicator({ btnLabel: "Register", waiting: false });
+    if (requiresVerifiedMinter) {
+      try {
+        setMintIndicator({ btnLabel: "Waiting for wallet", waiting: true });
+        token = (await generateAuthToken(address)).accessToken;
+      } catch (err) {
+        return;
+      } finally {
+        setMintIndicator({ btnLabel: "Register", waiting: false });
+      }
     }
 
     const addresses: AddressRecord[] = [
@@ -136,10 +152,12 @@ export const MintForm = () => {
           ],
         },
         subnameOwner: address,
-        token: token.accessToken,
+        token
       });
+
       const tx = await executeTx(params, address);
       setTxHash(tx);
+      console.log(tx, "TX HASH HERE!!");
       setRegistrationStep(RegistrationStep.TX_SENT);
       setMintIndicator({ btnLabel: "Registering...", waiting: true });
       await waitForTx(tx);
@@ -178,171 +196,99 @@ export const MintForm = () => {
   if (true) {
     return (
       <PageContainer>
-        {/* <img style={{background:"red"}} width={700} src={pizzaContainer}></img> */}
-        <div
-          className="mint-form-container"
-          style={{
-            background: `url(${pizzaContainer})`,
-            backgroundSize: "contain",
-            backgroundRepeat: "no-repeat",
-          }}
-        >
+        <div className="mint-form-container">
           <div className="content-container g-0 text-center p-4">
-            <div className="tw small-txt">REGISTER YOUR SUBNAME</div>
-            <div style={{ fontSize: 28 }} className="tw mb-2">
-              <span className="tg">
-                {label.length === 0 ? `{name}` : label}
-              </span>
-              {`.testing.eth`}
-            </div>
-            <input value={label} onChange={(e) => handleUpdateLabel(e.target.value) } className="w-100 search-input"></input>
-            <Button className="w-100 mt-2">Register</Button>
-          </div>
-        </div>
-      </PageContainer>
-    );
-  }
-
-  return (
-    <div className="mint-page">
-      <div className="mint-page-container d-flex align-items-center justify-content-center">
-        <div
-          className={`page-content-wrapper ${
-            registrationStep === 2 ? "animate" : ""
-          }`}
-        >
-          <div className="page-content d-flex flex-column">
             {registrationStep === 0 && (
               <>
-                <div className="text-center">
-                  <p className="m-0" style={{ color: "grey" }}>
-                    Register your subname
-                  </p>
-                  <div
-                    className="mb-2"
-                    style={{ fontSize: 20, color: "white", fontWeight: 500 }}
-                  >
-                    <span style={{ color: "rgb(101 253 235)" }}>{`${
-                      label.length === 0 ? "{name}" : label
-                    }.`}</span>
-                    {LISTEN_NAME.fullName}
-                  </div>
+                <div className="tw small-txt">REGISTER YOUR SUBNAME</div>
+                <div style={{ fontSize: 28 }} className="tw mb-2">
+                  <span className="tg">
+                    {label.length === 0 ? `{name}` : shortedString(label, 14)}
+                  </span>
+                  {`.${LISTEN_NAME.fullName}`}
                 </div>
-                <div className="mt-2 input-cont">
+                <div className="input-container">
                   <input
+                    placeholder="Type your subname..."
                     value={label}
-                    placeholder="Find your perfect name..."
                     onChange={(e) => handleUpdateLabel(e.target.value)}
-                    className="mint-input"
+                    className="w-100 search-input"
                   ></input>
                   {indicators.checking && (
                     <SyncLoader
-                      className="input-load"
-                      color="rgb(101 253 235)"
+                      color="#0B8766"
                       size={6}
+                      className="input-loader"
                     />
                   )}
                 </div>
                 <Button
+                  className="w-100 mt-2"
                   onClick={() => handleMint()}
-                  className="mt-2"
                   disabled={mintBtnDisabled}
                 >
                   {mintIndicators.btnLabel}
                 </Button>
                 {subnameTakenErr && (
-                  <div className="error-msg text-center">
+                  <div className="error-msg text-center tw mt-2">
                     Subname is already registered
-                  </div>
-                )}
-                {mintError.length > 0 && (
-                  <div className="error-msg d-flex align-items-center justify-content-between">
-                    {mintError}
-                    <FaX
-                      style={{ cursor: "pointer" }}
-                      onClick={() => setMintError("")}
-                    />
-                  </div>
-                )}
-                {isNoBalanceErr && (
-                  <div className="error-msg d-flex align-items-center justify-content-between">
-                    <div>
-                      Minimum balance of{" "}
-                      <a
-                        href={uniswapSwapUrl}
-                        target="_blank"
-                        className="uniswap-link"
-                      >
-                        1 NET coin
-                      </a>{" "}
-                      required.
-                    </div>
-                    <FaX
-                      style={{ cursor: "pointer" }}
-                      onClick={() => setIsNoBalanceErr(false)}
-                    />
                   </div>
                 )}
               </>
             )}
-            {registrationStep === 1 && (
-              <div className="d-flex flex-column align-items-center p-3">
-                <SyncLoader
-                  className="input-load mt-3 mb-3"
-                  color="rgb(101 253 235)"
-                  size={17}
-                />
-                <div className="mt-3" style={{ fontSize: 18, color: "white" }}>
-                  Registration in progress
+            {registrationStep === RegistrationStep.TX_SENT && (
+              <>
+                <SyncLoader color="#0B8766" size={30} />
+                <div className="tw mt-3" style={{ fontSize: 24 }}>
+                  Registering name....
                 </div>
                 {txHash && (
-                  <a
-                    target="_blank  "
-                    href={"https://basescan.org/tx/" + txHash}
-                  >
-                    Transaction
+                  <a target="_blank" href={`https://basescan.org/tx/${txHash}`}>
+                    <div className="tg" style={{ textDecoration: "underline" }}>
+                      Transaction
+                    </div>
                   </a>
                 )}
-              </div>
-            )}
-            {registrationStep === 2 && (
-              <div className="d-flex flex-column">
-                <div
-                  className="text-center"
-                  style={{ color: "grey", fontSize: 14 }}
-                >
-                  You have registered
-                </div>
-                <div
-                  style={{ color: "white", fontSize: 18 }}
-                  className="mt-3 mb-3 text-center"
-                >
-                  <span style={{ color: "rgb(101 253 235)" }}>{label}.</span>
-                  {LISTEN_NAME.fullName}
-                </div>
-                <div
-                  className="text-center mb-3 d-flex flex-column"
-                  style={{ fontSize: 14, color: "grey" }}
-                >
-                  <a
-                    href={`https://app.ens.domains/${label}.${LISTEN_NAME.fullName}`}
-                  >
-                    Check on ENS
-                  </a>
-                </div>
                 <Button
+                  className="w-100 mt-2"
+                  onClick={() => handleMint()}
+                  disabled={mintBtnDisabled}
+                >
+                  {mintIndicators.btnLabel}
+                </Button>
+              </>
+            )}
+            {registrationStep === RegistrationStep.COMPLETE && (
+              <>
+                <div className="tw small-txt">REGISTRATION SUCCESS</div>
+                <div style={{ fontSize: 28 }} className="tw mb-2">
+                  <span className="tg">
+                    {label.length === 0 ? `{name}` : label}
+                  </span>
+                  {`.${LISTEN_NAME.fullName}`}
+                </div>
+                <a
+                  style={{ color: "white", textDecoration: "underline" }}
+                  className="tw"
+                  target="_blank"
+                  href={`https://app.ens.domains/${label}.${LISTEN_NAME.fullName}`}
+                >
+                  Check on ENS
+                </a>
+                <Button
+                  className="w-100 mt-2"
                   onClick={() => {
-                    setLabel("");
-                    setRegistrationStep(0);
+                    handleUpdateLabel("");
+                    setRegistrationStep(RegistrationStep.START);
                   }}
                 >
                   Great!
                 </Button>
-              </div>
+              </>
             )}
           </div>
         </div>
-      </div>
-    </div>
-  );
-};
+      </PageContainer>
+    );
+  }
+}

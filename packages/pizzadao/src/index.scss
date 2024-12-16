@@ -7,31 +7,5 @@ a {
 }
 
 * {
-    font-family: 'Impact', sans-serif !important;
-}
-
-button[data-testid="rk-chain-button"] {
-   background-color: transparent !important;
-   border: 1px solid $border !important;
-   color: #fff !important;
-}
-
-button [data-testId="rk-chain-button"] * {
-    font-family: 'Monserrat', sans-serif !important;
-}
-
-button[data-testid="rk-account-button"] * {
-    font-family: 'Montserrat', sans-serif !important; 
-    color: white;
-    font-weight: 400;
-    border: none !important;
-    outline: none !important;
-}
-
-button[data-testid="rk-account-button"] {
-    font-family: 'Montserrat', sans-serif !important; 
-    background-color: black !important;
-    border: 1px solid $border !important;
-    color: white !important;
-    font-weight: 400;
+    font-family: 'DynaPuff', sans-serif !important;
 }
