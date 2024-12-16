@@ -16,3 +16,9 @@
         margin: auto;
     }
 }
+
+@media (max-width: 600px) {
+    .pizza-container {
+        height: calc(100vh - 80px);
+    }
+}

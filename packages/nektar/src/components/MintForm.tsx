@@ -241,7 +241,7 @@ export const MintForm = () => {
                 {isNoBalanceErr && (
                   <div className="error-msg d-flex align-items-center justify-content-between">
                     <div>
-                      Minimum balance of <a href={balancerFiUrl} target="_blank" className="uniswap-link">1 NET coin</a> required. 
+                      Minimum balance of <a href={balancerFiUrl} target="_blank" className="uniswap-link">0.1 NET coin</a> required. 
                     </div>
                     <FaX
                       style={{ cursor: "pointer" }}

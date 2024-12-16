@@ -18,16 +18,7 @@
 
   &.disabled {
     cursor: default;
-    border: 1px solid $border;
-    color: $border;
-    background-color: transparent;
-
-    &:hover {
-      border: 1px solid $border;
-    }
-
-    &:focus {
-        border: 1px solid $border;
-    }
+    color: white;
+    background-color: rgb(146, 146, 146);
   }
 }
