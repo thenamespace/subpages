@@ -15,10 +15,10 @@ export default function Home() {
           name="description"
           content="Namespace. The best place to manage ENS names and subnames for you and your community."
         />
-        <meta property="og:title" content={`Louisiana State University`} />
+        <meta property="og:title" content={`PizzaDAO + Namespace`} />
         <meta
           property="og:description"
-          content="PizzaDAO + Namespace"
+          content="Namespace. The best place to manage ENS names and subnames for you and your community"
         />
         <meta name="twitter:card" />
         <meta name="twitter:title" content="Namespace" />
