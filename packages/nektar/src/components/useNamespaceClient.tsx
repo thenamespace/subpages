@@ -4,10 +4,10 @@ import { base } from "viem/chains"
 import { usePublicClient, useSignTypedData, useWalletClient } from "wagmi"
 
 export const LISTEN_NAME: Listing = {
-    fullName: "degencasino.eth",
-    label: "degencasino",
+    fullName: "nktr.eth",
+    label: "nktr",
     network: "mainnet",
-    node: namehash("degencasino.eth"),
+    node: namehash("nktr.eth"),
     listingType: "l2",
     registryNetwork: "base"
 }
