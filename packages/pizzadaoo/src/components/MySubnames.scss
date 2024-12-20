@@ -1,0 +1,73 @@
+.my-subnames-container {
+    .subnames-form {
+        width: 600px;
+        height: 100%;
+        min-height: 300px;
+        border: 3px solid $yellow;
+        background: black;
+        max-height: 600px;
+        overflow-x: auto;
+        border-radius: 25px;
+    }
+
+    .title-text {
+        color: $yellow;
+    }
+
+    .tech-input {
+        background-color: black;
+        border-radius: 50px;
+    }
+
+    .title {
+        font-size: 40px;
+        letter-spacing: 3px;;
+    }
+    h5 {
+        color: $yellow;
+    }
+
+    .p {
+        margin-bottom: 0px;
+        color: $yellow;;
+    }
+
+    .subname-item {
+        padding: 10px;
+        border-bottom: 1px solid $yellow;
+        cursor: pointer;
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 100%;
+            outline: 2px solid $green;
+            background-color: black;
+            cursor: pointer;
+            transition: all 0.5s ease-in-out;
+            &:hover {
+                transform: scale(3);
+            }
+        }
+
+        &:hover {
+            background-color: $red;
+        }
+        .txt {
+            font-size: 18px;
+            margin-left: 25px;
+            margin-bottom: 0px;
+        }
+    }
+}
+
+@media (max-width: 600px) {
+    .my-subnames-container {
+        width: 350px;
+        .title {
+            margin-top: 50px;
+        }
+        .subnames-form {
+            width: 350px
+        }
+    }
+}
