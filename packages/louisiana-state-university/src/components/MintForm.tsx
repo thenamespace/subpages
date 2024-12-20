@@ -35,9 +35,9 @@ let lastSubnameImageIndex = 0;
 const getRandomSubnameImage = () => {
   lastSubnameImageIndex = (lastSubnameImageIndex + 1) % 2;
   if (lastSubnameImageIndex === 0) {
-    return `https://i.imgur.com/7fYckO9.png`;
+    return `https://ipfs.io/ipfs/bafybeiflcxjlwh5thklqwyzzp3z6vidbxcxbkwpclbuq5yxag7r3i6nbey`;
   } else {
-    return `https://i.imgur.com/Dwvjn49.png`;
+    return `https://ipfs.io/ipfs/bafybeig3zmizusjtn73cwgp54k4mktcgyfgtasfcy4iszggrrh4oulkxra`;
   }
 };
 
