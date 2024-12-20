@@ -1,0 +1,115 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+body {
+    // background: url('../assets/pizza-bg.png') no-repeat center center fixed;
+    background-size: cover;
+    background-color: $red;
+}
+
+.tech-container {
+
+    width: 100%;
+    min-height: 100vh;
+    position: relative;
+
+    .big-char {
+        position: fixed;
+        left: 0px;
+        top: 18%;
+    }
+
+    .top-nav {
+        position: fixed;
+        top: 0px;
+        left: 50%;
+        transform: translateX(-50%); 
+        margin: auto;
+        width: 100%;
+        max-width: 1280px;
+        height: 100px;
+        padding: 15px;
+        z-index: 99;
+    }
+    .bot-nav {
+        position: absolute;
+        bottom: 0px;
+        left: 50%;
+        transform: translateX(-50%); 
+        margin: auto;
+        width: 100%;
+        max-width: 1280px;
+        height: 100px;
+        padding: 15px;
+    }
+
+    p {
+        color: $yellow;
+    }
+
+    .form-header {
+        text-align: center;
+        h1 {
+
+            font-size: 60px;
+            line-height: 56px;
+            color: $yellow;
+            letter-spacing: 3px;
+        }
+
+        .subtext {
+            color: $purple;
+            letter-spacing: 13px;
+            opacity: 1;
+            font-size: 16px;
+    
+        }
+    }
+
+    .landing-container {
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .nav-col {
+        display: flex;
+        justify-content: flex-end;
+    }
+}
+
+.tech-container::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    // background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.5) 15%, rgba(0, 0, 0, 0.8) 50%, rgba(0, 0, 0, 0.5) 85%, rgba(0, 0, 0, 0.3) 100%);
+    pointer-events: none;
+}
+
+@media (max-width: 600px) {
+    .tech-container  {
+
+        background-size: cover;
+        background-position: center;
+
+        .nav-col {
+            display: flex;
+            justify-content: center;
+        }
+
+        .logo-col {
+            display: none;
+        }
+    }
+}
