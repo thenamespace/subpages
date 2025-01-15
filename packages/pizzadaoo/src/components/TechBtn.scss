@@ -1,0 +1,48 @@
+.cybr-btn { 
+
+    &.disabled {
+        cursor: default;
+        --primary-hue: grey;
+        --primary:grey;
+
+        &:hover {
+          --primary-hue: grey;
+          --primary: grey;
+          .cybr-btn__glitch {
+            display: none;
+          }
+        }
+    }
+  }
+
+  .tech-small {
+    min-width: 120px;
+    height: 35px;
+    line-height: 14px;
+    font-size: 10px;
+    line-height: 12px;
+  }
+
+  .btn-plain {
+    border: none;
+    background-color: $green;
+    border-radius: 50px;
+    color: $yellow;
+    min-width: 120px;
+    height: 45px;
+    transition: all 0.3s ease-in-out;
+    &.disabled {
+      background-color: grey;
+      cursor: not-allowed;
+
+      &:hover {
+        background-color: grey;
+        transform: none;
+      }
+    }
+
+    &:hover {
+      background-color: darken($green, 5%);
+      transform: scale(1.01);
+    }
+  }
