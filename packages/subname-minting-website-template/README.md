@@ -45,14 +45,14 @@ The design of the website can be customized using the `theme.json` file. This fi
 1. Clone the repository
 2. Install the dependencies:
 ```bash
-npm install
+yarn install
 ```
 
 ### Development
 
 To run the project in development mode with hot module replacement:
 ```bash
-npm run dev
+yarn run dev
 ```
 This will start the development server and watch for changes in the theme.json file.
 
@@ -60,7 +60,7 @@ This will start the development server and watch for changes in the theme.json f
 
 To build the project for production:
 ```bash
-npm run build
+yarn run build
 ```
 This will create a dist directory with the production build of the project.
 
@@ -68,7 +68,7 @@ This will create a dist directory with the production build of the project.
 
 To preview the production build:
 ```bash
-npm run preview
+yarn run preview
 ```
 This will start a local server to preview the production build.
 
@@ -76,7 +76,7 @@ This will start a local server to preview the production build.
 
 To lint the project:
 ```bash
-npm run lint
+yarn run lint
 ```
 This will run ESLint on the project to check for code quality issues.
 

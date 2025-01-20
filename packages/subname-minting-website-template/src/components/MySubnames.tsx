@@ -12,6 +12,7 @@ import { generateCode } from "@/api/api";
 import { generateAuthToken } from "@/api/siwe";
 import { useReferral } from "./ReferralContext";
 import { toast, ToastContainer } from "react-toastify";
+import QRCodeModal from "./QRCodeModal";
 
 
 const indexerUrl = AppEnv.indexerUrl;
@@ -37,6 +38,9 @@ interface MySubnamesProps {
 }
 
 export const MySubnames = ({ setView }: MySubnamesProps) => {
+
+
+    const [isQRCodeModalOpen, setQRCodeModalOpen] = useState(false);
 
     const { address } = useAccount();
     const { signMessageAsync } = useSignMessage();
@@ -120,7 +124,7 @@ export const MySubnames = ({ setView }: MySubnamesProps) => {
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text).then(() => {
-            toast("Referral link copied!", {position: "top-right", type: "success"});
+            toast("Referral link copied!", {position: "top-right", closeButton: false, autoClose: 1500});
         });
     };
 
@@ -255,17 +259,28 @@ export const MySubnames = ({ setView }: MySubnamesProps) => {
                         </Button>
                     )}
                     {referralCode.length > 0 && (
-                        <Button
-                            onClick={() => copyToClipboard(`${frontendUrl}?referral=${referralCode}`)}
-                            color={themeVariables.light}
-                            bg={themeVariables.accent}
-                        >
-                            Copy Referral Link to Clipboard
-                        </Button>
+                        <>
+                            <Button
+                                onClick={() => copyToClipboard(`${frontendUrl}?referral=${referralCode}`)}
+                                color={themeVariables.light}
+                                bg={themeVariables.accent}
+                            >
+                                Copy Referral Link to Clipboard
+                            </Button>
+                            <Button
+                                onClick={() => setQRCodeModalOpen(true)}
+                                color={themeVariables.light}
+                                bg={themeVariables.accent}
+                                ml={4}
+                            >
+                                Show QR Code
+                            </Button>
+                      </>
                     )}
                 </Box>
             )}
-            <ToastContainer/>
+            <ToastContainer toastStyle={{ backgroundColor: themeVariables.accent, color: themeVariables.light}} hideProgressBar/>
+            <QRCodeModal isOpen={isQRCodeModalOpen} onClose={() => setQRCodeModalOpen(false)} referralUrl={`${frontendUrl}?referral=${referralCode}`} />
         </Grid>
     );
 }
