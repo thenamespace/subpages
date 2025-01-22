@@ -1,4 +1,4 @@
-# Subname Minting
+# White Label Subname Minting Website
 
 This repository is a Lerna monorepo containing a white-label template for creating subname minting websites as well as examples from some of our clients demonstrating how the website can function and look.
 
