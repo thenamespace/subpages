@@ -6,7 +6,7 @@ import { AppEnv } from "../environment"
 import { getChainName } from "namespace-sdk"
 
 
-const fullName = AppEnv.name
+const fullName = "stayson.eth"
 const nameChainId = Number(AppEnv.chainId)
 
 export const LISTEN_NAME: Listing = {
