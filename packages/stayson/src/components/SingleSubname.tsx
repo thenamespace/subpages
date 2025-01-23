@@ -2,14 +2,14 @@ import { Box, Button, Flex, Text, Image, Input } from "@chakra-ui/react";
 import { Subname } from "./Types";
 import { useAccount, usePublicClient, useSwitchChain, useWalletClient } from "wagmi";
 import { useEffect, useMemo, useState } from "react";
-import { encodeFunctionData, Hash, hexToBytes, isAddress, namehash, parseAbi, toHex } from "viem";
+import { Address, encodeFunctionData, Hash, hexToBytes, isAddress, namehash, parseAbi, toHex } from "viem";
 import { AppEnv } from "@/environment";
 import { getCoderByCoinType } from "@ensdomains/address-encoder";
 import { KnownAddresses, WalletAddress } from "./records/Addresses";
 import { KnownText, KnownTexts } from "./records/TextRecords";
 import { validate as isValidBtcAddress } from "bitcoin-address-validation";
 import { toast, ToastContainer } from "react-toastify";
-import { getChainName, getL2ChainContracts, L2Chain } from "namespace-sdk";
+import { getChainName, getL2ChainContracts, getMainChainContracts, L2Chain } from "namespace-sdk";
 import { themeVariables } from "@/styles/themeVariables";
 import { CgProfile } from "react-icons/cg";
 import { IoShareSocialSharp } from "react-icons/io5";
@@ -25,7 +25,7 @@ const resolverAbi = parseAbi([
 ]);
 let resolver;
 if (nameChainId === 1 || nameChainId === 11155111) {
-  resolver = "1";
+  resolver = `0x0` as Address;
 } else {
   resolver = getL2ChainContracts(getChainName(nameChainId) as L2Chain).resolver;
 }

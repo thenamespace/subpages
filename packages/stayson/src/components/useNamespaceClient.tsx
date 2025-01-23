@@ -1,4 +1,4 @@
-import { createNamespaceClient, Listing, MintRequest, MintTransactionParameters, SupportedChain } from "namespace-sdk"
+import { createNamespaceClient, L2Chain, Listing, MintRequest, MintTransactionParameters, SupportedChain } from "namespace-sdk"
 import { Address, Hash, namehash } from "viem"
 import { mainnet, sepolia } from "viem/chains"
 import { usePublicClient, useSignTypedData, useWalletClient } from "wagmi"
@@ -15,7 +15,7 @@ export const LISTEN_NAME: Listing = {
     network: "mainnet",
     node: namehash(fullName),
     listingType: [mainnet.id, sepolia.id].includes(nameChainId as 1 | 11155111) ? "sellUnruggable" : "l2",
-    registryNetwork: getChainName(nameChainId) as SupportedChain
+    registryNetwork: [mainnet.id, sepolia.id].includes(nameChainId as 1 | 11155111) ? getChainName(nameChainId) as L2Chain : undefined
 }
 
 const client = createNamespaceClient({

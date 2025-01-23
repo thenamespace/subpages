@@ -15,7 +15,7 @@ export const Footer = () => {
     >
       <Text fontSize="14px" textAlign="center" mb={0}>
         <Link href="https://www.namespace.ninja" target="_blank" color={themeVariables.light} fontWeight="bold" textDecoration="none" _hover={{ textDecoration: "underline", textDecorationColor: themeVariables.accent }}>
-          Powered by Namespace
+          Built by Namespace 🤝 Create your subpage today
         </Link>
       </Text>
     </Grid>
