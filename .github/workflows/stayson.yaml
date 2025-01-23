@@ -21,7 +21,7 @@ jobs:
     - name: Build and push
       uses: docker/build-push-action@v4
       with:
-        context: ./packages/subname-minting-website-template
-        file: ./packages/subname-minting-website-template/Dockerfile
+        context: ./packages/stayson
+        file: ./packages/stayson/Dockerfile
         push: true
-        tags: ${{secrets.CR_URL}}/template-dapp:latest
+        tags: ${{secrets.CR_URL}}/stayson-dapp:latest
