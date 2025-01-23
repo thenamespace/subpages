@@ -40,7 +40,7 @@ The design of the website can be customized using the `theme.json` file. This fi
 
 To be able to issue subnames on L1 or L2s, you need to list the name through the Namespace platform.
 
-1. Go to app.namespace.ninja
+1. Go to [https://app.namespace.ninja](https://app.namespace.ninja)
 2. Navigate to Account -> Manager
 3. Select the ENS name you want to list (and issue subnames from)
 4. Go through the listing process
