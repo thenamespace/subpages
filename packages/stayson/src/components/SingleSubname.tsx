@@ -9,7 +9,7 @@ import { KnownAddresses, WalletAddress } from "./records/Addresses";
 import { KnownText, KnownTexts } from "./records/TextRecords";
 import { validate as isValidBtcAddress } from "bitcoin-address-validation";
 import { toast, ToastContainer } from "react-toastify";
-import { getChainName, getL2ChainContracts, getMainChainContracts, L2Chain } from "namespace-sdk";
+import { getChainName, getL2ChainContracts, L2Chain } from "namespace-sdk";
 import { themeVariables } from "@/styles/themeVariables";
 import { CgProfile } from "react-icons/cg";
 import { IoShareSocialSharp } from "react-icons/io5";

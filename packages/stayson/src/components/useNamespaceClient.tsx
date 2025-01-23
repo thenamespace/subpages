@@ -1,4 +1,4 @@
-import { createNamespaceClient, L2Chain, Listing, MintRequest, MintTransactionParameters, SupportedChain } from "namespace-sdk"
+import { createNamespaceClient, L2Chain, Listing, MintRequest, MintTransactionParameters } from "namespace-sdk"
 import { Address, Hash, namehash } from "viem"
 import { mainnet, sepolia } from "viem/chains"
 import { usePublicClient, useSignTypedData, useWalletClient } from "wagmi"
