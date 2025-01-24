@@ -14,7 +14,7 @@ export const Footer = () => {
       zIndex={1000}
     >
       <Text fontSize="14px" textAlign="center" mb={0}>
-        <Link href="https://www.namespace.ninja" target="_blank" color={themeVariables.light} fontWeight="bold" textDecoration="none" _hover={{ textDecoration: "underline", textDecorationColor: themeVariables.accent }}>
+        <Link href="https://github.com/thenamespace/subpages" target="_blank" color={themeVariables.light} fontWeight="bold" textDecoration="none" _hover={{ textDecoration: "underline", textDecorationColor: themeVariables.accent }}>
           Built by Namespace 🤝 Create your subpage today
         </Link>
       </Text>
