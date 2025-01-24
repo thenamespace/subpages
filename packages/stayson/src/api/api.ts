@@ -2,15 +2,11 @@ import axios from "axios";
 
 
 
-export const addReferral = async (code: string, subname: string, authToken: string) => {
+export const addReferral = async (code: string, subname: string) => {
     return await axios
     .post(`https://api.namespace.tech/api/v1/referral/add-referral`, {
         code,
         subname
-    }, {
-        headers: { 
-            Authorization: authToken,
-        }
     }).then(res => res.data);
 }
 

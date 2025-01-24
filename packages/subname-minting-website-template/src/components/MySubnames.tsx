@@ -1,4 +1,4 @@
-import { Box, Button, Flex, Grid, Spinner, Text, Image, Input } from "@chakra-ui/react";
+import { Box, Button, Flex, Grid, Spinner, Text, Image, Input, useBreakpointValue } from "@chakra-ui/react";
 import { hexToRgba, themeVariables } from "@/styles/themeVariables";
 import { Subname } from "./Types";
 import axios from "axios";
@@ -127,7 +127,9 @@ export const MySubnames = ({ setView }: MySubnamesProps) => {
 
 
 
-
+    const boxWidth = useBreakpointValue({ base: "90%", md: "600px" });
+    const boxPadding = useBreakpointValue({ base: 4, md: 6 });
+    const headlineFontSize = useBreakpointValue({ base: "40px", md: "70px" });
 
     return (
         <Grid display="flex" flexDirection="column" alignItems="flex-start" justifyContent="flex-start" paddingTop="50px">
@@ -137,11 +139,11 @@ export const MySubnames = ({ setView }: MySubnamesProps) => {
                 </SideModal>
             )}
             <Box display="flex" flexDirection="column" alignItems="center" mb={10} alignSelf="center">
-              <Text mt={0} mb={0} color={themeVariables.accent} fontSize="70px" textAlign="center" fontWeight="500">
+              <Text mt={0} mb={0} color={themeVariables.accent} fontSize={headlineFontSize} textAlign="center" fontWeight="500">
                 SUBNAMES
               </Text>
             </Box>
-            <Box width={{ base: "90%", md: "600px" }} alignSelf="center">
+            <Box width={boxWidth} alignSelf="center">
                 <Flex justifyContent="space-between" alignItems="center" mb={0}>
                     <Text color={themeVariables.accent} fontSize={24} marginLeft="15px" mb={0}>
                         {subnames.fetching ? "" : `Total: ${allSubnames.length}`}
@@ -158,7 +160,7 @@ export const MySubnames = ({ setView }: MySubnamesProps) => {
                     />
                 </Flex>
             </Box>
-            <Box bg={hexToRgba(themeVariables.main, 0.8)} p={6} alignSelf="center" borderRadius="15px 0 15px 15px" shadow="md" width={{ base: "90%", md: "600px" }} height="400px" position="relative" border="1px solid" borderColor={themeVariables.accent}>
+            <Box bg={hexToRgba(themeVariables.main, 0.8)} p={boxPadding} alignSelf="center" borderRadius="15px 0 15px 15px" shadow="md" width={{ base: "90%", md: "600px" }} height="400px" position="relative" border="1px solid" borderColor={themeVariables.accent}>
                 {subnames.fetching && (
                     <Flex alignItems="center" justifyContent="center" height="100%">
                         <Spinner color={themeVariables.accent} width={200} height={200} animationDuration="1.3s" borderWidth="3px"/>
@@ -257,10 +259,17 @@ export const MySubnames = ({ setView }: MySubnamesProps) => {
                     )}
                     {referralCode.length > 0 && (
                         <>
+                        <Flex
+                            direction={{ base: "column", md: "row" }}
+                            alignItems="center"
+                            justifyContent="center"
+                        >
                             <Button
                                 onClick={() => copyToClipboard(`${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}?referral=${referralCode}`)}
                                 color={themeVariables.light}
                                 bg={themeVariables.accent}
+                                mb={{ base: 4, md: 0 }}
+                                mr={{ base: 0, md: 4 }}
                             >
                                 Copy Referral Link to Clipboard
                             </Button>
@@ -272,6 +281,7 @@ export const MySubnames = ({ setView }: MySubnamesProps) => {
                             >
                                 Show QR Code
                             </Button>
+                        </Flex>
                       </>
                     )}
                 </Box>

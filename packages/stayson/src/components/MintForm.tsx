@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { Box, Button, Grid, Input, Link, Spinner, Text } from "@chakra-ui/react";
+import { Box, Button, Grid, Input, Link, Spinner, Text, useBreakpointValue } from "@chakra-ui/react";
 import { useNamepsaceClient, LISTEN_NAME } from "./useNamespaceClient";
 import { normalize } from "viem/ens";
 import { debounce } from "lodash";
-import { useAccount, useSignMessage, useSwitchChain } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Hash, namehash } from "viem";
 import { AddressRecord } from "namespace-sdk/dist/clients";
@@ -13,7 +13,6 @@ import { hexToRgba, themeVariables } from "@/styles/themeVariables";
 import { getChainName } from "namespace-sdk";
 import { getKnownAddress } from "./records/Addresses";
 import { addReferral, isRenting as isRentingApi } from "@/api/api";
-import { generateAuthToken as generateAuthTokenSiwe } from "@/api/siwe";
 
 const nameChainId = Number(AppEnv.chainId);
 const explorerUrl = AppEnv.explorerUrl;
@@ -30,7 +29,6 @@ enum RegistrationStep {
 export const MintForm = () => {
   const [label, setLabel] = useState("");
   const { address, chainId } = useAccount();
-  const { signMessageAsync } = useSignMessage();
   const { openConnectModal } = useConnectModal();
   const {
     checkAvailable,
@@ -127,9 +125,9 @@ export const MintForm = () => {
 
   
   
-  const handleAddReferral = async (code: string, subname: string, authToken: string) => {
+  const handleAddReferral = async (code: string, subname: string) => {
     try {
-      await addReferral(code, subname, authToken);
+      await addReferral(code, subname);
 
     } catch (err) {
       console.log(err);
@@ -151,16 +149,10 @@ export const MintForm = () => {
     }
 
     let token;
-    let authToken;
 
     try {
       setMintIndicator({ btnLabel: "Waiting for wallet", waiting: true });
       token = await generateAuthToken(address);
-      authToken = await generateAuthTokenSiwe(
-        address,
-        "Add Referral",
-        signMessageAsync
-      );
     } catch (err) {
       return;
     } finally {
@@ -208,7 +200,7 @@ export const MintForm = () => {
 
       const referralCodeStorage = localStorage.getItem("referralCode") || "";
       if (referralCodeStorage) {
-        handleAddReferral(referralCodeStorage, `${label}.${LISTEN_NAME.fullName}`, authToken);
+        handleAddReferral(referralCodeStorage, `${label}.${LISTEN_NAME.fullName}`);
       }
 
 
@@ -244,19 +236,25 @@ export const MintForm = () => {
     !indicators.available ||
     mintIndicators.waiting;
 
+    
+  const boxWidth = useBreakpointValue({ base: "90%", md: "400px" });
+  const boxPadding = useBreakpointValue({ base: 4, md: 6 });
+  const headlineFontSize = useBreakpointValue({ base: "40px", md: "70px" });
+  const subHeadlineFontSize = useBreakpointValue({ base: "16px", md: "22px" });
+  const letterSpacing = useBreakpointValue({ base: 8, md: 15 });
 
 
   return (
     <Grid display="flex" flexDirection="column" alignItems="flex-start" justifyContent="flex-start" paddingTop="50px">
         <Box display="flex" flexDirection="column" alignItems="center" mb={10} alignSelf="center">
-          <Text mt={0} mb={0} color={themeVariables.accent} fontSize="70px" textAlign="center" fontWeight="500">
+          <Text mt={0} mb={0} color={themeVariables.accent} fontSize={headlineFontSize} textAlign="center" fontWeight="500">
             {LISTEN_NAME.fullName.toUpperCase()}
           </Text>
-          <Text mt={0} mb={0} color={themeVariables.light} fontSize="22px" textAlign="center" letterSpacing={15}>
+          <Text mt={0} mb={0} color={themeVariables.light} fontSize={subHeadlineFontSize} textAlign="center" letterSpacing={letterSpacing}>
             GET YOUR SUBNAME
           </Text>
         </Box>
-        <Box bg={hexToRgba(themeVariables.main, 0.8)} p={6} alignSelf="center" borderRadius="15px" shadow="md" width="400px" position="relative" border="1px solid" borderColor={themeVariables.accent}>
+        <Box bg={hexToRgba(themeVariables.main, 0.8)} p={boxPadding} alignSelf="center" borderRadius="15px" shadow="md" width={boxWidth} position="relative" border="1px solid" borderColor={themeVariables.accent}>
           <Box paddingTop={6}>
           {registrationStep === 0 && (
               <>

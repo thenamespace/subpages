@@ -1,6 +1,6 @@
 import { useAccount } from "wagmi";
 import logo from "../assets/logo.png";
-import { Grid, Box, Button, Image, Text, Link, Flex } from "@chakra-ui/react";
+import { Grid, Box, Button, Image, Text, Link, Flex, useBreakpointValue } from "@chakra-ui/react";
 import { ConnectButton, useConnectModal } from "@rainbow-me/rainbowkit";
 import { themeVariables } from "@/styles/themeVariables";
 import { useEffect } from "react";
@@ -19,10 +19,16 @@ export const TopNavigation = ({ setView }: TopNavigationProps) => {
     }
   }, [isConnected]);
 
+
+  const logoHeight = useBreakpointValue({ base: "40px", md: "50px" });
+  const fontSize = useBreakpointValue({ base: "lg", md: "xl" });
+  const padding = useBreakpointValue({ base: 2, md: 4 });
+  const showText = useBreakpointValue({ base: false, md: true });
+
   return (
     <Box
       bg="transparent"
-      p={4}
+      p={padding}
       position="fixed"
       top={0}
       left={0}
@@ -30,7 +36,7 @@ export const TopNavigation = ({ setView }: TopNavigationProps) => {
       zIndex={1000}
     >
       <Grid
-        templateColumns="auto 1fr"
+        templateColumns={{ base: "1fr auto", md: "auto 1fr" }}
         alignItems="center"
         maxWidth="1250px"
         margin="0 auto"
@@ -38,13 +44,15 @@ export const TopNavigation = ({ setView }: TopNavigationProps) => {
         <Grid templateColumns="auto auto" alignItems="center">
           <Link textDecoration="none" onClick={() => setView("mint")}>
             <Image
-              height="50px"
+              height={logoHeight}
               src={logo}
               alt="Logo"
             />
-            <Text fontSize="xl" fontWeight="bold" color={themeVariables.accent} ml={3} mb={0}>
-              STAYSON
-            </Text>
+            {showText && (
+              <Text fontSize={fontSize} fontWeight="bold" color={themeVariables.accent} ml={3} mb={0}>
+                STAYSON
+              </Text>
+            )}
           </Link>
         </Grid>
         <Flex textAlign="right" ml="auto" alignItems="center">
