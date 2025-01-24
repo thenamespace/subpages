@@ -15,7 +15,7 @@ export const LISTEN_NAME: Listing = {
     network: [sepolia.id, baseSepolia.id].includes(nameChainId as 11155111 | 84532) ? "sepolia" : "mainnet",
     node: namehash(fullName),
     listingType: [mainnet.id, sepolia.id].includes(nameChainId as 1 | 11155111) ? "sellUnruggable" : "l2",
-    registryNetwork: [mainnet.id, sepolia.id].includes(nameChainId as 1 | 11155111) ? getChainName(nameChainId) as L2Chain : undefined
+    registryNetwork: [mainnet.id, sepolia.id].includes(nameChainId as 1 | 11155111) ?  undefined: getChainName(nameChainId) as L2Chain
 }
 
 const client = createNamespaceClient({
