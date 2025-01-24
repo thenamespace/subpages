@@ -43,7 +43,7 @@ export const TopNavigation = ({ setView }: TopNavigationProps) => {
               alt="Logo"
             />
             <Text fontSize="xl" fontWeight="bold" color={themeVariables.accent} ml={3} mb={0}>
-              WAGMI
+              STAYSON
             </Text>
           </Link>
         </Grid>

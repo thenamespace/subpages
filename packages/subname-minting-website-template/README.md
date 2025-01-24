@@ -12,6 +12,7 @@
 -  **Responsive Design**: Fully responsive design that works on all devices.
 -  **L1 and L2 Compatibility:** Supports both Layer 1 and Layer 2 chains and subnames.
 -  **User-Friendly Interface:** Simplifies the minting process for end-users.
+-  **Referral System**: Built-in referral system to incentivize users to invite others.
 
 ## Customizable Design
 

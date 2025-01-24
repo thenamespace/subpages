@@ -10,7 +10,6 @@ import { AddressRecord } from "namespace-sdk/dist/clients";
 import { FaArrowDown, FaArrowUp, FaX } from "react-icons/fa6";
 import { AppEnv } from "../environment";
 import { hexToRgba, themeVariables } from "@/styles/themeVariables";
-import { SideModal } from "./SideModal";
 import { getChainName } from "namespace-sdk";
 import { getKnownAddress } from "./records/Addresses";
 import { addReferral, isRenting as isRentingApi } from "@/api/api";
@@ -73,7 +72,6 @@ export const MintForm = () => {
 
 
 
-  const [showCostModal, setShowCostModal] = useState(false);
 
 
   const [isRenting, setIsRenting] = useState(false);
@@ -250,35 +248,6 @@ export const MintForm = () => {
 
   return (
     <Grid display="flex" flexDirection="column" alignItems="flex-start" justifyContent="flex-start" paddingTop="50px">
-        <SideModal open={showCostModal} onClose={() => setShowCostModal(false)}>
-          <Box p={4}>
-            <Text fontSize="24px" textAlign="center" mb={4}>Subname Cost</Text>
-            <Box borderBottom="1px solid" borderColor={themeVariables.accent} mb={2}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" height="40px">
-                <Text>1 Character</Text>
-                <Text>$50</Text>
-              </Box>
-            </Box>
-            <Box borderBottom="1px solid" borderColor={themeVariables.accent} mb={2}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" height="40px">
-                <Text>2 Characters</Text>
-                <Text>$20</Text>
-              </Box>
-            </Box>
-            <Box borderBottom="1px solid" borderColor={themeVariables.accent} mb={2}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" height="40px">
-                <Text>3 Characters</Text>
-                <Text>$5</Text>
-              </Box>
-            </Box>
-            <Box>
-              <Box display="flex" justifyContent="space-between" alignItems="center" height="40px">
-                <Text>4+ Characters</Text>
-                <Text>Free</Text>
-              </Box>
-            </Box>
-          </Box>
-        </SideModal>
         <Box display="flex" flexDirection="column" alignItems="center" mb={10} alignSelf="center">
           <Text mt={0} mb={0} color={themeVariables.accent} fontSize="70px" textAlign="center" fontWeight="500">
             {LISTEN_NAME.fullName.toUpperCase()}
@@ -288,16 +257,6 @@ export const MintForm = () => {
           </Text>
         </Box>
         <Box bg={hexToRgba(themeVariables.main, 0.8)} p={6} alignSelf="center" borderRadius="15px" shadow="md" width="400px" position="relative" border="1px solid" borderColor={themeVariables.accent}>
-          <Box position="absolute" top="0" right="0">
-            <Button
-              onClick={() => setShowCostModal((prev) => !prev)}
-              variant="plain"
-              color={themeVariables.light}
-              fontSize={12}
-            >
-              Subname Cost
-            </Button>
-          </Box>
           <Box paddingTop={6}>
           {registrationStep === 0 && (
               <>
@@ -331,6 +290,11 @@ export const MintForm = () => {
                   {indicators.checking && (
                     <Box position="absolute" top="50%" right="0.5rem" transform="translateY(-50%)">
                       <Spinner color={themeVariables.accent} height={21} />
+                    </Box>
+                  )}
+                  {!indicators.checking && indicators.available && (
+                    <Box position="absolute" right="0.5rem" transform="translateY(-85%)">
+                      <Text color={themeVariables.accent}>Free Mint</Text>
                     </Box>
                   )}
                 </Box>
