@@ -15,12 +15,10 @@ import { getChainName } from "namespace-sdk";
 import { getKnownAddress } from "./records/Addresses";
 import { addReferral, isRenting as isRentingApi } from "@/api/api";
 import { generateAuthToken as generateAuthTokenSiwe } from "@/api/siwe";
-import CryptoJS from "crypto-js";
 
 const nameChainId = Number(AppEnv.chainId);
 const explorerUrl = AppEnv.explorerUrl;
 const avatarUrl = AppEnv.avatarUrl;
-const referralSecretKey = AppEnv.referralSecretKey
 
 enum RegistrationStep {
   START = 0,
@@ -129,19 +127,11 @@ export const MintForm = () => {
   );
 
 
-
-  function generateToken(subname: string) {
-    const secret = referralSecretKey;
-    const hash = CryptoJS.HmacSHA256(subname, secret).toString(CryptoJS.enc.Hex);
-    return hash;
-  }
   
   
   const handleAddReferral = async (code: string, subname: string, authToken: string) => {
     try {
-      const token = generateToken(subname);
-
-      await addReferral(code, subname, token, authToken);
+      await addReferral(code, subname, authToken);
 
     } catch (err) {
       console.log(err);

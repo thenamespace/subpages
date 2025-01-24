@@ -3,7 +3,7 @@ import theme from "../../theme.json";
 
 export const themeVariables = {
   ...theme,
-  backgroundImage: `url('${theme.backgroundImage}')`,
+  backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('${theme.backgroundImage}')`,
 };
 
 

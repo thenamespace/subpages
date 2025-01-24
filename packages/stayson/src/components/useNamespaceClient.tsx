@@ -1,18 +1,18 @@
 import { createNamespaceClient, L2Chain, Listing, MintRequest, MintTransactionParameters } from "namespace-sdk"
 import { Address, Hash, namehash } from "viem"
-import { mainnet, sepolia } from "viem/chains"
+import { mainnet, sepolia, baseSepolia } from "viem/chains"
 import { usePublicClient, useSignTypedData, useWalletClient } from "wagmi"
 import { AppEnv } from "../environment"
 import { getChainName } from "namespace-sdk"
 
 
-const fullName = "stayson.eth"
+const fullName = AppEnv.name
 const nameChainId = Number(AppEnv.chainId)
 
 export const LISTEN_NAME: Listing = {
     fullName: fullName,
     label: fullName.split('.')[0],
-    network: "mainnet",
+    network: [sepolia.id, baseSepolia.id].includes(nameChainId as 11155111 | 84532) ? "sepolia" : "mainnet",
     node: namehash(fullName),
     listingType: [mainnet.id, sepolia.id].includes(nameChainId as 1 | 11155111) ? "sellUnruggable" : "l2",
     registryNetwork: [mainnet.id, sepolia.id].includes(nameChainId as 1 | 11155111) ? getChainName(nameChainId) as L2Chain : undefined
@@ -20,7 +20,7 @@ export const LISTEN_NAME: Listing = {
 
 const client = createNamespaceClient({
     chainId: nameChainId,
-    //mintSource: "test",
+    //mintSource: "template",
     mode: "production",
 })
 

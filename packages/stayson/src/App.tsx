@@ -24,17 +24,14 @@ function App() {
   return (
     <ReferralProvider>
       <WalletConnector>
-        <Flex minHeight="100vh" flexDirection="column" bg={themeVariables.backgroundImage} bgSize="cover" position="relative">
-          <Box position="absolute" top="0" left="0" width="100%" height="100%" bg="rgba(0, 0, 0, 0.5)" zIndex="1" />
-          <Box position="relative" zIndex="1000000">
+        <Flex minHeight="100vh" flexDirection="column" bg={themeVariables.backgroundImage} bgSize="cover">
+          <Box>
             <TopNavigation setView={setView} />
           </Box>
-          <Flex flex="1" width="100%" alignItems="center" justifyContent="center" position="relative" zIndex="2">
+          <Flex flex="1" width="100%" alignItems="center" justifyContent="center">
             {view === "mint" ? <MintForm /> : <MySubnames setView={setView} />}
           </Flex>
-          <Box position="relative" zIndex="1000000">
-            <Footer />
-          </Box>
+          <Footer />
         </Flex>
       </WalletConnector>
     </ReferralProvider>

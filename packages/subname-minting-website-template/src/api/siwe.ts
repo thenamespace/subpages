@@ -1,16 +1,14 @@
-import { AppEnv } from "@/environment";
 import axios from "axios";
 import { SiweMessage } from "siwe";
 import { Address, Hash } from "viem";
 import { Buffer } from "buffer";
 
 
-const backendUrl = AppEnv.backendUrl
 
 type SignerFunc = ({ message }: { message: any }) => Promise<Hash>;
 
 export const nonce = async (): Promise<string> => {
-  return axios.get<string>(backendUrl + "/siwe/nonce").then((res) => res.data);
+  return axios.get<string>("https://api.namespace.tech/siwe/nonce").then((res) => res.data);
 };
 
 export const generateMintAccessToken = async (

@@ -1,7 +1,6 @@
 import { Box, Button, Flex, Grid, Spinner, Text, Image, Input } from "@chakra-ui/react";
 import { hexToRgba, themeVariables } from "@/styles/themeVariables";
 import { Subname } from "./Types";
-import { AppEnv } from "@/environment";
 import axios from "axios";
 import { LISTEN_NAME } from "./useNamespaceClient";
 import { useAccount, useSignMessage } from "wagmi";
@@ -15,14 +14,12 @@ import { toast, ToastContainer } from "react-toastify";
 import QRCodeModal from "./QRCodeModal";
 
 
-const indexerUrl = AppEnv.indexerUrl;
-const frontendUrl = AppEnv.frontendUrl;
 
 const fetchSubnames = async (owner: string) => {
   const { data } = await axios.get<{
     items: Subname[];
     totalItems: number;
-  }>(`${indexerUrl}`, {
+  }>(`https://indexer.namespace.tech/api/v1/nodes`, {
     params: {
       owner,
       parentName: LISTEN_NAME.fullName,
@@ -261,7 +258,7 @@ export const MySubnames = ({ setView }: MySubnamesProps) => {
                     {referralCode.length > 0 && (
                         <>
                             <Button
-                                onClick={() => copyToClipboard(`${frontendUrl}?referral=${referralCode}`)}
+                                onClick={() => copyToClipboard(`${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}?referral=${referralCode}`)}
                                 color={themeVariables.light}
                                 bg={themeVariables.accent}
                             >
@@ -280,7 +277,7 @@ export const MySubnames = ({ setView }: MySubnamesProps) => {
                 </Box>
             )}
             <ToastContainer toastStyle={{ backgroundColor: themeVariables.accent, color: themeVariables.light}} hideProgressBar/>
-            <QRCodeModal isOpen={isQRCodeModalOpen} onClose={() => setQRCodeModalOpen(false)} referralUrl={`${frontendUrl}?referral=${referralCode}`} />
+            <QRCodeModal isOpen={isQRCodeModalOpen} onClose={() => setQRCodeModalOpen(false)} referralUrl={`${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}?referral=${referralCode}`} />
         </Grid>
     );
 }

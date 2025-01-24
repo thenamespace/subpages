@@ -14,6 +14,7 @@ import { themeVariables } from "@/styles/themeVariables";
 import { CgProfile } from "react-icons/cg";
 import { IoShareSocialSharp } from "react-icons/io5";
 import chainIcon from "../assets/chains/circle.svg";
+import { mainnet, sepolia } from "viem/chains";
 
 
 
@@ -24,8 +25,10 @@ const resolverAbi = parseAbi([
   "function setAddr(bytes32 node, uint256 coinType, bytes value) external",
 ]);
 let resolver;
-if (nameChainId === 1 || nameChainId === 11155111) {
-  resolver = `0x0` as Address;
+if (nameChainId === mainnet.id) {
+  resolver = "0x231b0Ee14048e9dCcD1d247744d114a4EB5E8E63" as Address;
+} else if (nameChainId === sepolia.id) {
+  resolver = "0x8948458626811dd0c23EB25Cc74291247077cC51" as Address;
 } else {
   resolver = getL2ChainContracts(getChainName(nameChainId) as L2Chain).resolver;
 }
