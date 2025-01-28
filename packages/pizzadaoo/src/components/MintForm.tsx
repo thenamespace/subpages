@@ -25,7 +25,7 @@ const namespaceClient = createNamespaceClient({
   mintSource: "pizzadao.namespace.ninja",
 });
 
-const defaultAvatar = "https://avatars.namespace.ninja/pizzadaoo.png"
+const defaultAvatar = "https://ipfs.io/ipfs/bafybeidzf4hofbgupxyvovbc6ybpz2qkeydvezdkig252t5oenaw2llere"
 
 const ETH_COIN = 60;
 const OP_COIN = 2147492101;

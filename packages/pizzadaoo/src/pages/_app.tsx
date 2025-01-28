@@ -8,7 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 export default function App({ Component, pageProps }: AppProps) {
   return <WalletConnector>
     <TechContainerBg>
-    <Component {...pageProps} />;      
+    <Component {...pageProps} />
     </TechContainerBg>
     <ToastContainer/>
   </WalletConnector>

@@ -2,7 +2,7 @@ import { PlainBtn } from "./TechBtn";
 import { UserProfile } from "./UserProfile";
 import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useEffect, useState } from "react";
 import Link from "next/link";
 import opLogo from "../assets/chains/op.svg";
 import Image from "next/image";
@@ -12,11 +12,34 @@ import pizzaChar from "../assets/PizzaCharacter.png";
 export const TechContainerBg = (props: PropsWithChildren) => {
   const { isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
+  const [imageWidth, setImageWidth] = useState(600);
+
+
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 2000) {
+        setImageWidth(900);
+      } else {
+        setImageWidth(600);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize();
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+
+  
 
   return (
     <div
       className="tech-container">
-        <Image className="big-char" src={pizzaChar} width={800} alt="adsf"></Image>
+        <Image className="big-char" src={pizzaChar} width={imageWidth} alt="adsf"></Image>
       <div className="top-nav">
         <div className="row">
           <div className="col-lg-6 col-sm-12 logo-col">

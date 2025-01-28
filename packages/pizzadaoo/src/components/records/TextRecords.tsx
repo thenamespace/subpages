@@ -29,7 +29,7 @@ export const KnownTexts: Record<string, KnownText> = {
     key: "description",
     label: "Short Bio",
     type: "profile",
-    placeholder: "ex. I love LSU",
+    placeholder: "ex. I love pizza",
   },
   mail: {
     key: "mail",
