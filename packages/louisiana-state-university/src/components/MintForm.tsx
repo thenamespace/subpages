@@ -11,6 +11,7 @@ import { debounce } from "lodash";
 import {
   useAccount,
   usePublicClient,
+  useSignTypedData,
   useSwitchChain,
   useWalletClient,
 } from "wagmi";
@@ -72,6 +73,7 @@ export const MintForm = () => {
   const publicClient = usePublicClient({ chainId: optimism.id });
   const { switchChain } = useSwitchChain();
   const { address, chain } = useAccount();
+  const { signTypedDataAsync } = useSignTypedData();
   const [indicator, setIndicator] = useState<{
     isChecking: boolean;
     isAvailable: boolean;
@@ -144,6 +146,11 @@ export const MintForm = () => {
       if (!chain || chain.id !== optimism.id) {
         switchChain({ chainId: optimism.id });
       }
+
+
+      const tokens = await namespaceClient.generateAuthToken(address, signTypedDataAsync, "Verify your address")
+
+
       params = await namespaceClient.getMintTransactionParameters(
         listing,
         {
@@ -169,6 +176,7 @@ export const MintForm = () => {
             ],
           },
           subnameOwner: address,
+          token: tokens.accessToken
         }
       );
     } catch (err: any) {
