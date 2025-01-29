@@ -9,8 +9,9 @@ import { debounce } from "lodash";
 import {
   useAccount,
   usePublicClient,
+  useSignTypedData,
   useSwitchChain,
-  useWalletClient,
+  useWalletClient
 } from "wagmi";
 import { toast } from "react-toastify";
 import Link from "next/link";
@@ -25,7 +26,7 @@ const namespaceClient = createNamespaceClient({
   mintSource: "pizzadao.namespace.ninja",
 });
 
-const defaultAvatar = "https://ipfs.io/ipfs/bafybeidzf4hofbgupxyvovbc6ybpz2qkeydvezdkig252t5oenaw2llere"
+const defaultAvatar = "https://avatars.namespace.ninja/pizzadaoo.png"
 
 const ETH_COIN = 60;
 const OP_COIN = 2147492101;
@@ -45,6 +46,7 @@ export const MintForm = () => {
   const publicClient = usePublicClient({ chainId: LISTING_CHAIN_ID });
   const { switchChain } = useSwitchChain();
   const { address, chain } = useAccount();
+  const { signTypedDataAsync } = useSignTypedData();
   const [indicator, setIndicator] = useState<{
     isChecking: boolean;
     isAvailable: boolean;
@@ -106,6 +108,11 @@ export const MintForm = () => {
       if (!chain || chain.id !== LISTING_CHAIN_ID) {
         switchChain({ chainId: LISTING_CHAIN_ID });
       }
+
+
+      const tokens = await namespaceClient.generateAuthToken(address, signTypedDataAsync, "Verify your address")
+
+
       params = await namespaceClient.getMintTransactionParameters(LISTED_NAME, {
         minterAddress: address,
         subnameLabel: searchLabel,
@@ -129,6 +136,7 @@ export const MintForm = () => {
           ],
         },
         subnameOwner: address,
+        token: tokens.accessToken
       });
     } catch (err: any) {
       setMintState({ ...mintState, waitingWallet: false });
