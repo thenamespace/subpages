@@ -189,7 +189,22 @@ export const MintForm = () => {
       } else if (err.response && err.response?.data?.message) {
         toast(err.response?.data?.message, { className: "tech-toasty", type: "error"});
       } else {
-        toast("Unexpected error happened :(", { className: "tech-toasty", type: "error"})
+        let errorMsg = "Unexpected error happened :(";
+
+        if (err.toString().includes("MINTER_NOT_TOKEN_OWNER")) {
+          errorMsg = "You don't own required token";
+        } else if (err.toString().includes("SUBNAME_TAKEN")) {
+          errorMsg = "Subname is already taken";
+        } else if (err.toString().includes("MINTER_NOT_WHITELISTED")) {
+          errorMsg = "You are not whitelisted";
+        } else if (err.toString().includes("LISTING_EXPIRED")) {
+          errorMsg = "Listing has expired";
+        } else if (err.toString().includes("SUBNAME_RESERVED")) {
+          errorMsg = "Subname is reserved";
+        } else if (err.toString().includes("VERIFIED_MINTER_ADDRESS_REQUIRED")) {
+          errorMsg = "Verification required";
+        }
+        toast(errorMsg, { className: "tech-toasty", type: "error"})
       }
       return;
     }

@@ -224,6 +224,16 @@ export const MintForm = () => {
   const parseError = (errMessage: string) => {
     if (errMessage.includes("MINTER_NOT_TOKEN_OWNER")) {
       setMintError("You don't have enought tokens for minting!");
+    } else if (errMessage.includes("SUBNAME_TAKEN")) {
+      setMintError("Subname is already taken");
+    } else if (errMessage.includes("MINTER_NOT_WHITELISTED")) {
+      setMintError("You are not whitelisted");
+    } else if (errMessage.includes("LISTING_EXPIRED")) {
+      setMintError("Listing has expired");
+    } else if (errMessage.includes("SUBNAME_RESERVED")) {
+      setMintError("Subname is reserved");
+    } else if (errMessage.includes("VERIFIED_MINTER_ADDRESS_REQUIRED")) {
+      setMintError("Verification required");
     } else {
       setMintError("Unknown error ocurred. Check console for more info");
     }
