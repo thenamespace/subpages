@@ -14,28 +14,7 @@
 -  **User-Friendly Interface:** Simplifies the minting process for end-users.
 -  **Referral System**: Built-in referral system to incentivize users to invite others.
 
-## Customizable Design
-
-The design of the website can be customized using the `theme.json` file. This file contains the basic design variables such as colors and background images. You can change these values to match your branding without any technical knowledge.
-
-### Example `theme.json`
-
-```json
-{
-"main": "#0a2943",
-"accent": "#309ae0",
-"light": "#ffffff",
-"dark": "#000000",
-"error": "#d80000",
-"backgroundImage": "<image-url>"
-}
-```
-
-## How to Customize
-
-1. Open the theme.json file.
-2. Change the values of the design variables to match your branding.
-3. Save the file and the changes will be reflected in the website.
+# Launch your own Subpage
 
 ## Listing and configuring ENS Name
 
@@ -53,7 +32,7 @@ To be able to issue subnames on L1 or L2s, you need to list the name through the
 5. List the name!
 6. Done.
 
-For more information, or assistance, ping @thecaphimself on Telegram or read through our [official docs](https://docs.namespace.tech/namespace-platform/manager/listing-an-ens-name). 
+For more information, or assistance, ping @thecaphimself on Telegram or read through our [official docs](https://docs.namespace.tech/namespace-platform/manager/listing-an-ens-name).
 
 ## Running the Project
 
@@ -101,6 +80,29 @@ To lint the project:
 yarn run lint
 ```
 This will run ESLint on the project to check for code quality issues.
+
+## Customizable Design
+
+The design of the website can be customized using the `theme.json` file. This file contains the basic design variables such as colors and background images. You can change these values to match your branding without any technical knowledge.
+
+### Example `theme.json`
+
+```json
+{
+"main": "#0a2943",
+"accent": "#309ae0",
+"light": "#ffffff",
+"dark": "#000000",
+"error": "#d80000",
+"backgroundImage": "<image-url>"
+}
+```
+
+## How to Customize
+
+1. Open the theme.json file.
+2. Change the values of the design variables to match your branding.
+3. Save the file and the changes will be reflected in the website.
 
 ## Contributing
 
