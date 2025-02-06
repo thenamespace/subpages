@@ -8,11 +8,12 @@ import opLogo from "../assets/chains/op.svg";
 import Image from "next/image";
 import pizzaLogo from "../assets/pizzadao-logo.png";
 import pizzaChar from "../assets/PizzaCharacter.png";
+import Head from "next/head";
 
 export const TechContainerBg = (props: PropsWithChildren) => {
   const { isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const [imageWidth, setImageWidth] = useState(600);
+  const [imageWidth, setImageWidth] = useState(500);
 
 
 
@@ -20,8 +21,10 @@ export const TechContainerBg = (props: PropsWithChildren) => {
     const handleResize = () => {
       if (window.innerWidth > 2000) {
         setImageWidth(900);
+      } else if (window.innerWidth > 1500) {
+        setImageWidth(500);
       } else {
-        setImageWidth(600);
+        setImageWidth(400);
       }
     };
 
@@ -37,9 +40,13 @@ export const TechContainerBg = (props: PropsWithChildren) => {
   
 
   return (
+    <>
+    <Head>
+        <link rel="preload" href={pizzaChar.src} as="image" />
+      </Head>
     <div
       className="tech-container">
-        <Image className="big-char" src={pizzaChar} width={imageWidth} alt="adsf"></Image>
+        <Image className="big-char" src={pizzaChar.src} height={imageWidth} width={imageWidth} alt="adsf"></Image>
       <div className="top-nav">
         <div className="row">
           <div className="col-lg-6 col-sm-12 logo-col">
@@ -82,5 +89,6 @@ export const TechContainerBg = (props: PropsWithChildren) => {
       </div>
       <div className="landing-container">{props.children}</div>
     </div>
+    </>
   );
 };

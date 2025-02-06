@@ -1,4 +1,9 @@
 .mint-form {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 15px;
+  padding-top: 120px;
   
   .tech-input-container {
     position: relative;
@@ -167,7 +172,9 @@
         padding: 15px;
         padding-top: 120px;
         .form-tech-container {
-            width: 100%
+            width: 90%;
+            padding: 20px;
+            margin-top: 100px;
         }
         .form-header {
             h1 {

@@ -22,8 +22,8 @@ const myTheme = merge(lightTheme(), {
 } as Theme);
 
 const config = getDefaultConfig({
-  appName: "My RainbowKit App",
-  projectId: "455e05b6c3f1ad264d16b48d53703747",
+  appName: "LSU",
+  projectId: "a5f353014d529c8f85633e3c6250ac28",
   chains: [mainnet, sepolia, base, optimism, arbitrum, baseSepolia],
 });
 

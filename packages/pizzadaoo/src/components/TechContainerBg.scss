@@ -111,5 +111,14 @@ body {
         .logo-col {
             display: none;
         }
+
+        .big-char {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 65%;
+            height: auto;
+        }
     }
 }
