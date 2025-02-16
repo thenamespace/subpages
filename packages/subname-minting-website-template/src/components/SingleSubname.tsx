@@ -264,7 +264,7 @@ export const SingleSubname = ({subname, onUpdate}: {subname: Subname; onUpdate: 
           await publicClient?.waitForTransactionReceipt({hash: tx, confirmations:2})
           setBtnState({waitingTx: false, waitingWallet: false})
   
-          toast("Records updated successfully!", {position: "top-right", type: "success"})
+          toast("Records updated successfully!", {position: "top-right", closeButton: false, autoClose: 1500})
   
           setTimeout(() => {
             onUpdate()
@@ -457,7 +457,7 @@ export const SingleSubname = ({subname, onUpdate}: {subname: Subname; onUpdate: 
           </>
         )}
       </Box>
-      <ToastContainer/>
+      <ToastContainer toastStyle={{ backgroundColor: themeVariables.accent, color: themeVariables.light}} hideProgressBar/>
     </Box>
     );
 }

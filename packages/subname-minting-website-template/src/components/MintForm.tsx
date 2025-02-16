@@ -3,9 +3,9 @@ import { Box, Button, Grid, Input, Link, Spinner, Text, useBreakpointValue } fro
 import { useNamepsaceClient, LISTEN_NAME } from "./useNamespaceClient";
 import { normalize } from "viem/ens";
 import { debounce } from "lodash";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount, usePublicClient, useSwitchChain, useWalletClient } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { Hash, namehash } from "viem";
+import { Address, Hash, namehash, parseAbi } from "viem";
 import { AddressRecord } from "namespace-sdk/dist/clients";
 import { FaArrowDown, FaArrowUp, FaX } from "react-icons/fa6";
 import { AppEnv } from "../environment";
@@ -14,6 +14,8 @@ import { SideModal } from "./SideModal";
 import { getChainName } from "namespace-sdk";
 import { getKnownAddress } from "./records/Addresses";
 import { addReferral, isRenting as isRentingApi } from "@/api/api";
+import { toast, ToastContainer } from "react-toastify";
+import { mainnet, sepolia } from "viem/chains";
 
 const nameChainId = Number(AppEnv.chainId);
 const explorerUrl = AppEnv.explorerUrl;
@@ -22,7 +24,8 @@ const avatarUrl = AppEnv.avatarUrl;
 enum RegistrationStep {
   START = 0,
   TX_SENT = 1,
-  COMPLETE = 2,
+  PRIMARY_NAME = 2,
+  COMPLETE = 3,
 }
 
 
@@ -56,6 +59,34 @@ export const MintForm = () => {
     RegistrationStep.START
   );
 
+  const [primaryNameIndicators, setPrimaryNameIndicators] = useState<{
+    waiting: boolean;
+    btnLabel: string;
+  }>({ waiting: false, btnLabel: "Set primary name!" });
+
+
+
+  let reverseRegistarAbi;
+  let reverseRegistar;
+  let chainForPrimaryName;
+  if (LISTEN_NAME.network === "mainnet") {
+    reverseRegistar = "0xa58E81fe9b61B5c3fE2AFD33CF304c454AbFc7Cb" as Address;
+    reverseRegistarAbi = parseAbi([
+      "function setName(string name)"
+    ]);
+    chainForPrimaryName = mainnet.id;
+  } else {
+    reverseRegistar = "0xCF75B92126B02C9811d8c632144288a3eb84afC8" as Address;
+    reverseRegistarAbi = parseAbi([
+      "function setName(string _name)"
+    ]);
+    chainForPrimaryName = sepolia.id;
+  }
+
+
+  const publicClient = usePublicClient({ chainId: chainForPrimaryName });
+  const { data: walletClient } = useWalletClient({ chainId: chainForPrimaryName });
+  
 
 
   const ETH_COIN = 60;
@@ -206,7 +237,7 @@ export const MintForm = () => {
       }
 
 
-      setRegistrationStep(RegistrationStep.COMPLETE);
+      setRegistrationStep(RegistrationStep.PRIMARY_NAME);
     } catch (err: any) {
       console.error(err);
       if (err?.cause?.details?.includes("User denied transaction signatur")) {
@@ -254,6 +285,55 @@ export const MintForm = () => {
   const headlineFontSize = useBreakpointValue({ base: "40px", md: "70px" });
   const subHeadlineFontSize = useBreakpointValue({ base: "16px", md: "22px" });
   const letterSpacing = useBreakpointValue({ base: 8, md: 15 });
+
+
+
+  const handlePrimaryName = async () => {
+
+    if (chainId !== chainForPrimaryName) {
+      switchChainAsync({ chainId: chainForPrimaryName });
+    }
+
+    try {
+
+      setPrimaryNameIndicators({ btnLabel: "Waiting for wallet", waiting: true });
+
+      const resp = await publicClient!!.simulateContract({
+        abi: reverseRegistarAbi,
+        address: reverseRegistar,
+        functionName: "setName",
+        args: [LISTEN_NAME.fullName],
+        account: address!!,
+      });
+
+      try {
+        const tx = await walletClient!!.writeContract(resp.request);
+        setPrimaryNameIndicators({ btnLabel: "Processing", waiting: true });
+
+        await publicClient?.waitForTransactionReceipt({ hash: tx, confirmations: 2 });
+        setRegistrationStep(RegistrationStep.COMPLETE);
+
+        toast("Primary name set successfully!", { position: "top-right", closeButton: false, autoClose: 1500 });
+
+      } catch (err: any) {
+        if (err.details) {
+          toast(err.details, {type: "error"});
+        }
+      }
+
+    } catch (err: any) {
+      if (err.details) {
+        toast(err.details, {type: "error"});
+      } else if (err.response) {
+        toast(err.response?.data?.message, {type: "error"});
+      } else {
+        console.log(err);
+        toast("Unknown error occurred :(", {type: "error"});
+      }
+    } finally {
+      setPrimaryNameIndicators({ btnLabel: "Set primary name!", waiting: false });
+    };
+  };
 
 
   return (
@@ -307,7 +387,7 @@ export const MintForm = () => {
             </Button>
           </Box>
           <Box paddingTop={6}>
-          {registrationStep === 0 && (
+          {registrationStep === RegistrationStep.START && (
               <>
                 <Box display="flex" justifyContent="center" mb={3}>
                   <Box
@@ -377,7 +457,7 @@ export const MintForm = () => {
                 )}
               </>
             )}
-            {registrationStep === 1 && (
+            {registrationStep === RegistrationStep.TX_SENT && (
               <Grid templateColumns="1fr" justifyItems="center">
                 <Spinner color={themeVariables.accent} width={100} height={100} animationDuration="1.3s" borderWidth="3px"/>
                 <Text mt={3} fontSize={20} color="white">
@@ -392,7 +472,54 @@ export const MintForm = () => {
                 )}
               </Grid>
             )}
-            {registrationStep === 2 && (
+            {registrationStep === RegistrationStep.PRIMARY_NAME && (
+              <Grid templateColumns="1fr" justifyItems="center">  
+                <Text textAlign="center" color={themeVariables.light} fontSize={24} mt={2} mb={4} >
+                  You have registered
+                </Text>
+                <Box display="flex" justifyContent="center" mb={1}>
+                  <Box
+                    as="img"
+                    //@ts-ignore
+                    src={avatarUrl}
+                    alt="Avatar"
+                    borderRadius="40px"
+                    border="2px solid"
+                    borderColor={themeVariables.accent}
+                    boxSize="120px"
+                  />
+                </Box>
+                <Link href={`https://app.ens.domains/${label}.${LISTEN_NAME.fullName}`} target="_blank" rel="noopener noreferrer" mb={2} textDecoration="none" _hover={{ textDecoration: "underline", textDecorationColor: themeVariables.accent }}>
+                  <Text color="white" fontSize={30} textAlign="center">
+                    <Box as="span" color={themeVariables.accent}>{label}</Box>
+                    .{LISTEN_NAME.fullName}
+                  </Text>
+                </Link>
+                <Button
+                  onClick={() => handlePrimaryName()}
+                  bg={themeVariables.accent}
+                  color={themeVariables.light}
+                  width="100%"
+                  mb={2}
+                  disabled={primaryNameIndicators.waiting}
+                >
+                  {primaryNameIndicators.btnLabel}
+                </Button>
+                <Button
+                  onClick={() => {
+                    setLabel("");
+                    setRegistrationStep(RegistrationStep.START);
+                  }}
+                  bg={themeVariables.main}
+                  color={themeVariables.light}
+                  width="95%"
+                  disabled={primaryNameIndicators.waiting}
+                >
+                  Finish
+                </Button>
+              </Grid>
+            )}
+            {registrationStep === RegistrationStep.COMPLETE && (
               <Grid templateColumns="1fr" justifyItems="center">  
                 <Text textAlign="center" color={themeVariables.light} fontSize={24} mt={2} mb={4} >
                   You have registered
@@ -418,7 +545,7 @@ export const MintForm = () => {
                 <Button
                   onClick={() => {
                     setLabel("");
-                    setRegistrationStep(0);
+                    setRegistrationStep(RegistrationStep.START);
                   }}
                   bg={themeVariables.accent}
                   color={themeVariables.light}
@@ -430,6 +557,7 @@ export const MintForm = () => {
             )}
           </Box>
         </Box>
+        <ToastContainer toastStyle={{ backgroundColor: themeVariables.accent, color: themeVariables.light}} hideProgressBar/>
       </Grid>
   );
 };
