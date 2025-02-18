@@ -5,10 +5,9 @@ import { Footer } from "./components/Footer";
 import { MintForm } from "./components/MintForm";
 import { MySubnames } from "./components/MySubnames";
 import { useEffect, useState } from "react";
-import { Flex, Box, Image } from "@chakra-ui/react";
+import { Flex, Box } from "@chakra-ui/react";
 import { themeVariables } from "./styles/themeVariables";
 import { ReferralProvider } from "./components/ReferralContext";
-import RedWoman from './assets/RedWoman.png';
 
 function App() {
   const [view, setView] = useState("mint");
@@ -23,27 +22,6 @@ function App() {
   }, []);
 
 
-
-  const [imageWidth, setImageWidth] = useState(500);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth > 2000) {
-        setImageWidth(900);
-      } else if (window.innerWidth > 1500) {
-        setImageWidth(500);
-      } else {
-        setImageWidth(400);
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    handleResize();
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
 
   return (
     <ReferralProvider>

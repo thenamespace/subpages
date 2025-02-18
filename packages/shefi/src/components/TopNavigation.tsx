@@ -1,6 +1,6 @@
 import { useAccount } from "wagmi";
 import logo from "../assets/logo.png";
-import { Grid, Box, Button, Image, Text, Link, Flex, useBreakpointValue } from "@chakra-ui/react";
+import { Grid, Box, Button, Image, Link, Flex, useBreakpointValue } from "@chakra-ui/react";
 import { ConnectButton, useConnectModal } from "@rainbow-me/rainbowkit";
 import { themeVariables } from "@/styles/themeVariables";
 import { useEffect } from "react";
@@ -21,7 +21,6 @@ export const TopNavigation = ({ setView }: TopNavigationProps) => {
 
 
   const logoHeight = useBreakpointValue({ base: "40px", md: "50px" });
-  const fontSize = useBreakpointValue({ base: "lg", md: "xl" });
   const padding = useBreakpointValue({ base: 2, md: 4 });
   const showText = useBreakpointValue({ base: false, md: true });
 
