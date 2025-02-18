@@ -53,7 +53,7 @@ export const TopNavigation = ({ setView }: TopNavigationProps) => {
         </Grid>
         <Flex textAlign="right" ml="auto" alignItems="center">
           {isConnected && (
-            <Box>
+            <Box fontSize="1.25rem">
               <Link
                 onClick={() => setView("mint")}
                 color={themeVariables.accent}

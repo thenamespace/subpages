@@ -368,7 +368,7 @@ export const MintForm = () => {
           </Box>
         </SideModal>
         <Box display="flex" flexDirection="column" alignItems="center" mb={10} alignSelf="center">
-          <Text mt={0} mb={0} color={themeVariables.accent} fontSize={headlineFontSize} textAlign="center" fontWeight="500">
+          <Text mt={0} mb={0} color={themeVariables.accent} fontSize={headlineFontSize} textAlign="center">
             {LISTEN_NAME.fullName.toUpperCase()}
           </Text>
           <Text mt={0} mb={0} color={themeVariables.light} fontSize={subHeadlineFontSize} textAlign="center" letterSpacing={letterSpacing}>
