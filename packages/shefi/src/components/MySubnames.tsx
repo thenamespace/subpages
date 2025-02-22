@@ -157,6 +157,7 @@ export const MySubnames = ({ setView }: MySubnamesProps) => {
                         width={{ base: "60%", md: "50%" }}
                         color={themeVariables.light}
                         borderColor={themeVariables.accent}
+                        _placeholder={{ color: themeVariables.accent }}
                     />
                 </Flex>
             </Box>

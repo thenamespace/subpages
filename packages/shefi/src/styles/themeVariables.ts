@@ -2,7 +2,7 @@ import theme from "../../theme.json";
 
 export const themeVariables = {
   ...theme,
-  backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('${theme.backgroundImage}')`,
+  backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15)), url('${theme.backgroundImage}')`,
 };
 
 export const hexToRgba = (hex: string, alpha: any) => {
