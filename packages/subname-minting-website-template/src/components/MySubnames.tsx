@@ -12,6 +12,7 @@ import { generateAuthToken } from "@/api/siwe";
 import { useReferral } from "./ReferralContext";
 import { toast, ToastContainer } from "react-toastify";
 import QRCodeModal from "./QRCodeModal";
+import { createIndexerClient } from "@namespacesdk/indexer-manager";
 
 
 

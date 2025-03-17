@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-dark: #2a2c28;
+  --brand-orange: #ff7223;
+  --brand-yellow-btn: #ecff90;
+  --brand-yellow-bg: #f0ffa8;
+  --brand-blue-bg: #bdd7f6;
+  --brand-blue-btn: #7b92ef;
+  --brand-light: #f3f4e7;
+  --brand-pink: #f6cef8;
+}
+
+body {
+  background-color: var(--brand-light);
+  color: var(--brand-dark);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-seasons);
+}

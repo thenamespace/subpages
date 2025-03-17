@@ -8,6 +8,8 @@ import { useEffect, useState } from "react";
 import { Flex, Box } from "@chakra-ui/react";
 import { themeVariables } from "./styles/themeVariables";
 import { ReferralProvider } from "./components/ReferralContext";
+import { Squiggle } from "./components/Squiggle";
+import "./globals.css";
 
 function App() {
   const [view, setView] = useState("mint");
@@ -34,6 +36,7 @@ function App() {
           <Flex flex="1" width="100%" alignItems="center" justifyContent="center">
             {view === "mint" ? <MintForm /> : <MySubnames setView={setView} />}
           </Flex>
+          <Squiggle />
           <Footer />
         </Flex>
       </WalletConnector>
