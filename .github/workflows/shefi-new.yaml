@@ -31,6 +31,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
-          context: .
+          context: ./packages/shefi-new
+          file: ./packages/shefi-new/Dockerfile
           push: true
           tags: ${{secrets.CR_URL}}/shefi-new:latest
