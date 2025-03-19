@@ -9,6 +9,7 @@ import { MintForm } from '@/components/MainForm'
 import axios from 'axios'
 import { ProfileCard } from '@/components/ProfileCard'
 import { useEffect, useState } from 'react'
+import Head from 'next/head'
 
 export interface L2SubnamePagedResponse {
   items: L2SubnameResponse[];
@@ -59,7 +60,7 @@ export default function Home() {
 
 
   return (
-    <main>
+    <main className='overflow-x-hidden'>
       <section className="bg-gradient-radial">
         {/* Nav */}
         <nav className="flex items-center justify-between p-6 sm:p-8">
@@ -71,8 +72,7 @@ export default function Home() {
         {/* Hero */}
         <section className="mx-auto flex min-h-[75svh] max-w-3xl flex-col items-center justify-center px-6 py-24 text-center">
           <h1 className="text-4xl sm:text-6xl">
-            Web3 Profiles for <br />
-            SheFi Summit Attendees
+            SheFi Usernames
           </h1>
 
           <span className="mb-8 mt-3 text-lg sm:text-xl">
