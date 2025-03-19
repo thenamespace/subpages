@@ -13,7 +13,7 @@ import Head from "next/head";
 export const TechContainerBg = (props: PropsWithChildren) => {
   const { isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const [imageWidth, setImageWidth] = useState(500);
+  const [imageWidth, setImageWidth] = useState(200);
 
 
 
@@ -22,9 +22,9 @@ export const TechContainerBg = (props: PropsWithChildren) => {
       if (window.innerWidth > 2000) {
         setImageWidth(900);
       } else if (window.innerWidth > 1500) {
-        setImageWidth(500);
-      } else {
         setImageWidth(400);
+      } else {
+        setImageWidth(200);
       }
     };
 
