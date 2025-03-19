@@ -62,6 +62,17 @@ export default function RootLayout({
       lang="en"
       className={cn(seasonsFont.variable, cyGroteskFont.variable)}
     >
+      <head>
+        <meta property="og:title" content="SheFi + Namespace" />
+        <meta property="og:description" content="Mint your own shefi.eth subname!" />
+        <meta property="og:image" content="https://ipfs.io/ipfs/bafybeibdzhz7lwx6q6oxwrkiufrgncpuv4aeccsycytlnnycpkudt2is4a" />
+        <meta property="og:image:width" content="1500" />
+        <meta property="og:image:height" content="735" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="SheFi + Namespace" />
+        <meta name="twitter:description" content="Mint your own shefi.eth subname!" />
+        <meta name="twitter:image" content="https://ipfs.io/ipfs/bafybeibdzhz7lwx6q6oxwrkiufrgncpuv4aeccsycytlnnycpkudt2is4a" />
+      </head>
       <body>
         <WalletConnector>{children}</WalletConnector>
       </body>
