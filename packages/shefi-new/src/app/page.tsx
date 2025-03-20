@@ -37,26 +37,42 @@ export interface L2SubnameResponse {
 
 export default function Home() {
 
-  const [profiles, setProfiles] = useState<L2SubnamePagedResponse>();
+  const [profiles, setProfiles] = useState<L2SubnameResponse[]>([]);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
 
-  const getProfiles = async () => {
-    const profiles: L2SubnamePagedResponse = await axios
+  const getProfiles = async (page: number) => {
+    setLoading(true);
+    const response = await axios
       .get(
-        `https://staging.indexer.namespace.ninja/api/v1/subnames?network=base&parentName=shefi.eth&pageSize=50`,
+        `https://staging.indexer.namespace.ninja/api/v1/subnames?network=base&parentName=shefi.eth&pageSize=50&page=${page}`,
         {}
       )
-      .then((res) => res.data);
+      setProfiles((prevProfiles) => [...prevProfiles, ...response.data.items]);
+      setHasMore(response.data.items.length > 0);
+      setLoading(false);
     return profiles;
   };
 
 
   useEffect(() => {
-    getProfiles().then((profiles) => {
-      setProfiles(profiles);
-    });
-  }
-  , []);
+    getProfiles(page);
+  }, [page]);
+
+
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 2 && hasMore && !loading) {
+        setPage((prevPage) => prevPage + 1);
+      }
+    };
+  
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [loading, hasMore]);
 
 
   return (
@@ -95,7 +111,7 @@ export default function Home() {
 
         <div className="grid w-full max-w-4xl grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
           
-          {profiles?.items.map((profile) => (
+          {profiles.map((profile) => (
             <ProfileCard key={profile.name} profile={profile} />
           ))}
             
