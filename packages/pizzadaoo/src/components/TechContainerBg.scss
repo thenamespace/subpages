@@ -117,7 +117,33 @@ body {
             top: 100px;
             left: 50%;
             transform: translateX(-50%);
-            width: 65%;
+            width: 50%;
+            height: auto;
+        }
+    }
+}
+
+
+@media (max-width: 400px) {
+    .tech-container  {
+
+        background-size: cover;
+        background-position: center;
+
+        .nav-col {
+            display: flex;
+            justify-content: center;
+        }
+
+        .logo-col {
+            display: none;
+        }
+
+        .big-char {
+            position: absolute;
+            top: 100px;
+            transform: translateX(-50%);
+            width: 40%;
             height: auto;
         }
     }
