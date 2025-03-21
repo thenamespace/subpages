@@ -62,7 +62,17 @@
 
 @media (max-width: 600px) {
     .my-subnames-container {
-        width: 350px;
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        margin: 0 auto;
+        padding-bottom: 20px;
+
+        width: 90%;
+        max-width: 350px;
+        display: flex;
+        justify-content: center;
         .title {
             margin-top: 50px;
         }

@@ -169,7 +169,11 @@
 
 @media (max-width: 600px) {
     .mint-form {
-        padding: 15px;
+        position: fixed;
+        bottom: 30px;
+        left: 0;
+        right: 0;
+        padding-bottom: 20px;
         padding-top: 120px;
         .form-tech-container {
             width: 90%;
