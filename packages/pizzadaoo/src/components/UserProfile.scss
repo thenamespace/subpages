@@ -1,14 +1,21 @@
 .user-profile {
     width: 150px;
-    height: 45px;
+    height: 50px;
     border: 2px solid $yellow;
-    padding: 5px;
+    padding: 5px 10px;
     position: relative;
     border-radius: 50px;
     background-color: black;
     .avatar {
         border-radius: 100%;
         outline: 1px solid $yellow;
+    }
+
+    .avatar-template {
+        width: 30px;
+        height: 30px;
+        border-radius: 100%;
+        background-color: $yellow;
     }
 
     .dc {

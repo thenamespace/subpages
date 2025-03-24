@@ -74,16 +74,17 @@ export const UserProfile = () => {
       </div>
       <div className="user-profile">
         <div>
-          <div className="row">
-            <div className="col col-lg-3">
+          <div className="row g-0">
+            <div className="col col-xs-3 mt-1">
               {profile.avatar && (
                 <img className="avatar" width={30} src={profile.avatar}></img>
               )}
+              {!profile.avatar && <div className="avatar-template"></div>}
             </div>
-            <div className="col col-lg-9 d-flex flex-column justify-content-center">
+            <div className="col ps-1 col-lg-9 d-flex flex-column justify-content-center">
               <p
                 className="m-0 mb-1"
-                style={{ color: "white", lineHeight: "15px" }}
+                style={{ color: "white", lineHeight: "15px", fontSize:14 }}
               >
                 {profile.name || "Anonymous"}
               </p>

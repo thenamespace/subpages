@@ -4,7 +4,6 @@ import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { PropsWithChildren, useEffect, useState } from "react";
 import Link from "next/link";
-import opLogo from "../assets/chains/op.svg";
 import Image from "next/image";
 import pizzaLogo from "../assets/pizzadao-logo.png";
 import pizzaChar from "../assets/PizzaCharacter.png";
@@ -14,8 +13,6 @@ export const TechContainerBg = (props: PropsWithChildren) => {
   const { isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
   const [imageWidth, setImageWidth] = useState(200);
-
-
 
   useEffect(() => {
     const handleResize = () => {
@@ -46,7 +43,7 @@ export const TechContainerBg = (props: PropsWithChildren) => {
       </Head>
     <div
       className="tech-container">
-        <Image className="big-char" src={pizzaChar.src} height={imageWidth} width={imageWidth} alt="adsf"></Image>
+        {/* <Image className="big-char" src={pizzaChar.src} height={imageWidth} width={imageWidth} alt="adsf"></Image> */}
       <div className="top-nav">
         <div className="row">
           <div className="col-lg-6 col-sm-12 logo-col">

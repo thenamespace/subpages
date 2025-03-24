@@ -20,6 +20,7 @@ import { SideModal } from "./SideModal";
 import { normalise } from "@ensdomains/ensjs/utils";
 import pizzaChar from "../assets/PizzaCharacter.png";
 import { LISTED_NAME, LISTING_CHAIN_ID } from "./Listing";
+import Image from "next/image";
 
 const namespaceClient = createNamespaceClient({
   chainId: LISTING_CHAIN_ID,
@@ -240,6 +241,7 @@ export const MintForm = () => {
   return (
     <>
       <div className="mint-form d-flex flex-column justify-content-end p-4">
+        <Image src={pizzaChar} width={250} style={{marginBottom: -20, zIndex: 5}} alt="PizzaDao"></Image>
         <SideModal open={showCostModal} onClose={() => setShowCostModal(false)}>
           <div className="cost-modal">
             <p style={{ fontSize: 24 }} className="text-center">
