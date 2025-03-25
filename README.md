@@ -6,7 +6,7 @@ This repository is a Lerna monorepo containing a white-label template for creati
 
 ### [White-label Template](./packages/subname-minting-website-template)
 
-The white-label template is designed to quickly and easily create subname minting websites without the need for tech knowledge.
+The white-label template is designed to allow you to quickly and easily create subname minting websites without doing the heavy lifting - it has wallet connect, subname minting, and basic website structure already built out. Your job is only to customize it and make it pretty.
 
 ### [Examples](./packages)
 
