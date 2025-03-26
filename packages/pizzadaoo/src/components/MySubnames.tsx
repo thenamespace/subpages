@@ -1,4 +1,4 @@
-import axios, { all } from "axios";
+import axios, { all, AxiosResponse } from "axios";
 import { useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { Spinner } from "./Spinner";
@@ -8,21 +8,40 @@ import { SideModal } from "./SideModal";
 import { SingleSubname } from "./SingleSubname";
 import { Subname } from "./Models";
 import { useRouter } from "next/router";
-import { LISTED_NAME } from "./Listing";
+import { LISTED_NAMES } from "./Listing";
 
 const indexer = "https://indexer.namespace.tech/api/v1/nodes";
 
 const fetchSubnames = async (owner: string) => {
-  const { data } = await axios.get<{
-    items: Subname[];
-    totalItems: number;
-  }>(`${indexer}`, {
-    params: {
-      owner,
-      parentName: LISTED_NAME.fullName,
-    },
-  });
-  return data;
+
+  const promises: Promise<AxiosResponse<{items: Subname[], totalItems: number}>>[] = []
+  for (const name of LISTED_NAMES) {
+    const getPromise = axios.get<{
+      items: Subname[];
+      totalItems: number;
+    }>(`${indexer}`, {
+      params: {
+        owner,
+        parentName: name.fullName
+      },
+    });
+    promises.push(getPromise);
+  }
+
+  const results = await Promise.all(promises)
+
+  let totalItems = 0;
+  let subnames: Subname[] = []
+
+  results.forEach(res => {
+    totalItems+= res.data.totalItems
+    subnames = [...subnames, ...res.data.items]
+  })
+
+  return  {
+    totalItems,
+    subnames
+  }
 };
 
 export const MySubnames = () => {
@@ -49,12 +68,12 @@ export const MySubnames = () => {
       setTimeout(() => {
         setSubnames({
           fetching: false,
-          items: res.items,
+          items: res.subnames,
           totalItems: res.totalItems,
         });
         const _selectedSubname = router.query.selected;
         if (_selectedSubname && _selectedSubname.length) {
-          const currentSubname = res.items.find(sbnm => sbnm.name === _selectedSubname);
+          const currentSubname = res.subnames.find(sbnm => sbnm.name === _selectedSubname);
           if (currentSubname !== undefined) {
             setSelectedSubname(currentSubname)
           }
@@ -68,7 +87,7 @@ export const MySubnames = () => {
     fetchSubnames(address!!).then((res) => {
       setSubnames({
         fetching: false,
-        items: res.items,
+        items: res.subnames,
         totalItems: res.totalItems,
       });
     });

@@ -4,6 +4,13 @@
   align-items: center;
   padding: 15px;
   padding-top: 120px;
+
+  .pizza-mascot {
+    width: 250px;
+    height: 250px;
+    margin-bottom: -20px;
+    z-index: 5;
+  }
   
   .tech-input-container {
     position: relative;
@@ -60,6 +67,29 @@
       color: grey;
     }
   }
+
+  .select-name-cont {
+
+    .select-name-badge {
+      color: white;
+      padding: 10px;
+      font-size: 13px;
+      margin: 7px;
+      border-radius: 10px;
+      outline: 3px solid $yellow;
+      cursor: pointer;
+      transition: all 0.3s linear;
+
+      &:hover {
+        background-color: $red;
+      }
+
+      &.active {
+        background-color: $red;
+      }
+    }
+  }
+
   
   .form-container-square {
     width: 100%;
@@ -180,6 +210,26 @@
             }
         }
     }
+}
+
+@media (max-height: 700px) {
+  .mint-form {
+      .select-name-badge {
+        font-size: 11px !important;
+        padding: 8px !important;
+      }
+
+      .pizza-mascot {
+        width: 140px;
+        height: 140px;
+      }
+      .form-header {
+        .subtext {
+          font-size: 12px !important;
+          letter-spacing: 6px !important;
+        }
+      }
+  }
 }
 
 .cost-modal {
