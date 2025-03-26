@@ -1,5 +1,6 @@
 import {
   createNamespaceClient,
+  Listing,
   MintTransactionParameters,
 } from "namespace-sdk";
 import { PlainBtn } from "./TechBtn";
@@ -11,7 +12,7 @@ import {
   usePublicClient,
   useSignTypedData,
   useSwitchChain,
-  useWalletClient
+  useWalletClient,
 } from "wagmi";
 import { toast } from "react-toastify";
 import Link from "next/link";
@@ -19,15 +20,15 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { SideModal } from "./SideModal";
 import { normalise } from "@ensdomains/ensjs/utils";
 import pizzaChar from "../assets/PizzaCharacter.png";
-import { LISTED_NAME, LISTING_CHAIN_ID } from "./Listing";
+import { LISTED_NAMES, LISTING_CHAIN_ID } from "./Listing";
 import Image from "next/image";
 
 const namespaceClient = createNamespaceClient({
   chainId: LISTING_CHAIN_ID,
-  mintSource: "pizzadao.namespace.ninja",
+  mintSource: "pizzadao",
 });
 
-const defaultAvatar = "https://avatars.namespace.ninja/pizzadaoo.png"
+const defaultAvatar = "https://avatars.namespace.ninja/pizzadaoo.png";
 
 const ETH_COIN = 60;
 const OP_COIN = 2147492101;
@@ -45,15 +46,20 @@ export const MintForm = () => {
   const [showCostModal, setShowCostModal] = useState(false);
   const { data: walletClient } = useWalletClient({ chainId: LISTING_CHAIN_ID });
   const publicClient = usePublicClient({ chainId: LISTING_CHAIN_ID });
-  const { switchChain } = useSwitchChain();
+  const [selectedPizzaName, setSelectedPizza] = useState<Listing>(
+    LISTED_NAMES[0]
+  );
+  const { switchChainAsync } = useSwitchChain();
   const { address, chain } = useAccount();
   const { signTypedDataAsync } = useSignTypedData();
   const [indicator, setIndicator] = useState<{
     isChecking: boolean;
     isAvailable: boolean;
+    isError?: boolean
   }>({
     isChecking: false,
     isAvailable: false,
+    isError: false
   });
   const [mintState, setMintState] = useState<{
     waitingWallet: boolean;
@@ -64,7 +70,7 @@ export const MintForm = () => {
     waitingTx: false,
     waitingWallet: false,
   });
-  const [txHash, setTxHash] = useState()
+  const [txHash, setTxHash] = useState();
 
   const handleSearch = async (value: string) => {
     const _value = value.toLocaleLowerCase();
@@ -81,20 +87,30 @@ export const MintForm = () => {
     setSearchLabel(_value);
 
     if (_value.length > 0) {
-      setIndicator({ isAvailable: false, isChecking: true });
+      setIndicator({ isAvailable: false, isChecking: true, isError: false });
       debouncedCheckAvailable(_value);
     }
   };
 
   const checkAvailable = async (value: string) => {
-    const isAvailable = await namespaceClient.isSubnameAvailable(
-      LISTED_NAME,
-      value
-    );
-    setIndicator({
-      isChecking: false,
-      isAvailable: isAvailable,
-    });
+
+    try {
+      const isAvailable = await namespaceClient.isSubnameAvailable(
+        selectedPizzaName,
+        value
+      );
+      setIndicator({
+        isChecking: false,
+        isAvailable: isAvailable,
+      });
+    } catch(err : any) {
+      setIndicator({
+        isChecking: false,
+        isAvailable: true,
+        isError: true
+      });
+      toast(err.details || "Error while checking subname, is the name listed?", { className: "tech-toasty", type: "error" });
+    }
   };
 
   const handleMint = async () => {
@@ -107,38 +123,44 @@ export const MintForm = () => {
     let params: MintTransactionParameters;
     try {
       if (!chain || chain.id !== LISTING_CHAIN_ID) {
-        switchChain({ chainId: LISTING_CHAIN_ID });
+        await switchChainAsync({ chainId: LISTING_CHAIN_ID });
       }
 
+      const tokens = await namespaceClient.generateAuthToken(
+        address,
+        signTypedDataAsync,
+        "Verify your address"
+      );
 
-      const tokens = await namespaceClient.generateAuthToken(address, signTypedDataAsync, "Verify your address")
+      params = await namespaceClient.getMintTransactionParameters(
+        selectedPizzaName,
+        {
+          minterAddress: address,
+          subnameLabel: searchLabel,
+          expiryInYears: 1,
+          records: {
+            texts: [
+              {
+                key: "avatar",
+                value: defaultAvatar,
+              },
+            ],
+            addresses: [
+              {
+                address: address,
+                coinType: ETH_COIN,
+              },
+              {
+                address: address,
+                coinType: OP_COIN,
+              },
+            ],
+          },
+          subnameOwner: address,
+          token: tokens.accessToken,
+        }
+      );
 
-
-      params = await namespaceClient.getMintTransactionParameters(LISTED_NAME, {
-        minterAddress: address,
-        subnameLabel: searchLabel,
-        expiryInYears: 1,
-        records: {
-          texts: [
-            {
-              key: "avatar",
-              value: defaultAvatar,
-            },
-          ],
-          addresses: [
-            {
-              address: address,
-              coinType: ETH_COIN,
-            },
-            {
-              address: address,
-              coinType: OP_COIN,
-            },
-          ],
-        },
-        subnameOwner: address,
-        token: tokens.accessToken
-      });
     } catch (err: any) {
       setMintState({ ...mintState, waitingWallet: false });
       if (err.details && err.details.includes) {
@@ -174,7 +196,9 @@ export const MintForm = () => {
           errorMsg = "Listing has expired";
         } else if (err.toString().includes("SUBNAME_RESERVED")) {
           errorMsg = "Subname is reserved";
-        } else if (err.toString().includes("VERIFIED_MINTER_ADDRESS_REQUIRED")) {
+        } else if (
+          err.toString().includes("VERIFIED_MINTER_ADDRESS_REQUIRED")
+        ) {
           errorMsg = "Verification required";
         }
 
@@ -226,61 +250,57 @@ export const MintForm = () => {
 
   const debouncedCheckAvailable = useCallback(
     debounce((label: string) => checkAvailable(label), 300),
-    []
+    [selectedPizzaName]
   );
+
+  const handleSelectName = (listing: Listing) => {
+    setSearchLabel("");
+    setSelectedPizza(listing);
+  };
 
   const mintBtnDisabled =
     searchLabel.length === 0 ||
     indicator.isChecking ||
     !indicator.isAvailable ||
     mintState.waitingTx ||
-    mintState.waitingWallet;
+    mintState.waitingWallet || indicator.isError;
   const isTaken =
     searchLabel.length > 0 && !indicator.isChecking && !indicator.isAvailable;
 
   return (
     <>
       <div className="mint-form d-flex flex-column justify-content-end p-4">
-        <Image src={pizzaChar} width={250} style={{marginBottom: -20, zIndex: 5}} alt="PizzaDao"></Image>
-        <SideModal open={showCostModal} onClose={() => setShowCostModal(false)}>
-          <div className="cost-modal">
-            <p style={{ fontSize: 24 }} className="text-center">
-              Subname Cost
-            </p>
-            <div className="d-flex price justify-content-between align-items-center w-100">
-              <p>1 Characters</p>
-              <p>50$</p>
-            </div>
-            <div className="d-flex price justify-content-between align-items-center w-100">
-              <p>2 Characters</p>
-              <p>20$</p>
-            </div>
-            <div className="d-flex price justify-content-between align-items-center w-100">
-              <p>3 Characters</p>
-              <p>5$</p>
-            </div>
-            <div className="d-flex price justify-content-between align-items-center w-100">
-              <p>4+ Characters</p>
-              <p>Free</p>
-            </div>
-          </div>
-        </SideModal>
+        <Image
+          src={pizzaChar}
+          className="pizza-mascot"
+          alt="PizzaDao"
+        ></Image>
         <div className="form-tech-container">
           {mintStep === MintSteps.Start && (
             <>
-              <div className="form-header mb-3">
+              <div className="form-header mb-2">
                 <h1>PizzaDAO</h1>
                 <p className="subtext" style={{ color: "white" }}>
                   GET YOUR SUBNAME
                 </p>
+                <div className="select-name-cont d-flex flex-wrap justify-content-center">
+                  {LISTED_NAMES.map((name) => (
+                    <div
+                      onClick={() => handleSelectName(name)}
+                      className={`select-name-badge ${name.node === selectedPizzaName.node ? "active" : ""}`}
+                      key={name.node}
+                    >
+                      {name.fullName}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="d-flex flex-column align-items-center">
-              </div>
+              <div className="d-flex flex-column align-items-center"></div>
               <p className="text-center" style={{ fontSize: 18 }}>
                 <span style={{ fontSize: 18 }} className="input-name">
                   {searchLabel.length ? searchLabel : "{name}"}.
                 </span>
-                {LISTED_NAME.fullName}
+                {selectedPizzaName.fullName}
               </p>
               <div className="tech-input-container">
                 <input
@@ -311,12 +331,12 @@ export const MintForm = () => {
             </>
           )}
           {mintStep === MintSteps.PendingTx && (
-            <TransactionPending hash={mintState.txHash || txHash as any} />
+            <TransactionPending hash={mintState.txHash || (txHash as any)} />
           )}
           {mintStep === MintSteps.Success && (
             <SuccessScreen
               avatar={pizzaChar.src}
-              name={`${searchLabel}.${LISTED_NAME.fullName}`}
+              name={`${searchLabel}.${selectedPizzaName.fullName}`}
             />
           )}
         </div>
@@ -359,13 +379,15 @@ export const TransactionPending = ({ hash }: { hash: string }) => {
       <p className="mt-3 mb-0" style={{ fontSize: "22px" }}>
         Generating a subname
       </p>
-     {hash &&  <a
-        href={`https://basescan.org/tx/${hash}`}
-        target="_blank"
-        style={{ color: "rgb(255,255,255,0.8)", cursor: "pointer" }}
-      >
-        Transaction
-      </a>}
+      {hash && (
+        <a
+          href={`https://basescan.org/tx/${hash}`}
+          target="_blank"
+          style={{ color: "rgb(255,255,255,0.8)", cursor: "pointer" }}
+        >
+          Transaction
+        </a>
+      )}
     </div>
   );
 };
