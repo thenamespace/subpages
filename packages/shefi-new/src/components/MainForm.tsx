@@ -86,8 +86,6 @@ export const MintForm = () => {
 
   const publicClient = usePublicClient({ chainId: chainForPrimaryName });
   const { data: walletClient } = useWalletClient({ chainId: chainForPrimaryName });
-  
-
 
   const ETH_COIN = 60;
 
@@ -151,6 +149,12 @@ export const MintForm = () => {
     debounce((label) => check(label), 200),
     []
   );
+
+  const switchToBase = async () => {
+    if (chainId !== nameChainId) {
+      await switchChainAsync({ chainId: nameChainId });
+    }
+  }
 
 
   const handleMint = async () => {
@@ -270,7 +274,7 @@ export const MintForm = () => {
         const tx = await walletClient!!.writeContract(resp.request);
         setPrimaryNameIndicators({ btnLabel: "Processing...", waiting: true });
 
-        await publicClient?.waitForTransactionReceipt({ hash: tx, confirmations: 2 });
+        await publicClient?.waitForTransactionReceipt({ hash: tx, confirmations: 1 });
         setRegistrationStep(RegistrationStep.COMPLETE);
 
         toast.success("Primary name set successfully!");
@@ -297,7 +301,7 @@ export const MintForm = () => {
 
 
   return (
-    <form
+    <div
       className={'flex w-full max-w-80 flex-col gap-2'}
     >
         {registrationStep != RegistrationStep.COMPLETE && registrationStep != RegistrationStep.PRIMARY_NAME && (
@@ -309,11 +313,14 @@ export const MintForm = () => {
               onChange={(e) => handleUpdateLabel(e.target.value)}
             />
         
-            <Button type="submit"
+            <Button
               loading={indicators.checking}
               disabled={mintBtnDisabled}
               className={!indicators.available ? 'bg-red-400 hover:bg-red-500' : ''}
-              onClick={handleMint}
+              onClick={(e) => {
+                e.preventDefault()
+                handleMint()
+              }}
             >
               {buttonText}
             </Button>
@@ -322,7 +329,7 @@ export const MintForm = () => {
         {registrationStep === RegistrationStep.PRIMARY_NAME && (
           <>
             <h1 className="text-lg font-bold">You can set {label}.shefi.eth as your primary name!</h1>
-            <Button type="submit"
+            <Button
               disabled={primaryNameIndicators.waiting}
               loading={primaryNameIndicators.waiting}
               onClick={() => {
@@ -332,7 +339,7 @@ export const MintForm = () => {
             >
               {primaryNameIndicators.btnLabel}
             </Button>
-            <Button type="submit"
+            <Button
               onClick={() => {
                 setLabel("");
                 setRegistrationStep(RegistrationStep.START)}
@@ -345,7 +352,7 @@ export const MintForm = () => {
         {registrationStep === RegistrationStep.COMPLETE && (
           <>
             <h1 className="text-lg font-bold">You have successfully registred {label}.shefi.eth</h1>
-            <Button type="submit"
+            <Button
               onClick={() => {
                 setLabel("");
                 setRegistrationStep(RegistrationStep.START)}
@@ -355,7 +362,7 @@ export const MintForm = () => {
             </Button>
           </>
         )}
-    </form>
+    </div>
   );
 };
 
