@@ -127,9 +127,13 @@ export const MintForm = () => {
   };
 
   useEffect(() => {
-    if (!indicators.available) {
-      setButtonText(`Subname taken`);
-    } else {
+
+    if (indicators.checking && label.length > 0) {
+      setButtonText(`Checking...`);
+    } else if (!indicators.available) {
+      setButtonText("Subname Taken")
+    } 
+    else {
       setButtonText("Register");
     }
   }, [indicators]);
@@ -157,19 +161,6 @@ export const MintForm = () => {
 
     if (chainId !== nameChainId) {
       await switchChainAsync({ chainId: nameChainId });
-    }
-
-    let token;
-
-    try {
-      setMintIndicator({ btnLabel: "Waiting for wallet", waiting: true });
-      setButtonText("Registering...");
-      token = await generateAuthToken(address);
-    } catch (err) {
-      return;
-    } finally {
-      setMintIndicator({ btnLabel: "Register", waiting: false });
-      setButtonText("Register");
     }
 
     const addresses: AddressRecord[] = [
@@ -203,7 +194,6 @@ export const MintForm = () => {
           ],
         },
         subnameOwner: address,
-        token: token.accessToken,
       });
       const tx = await executeTx(params, address);
       setTxHash(tx);
@@ -261,7 +251,7 @@ export const MintForm = () => {
   const handlePrimaryName = async () => {
 
     if (chainId !== chainForPrimaryName) {
-      switchChainAsync({ chainId: chainForPrimaryName });
+      await switchChainAsync({ chainId: chainForPrimaryName });
     }
 
     try {
@@ -272,7 +262,7 @@ export const MintForm = () => {
         abi: reverseRegistarAbi,
         address: reverseRegistar,
         functionName: "setName",
-        args: [LISTEN_NAME.fullName],
+        args: [`${label}.${LISTEN_NAME.fullName}`],
         account: address!!,
       });
 
