@@ -13,6 +13,7 @@ import { getKnownAddress } from "./records/Addresses";
 import { AddressRecord } from "namespace-sdk/dist/clients";
 import { mainnet, sepolia } from "wagmi/chains";
 import toast from "react-hot-toast";
+import axios from "axios";
 
 
 
@@ -58,7 +59,6 @@ export const MintForm = () => {
   }, []);
   
   const nameChainId = 8453;
-  const avatarUrl = "https://ipfs.io/ipfs/bafkreiac2vzw6ky2mk4e27rkvb7n26xfsvhljgo3mxcbutkcamn2s3qene";
 
   const [mintIndicators, setMintIndicator] = useState<{
     waiting: boolean;
@@ -86,8 +86,6 @@ export const MintForm = () => {
 
   const publicClient = usePublicClient({ chainId: chainForPrimaryName });
   const { data: walletClient } = useWalletClient({ chainId: chainForPrimaryName });
-  
-
 
   const ETH_COIN = 60;
 
@@ -127,9 +125,13 @@ export const MintForm = () => {
   };
 
   useEffect(() => {
-    if (!indicators.available) {
-      setButtonText(`Subname taken`);
-    } else {
+
+    if (indicators.checking && label.length > 0) {
+      setButtonText(`Checking...`);
+    } else if (!indicators.available) {
+      setButtonText("Subname Taken")
+    } 
+    else {
       setButtonText("Register");
     }
   }, [indicators]);
@@ -159,68 +161,28 @@ export const MintForm = () => {
       await switchChainAsync({ chainId: nameChainId });
     }
 
-    let token;
-
     try {
       setMintIndicator({ btnLabel: "Waiting for wallet", waiting: true });
       setButtonText("Registering...");
-      token = await generateAuthToken(address);
-    } catch (err) {
-      return;
-    } finally {
-      setMintIndicator({ btnLabel: "Register", waiting: false });
-      setButtonText("Register");
-    }
 
-    const addresses: AddressRecord[] = [
-      {
-      address: address,
-      coinType: ETH_COIN,
-      },
-    ];
+      const { data } = await axios.post<{tx: Hash}>("/api/mint", {
+        owner: address,
+        label: label,
+      })
 
-    if (L2_COIN !== null) {
-      addresses.push({
-        address: address,
-        coinType: L2_COIN,
-      });
-    }
-
-    try {
-      setMintIndicator({ btnLabel: "Waiting for wallet", waiting: true });
-      setButtonText("Registering...");
-      const params = await mintParameters({
-        minterAddress: address,
-        subnameLabel: label,
-        expiryInYears: 1,
-        records: {
-          addresses: addresses,
-          texts: [
-            {
-              key: "avatar",
-              value: avatarUrl,
-            },
-          ],
-        },
-        subnameOwner: address,
-        token: token.accessToken,
-      });
-      const tx = await executeTx(params, address);
-      setTxHash(tx);
+      setTxHash(data.tx);
       setRegistrationStep(RegistrationStep.TX_SENT);
       setMintIndicator({ btnLabel: "Registering...", waiting: true });
-      await waitForTx(tx);
-
-
+      await waitForTx(data.tx);
       setRegistrationStep(RegistrationStep.PRIMARY_NAME);
     } catch (err: any) {
       console.error(err);
-      if (err?.cause?.details?.includes("User denied transaction signatur")) {
+      if (err?.cause?.details?.includes("User denied transaction signature")) {
         return;
       } else if (err?.cause?.details?.includes("insufficient funds for")) {
         setMintError(`Insufficient balance`);
       } else {
-        parseError(err?.message || "");
+        parseError(err?.message || "Unknown error ocurred");
       }
     } finally {
       setMintIndicator({ btnLabel: "Register", waiting: false });
@@ -261,7 +223,7 @@ export const MintForm = () => {
   const handlePrimaryName = async () => {
 
     if (chainId !== chainForPrimaryName) {
-      switchChainAsync({ chainId: chainForPrimaryName });
+      await switchChainAsync({ chainId: chainForPrimaryName });
     }
 
     try {
@@ -272,7 +234,7 @@ export const MintForm = () => {
         abi: reverseRegistarAbi,
         address: reverseRegistar,
         functionName: "setName",
-        args: [LISTEN_NAME.fullName],
+        args: [`${label}.${LISTEN_NAME.fullName}`],
         account: address!!,
       });
 
@@ -280,7 +242,7 @@ export const MintForm = () => {
         const tx = await walletClient!!.writeContract(resp.request);
         setPrimaryNameIndicators({ btnLabel: "Processing...", waiting: true });
 
-        await publicClient?.waitForTransactionReceipt({ hash: tx, confirmations: 2 });
+        await publicClient?.waitForTransactionReceipt({ hash: tx, confirmations: 1 });
         setRegistrationStep(RegistrationStep.COMPLETE);
 
         toast.success("Primary name set successfully!");
@@ -307,7 +269,7 @@ export const MintForm = () => {
 
 
   return (
-    <form
+    <div
       className={'flex w-full max-w-80 flex-col gap-2'}
     >
         {registrationStep != RegistrationStep.COMPLETE && registrationStep != RegistrationStep.PRIMARY_NAME && (
@@ -319,11 +281,14 @@ export const MintForm = () => {
               onChange={(e) => handleUpdateLabel(e.target.value)}
             />
         
-            <Button type="submit"
+            <Button
               loading={indicators.checking}
               disabled={mintBtnDisabled}
               className={!indicators.available ? 'bg-red-400 hover:bg-red-500' : ''}
-              onClick={handleMint}
+              onClick={(e) => {
+                e.preventDefault()
+                handleMint()
+              }}
             >
               {buttonText}
             </Button>
@@ -332,7 +297,7 @@ export const MintForm = () => {
         {registrationStep === RegistrationStep.PRIMARY_NAME && (
           <>
             <h1 className="text-lg font-bold">You can set {label}.shefi.eth as your primary name!</h1>
-            <Button type="submit"
+            <Button
               disabled={primaryNameIndicators.waiting}
               loading={primaryNameIndicators.waiting}
               onClick={() => {
@@ -342,7 +307,7 @@ export const MintForm = () => {
             >
               {primaryNameIndicators.btnLabel}
             </Button>
-            <Button type="submit"
+            <Button
               onClick={() => {
                 setLabel("");
                 setRegistrationStep(RegistrationStep.START)}
@@ -355,7 +320,7 @@ export const MintForm = () => {
         {registrationStep === RegistrationStep.COMPLETE && (
           <>
             <h1 className="text-lg font-bold">You have successfully registred {label}.shefi.eth</h1>
-            <Button type="submit"
+            <Button
               onClick={() => {
                 setLabel("");
                 setRegistrationStep(RegistrationStep.START)}
@@ -365,7 +330,7 @@ export const MintForm = () => {
             </Button>
           </>
         )}
-    </form>
+    </div>
   );
 };
 
