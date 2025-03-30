@@ -52,7 +52,7 @@ export const MintForm = () => {
     btnLabel: string;
   }>({ waiting: false, btnLabel: "Register" });
   const [registrationStep, setRegistrationStep] = useState(
-    RegistrationStep.START
+    RegistrationStep.COMPLETE
   );
 
 
@@ -377,6 +377,17 @@ export const MintForm = () => {
                   <Text color="white" fontSize={30} textAlign="center">
                     <Box as="span" color={themeVariables.accent}>{label}</Box>
                     .{LISTEN_NAME.fullName}
+                  </Text>
+                </Link>
+                <Link
+                  href={`https://x.com/intent/tweet?text=I just minted ${label}.${LISTEN_NAME.fullName}! Hop on https://stayson.namespace.ninja/ to mint your own subname!`}
+                  target="_blank" rel="noopener noreferrer"
+                  mb={2}
+                  textDecoration="none"
+                  _hover={{ textDecoration: "underline", textDecorationColor: themeVariables.accent }}
+                >
+                  <Text color="white" fontSize={30} textAlign="center">
+                    Share on X
                   </Text>
                 </Link>
                 <Button

@@ -542,6 +542,17 @@ export const MintForm = () => {
                     .{LISTEN_NAME.fullName}
                   </Text>
                 </Link>
+                <Link
+                  href={`https://x.com/intent/tweet?text=I just minted ${label}.${LISTEN_NAME.fullName} via @namespace_eth!`}
+                  target="_blank" rel="noopener noreferrer"
+                  mb={2}
+                  textDecoration="none"
+                  _hover={{ textDecoration: "underline", textDecorationColor: themeVariables.accent }}
+                >
+                  <Text color="white" fontSize={30} textAlign="center">
+                    Share on X
+                  </Text>
+                </Link>
                 <Button
                   onClick={() => {
                     setLabel("");
