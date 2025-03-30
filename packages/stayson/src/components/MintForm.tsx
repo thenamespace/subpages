@@ -52,7 +52,7 @@ export const MintForm = () => {
     btnLabel: string;
   }>({ waiting: false, btnLabel: "Register" });
   const [registrationStep, setRegistrationStep] = useState(
-    RegistrationStep.COMPLETE
+    RegistrationStep.START
   );
 
 
