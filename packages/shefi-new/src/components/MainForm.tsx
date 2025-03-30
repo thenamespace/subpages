@@ -13,6 +13,7 @@ import { getKnownAddress } from "./records/Addresses";
 import { AddressRecord } from "namespace-sdk/dist/clients";
 import { mainnet, sepolia } from "wagmi/chains";
 import toast from "react-hot-toast";
+import axios from "axios";
 
 
 
@@ -58,7 +59,6 @@ export const MintForm = () => {
   }, []);
   
   const nameChainId = 8453;
-  const avatarUrl = "https://ipfs.io/ipfs/bafkreiac2vzw6ky2mk4e27rkvb7n26xfsvhljgo3mxcbutkcamn2s3qene";
 
   const [mintIndicators, setMintIndicator] = useState<{
     waiting: boolean;
@@ -150,12 +150,6 @@ export const MintForm = () => {
     []
   );
 
-  const switchToBase = async () => {
-    if (chainId !== nameChainId) {
-      await switchChainAsync({ chainId: nameChainId });
-    }
-  }
-
 
   const handleMint = async () => {
     if (!address) {
@@ -167,54 +161,28 @@ export const MintForm = () => {
       await switchChainAsync({ chainId: nameChainId });
     }
 
-    const addresses: AddressRecord[] = [
-      {
-      address: address,
-      coinType: ETH_COIN,
-      },
-    ];
-
-    if (L2_COIN !== null) {
-      addresses.push({
-        address: address,
-        coinType: L2_COIN,
-      });
-    }
-
     try {
       setMintIndicator({ btnLabel: "Waiting for wallet", waiting: true });
       setButtonText("Registering...");
-      const params = await mintParameters({
-        minterAddress: address,
-        subnameLabel: label,
-        expiryInYears: 1,
-        records: {
-          addresses: addresses,
-          texts: [
-            {
-              key: "avatar",
-              value: avatarUrl,
-            },
-          ],
-        },
-        subnameOwner: address,
-      });
-      const tx = await executeTx(params, address);
-      setTxHash(tx);
+
+      const { data } = await axios.post<{tx: Hash}>("/api/mint", {
+        owner: address,
+        label: label,
+      })
+
+      setTxHash(data.tx);
       setRegistrationStep(RegistrationStep.TX_SENT);
       setMintIndicator({ btnLabel: "Registering...", waiting: true });
-      await waitForTx(tx);
-
-
+      await waitForTx(data.tx);
       setRegistrationStep(RegistrationStep.PRIMARY_NAME);
     } catch (err: any) {
       console.error(err);
-      if (err?.cause?.details?.includes("User denied transaction signatur")) {
+      if (err?.cause?.details?.includes("User denied transaction signature")) {
         return;
       } else if (err?.cause?.details?.includes("insufficient funds for")) {
         setMintError(`Insufficient balance`);
       } else {
-        parseError(err?.message || "");
+        parseError(err?.message || "Unknown error ocurred");
       }
     } finally {
       setMintIndicator({ btnLabel: "Register", waiting: false });
