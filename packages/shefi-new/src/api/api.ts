@@ -2,6 +2,11 @@
 
 import axios from "axios";
 
+export interface WhitelistResponse {
+  whitelist: string[]
+  whitelistType: number
+}
+
 export const addReferral = async (code: string, subname: string) => {
   return await axios
     .post(`https://api.namespace.tech/api/v1/referral/add-referral`, {
@@ -33,3 +38,12 @@ export const isRenting = async (network: string, namehash: string) => {
     )
     .then((res) => res.data);
 };
+
+export const getWhitelist = async(network: string, namehash: string): Promise<WhitelistResponse> => {
+  return await axios
+  .get<WhitelistResponse>(
+    `https://api.namespace.tech/api/v1/listings/single?network=${network}&namehash=${namehash}`,
+    {}
+  )
+  .then((res) => res.data);
+}

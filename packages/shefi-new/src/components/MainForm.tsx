@@ -1,19 +1,25 @@
-'use client'
+"use client";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "./Button";
 import { Input } from "./Input";
 import { normalize } from "viem/ens";
-import { useAccount, usePublicClient, useSwitchChain, useWalletClient } from "wagmi";
+import {
+  useAccount,
+  usePublicClient,
+  useSwitchChain,
+  useWalletClient,
+} from "wagmi";
 import { LISTEN_NAME, useNamepsaceClient } from "./useNamespaceClient";
 import { debounce, set } from "lodash";
 import { Spinner } from "./Spinner";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { Address, Hash, parseAbi } from "viem";
+import { Address, Hash, namehash, parseAbi } from "viem";
 import { getKnownAddress } from "./records/Addresses";
 import { AddressRecord } from "namespace-sdk/dist/clients";
 import { mainnet, sepolia } from "wagmi/chains";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { getWhitelist } from "@/api/api";
 
 
 
@@ -23,7 +29,6 @@ enum RegistrationStep {
   PRIMARY_NAME = 2,
   COMPLETE = 3,
 }
-
 
 export const MintForm = () => {
   const [label, setLabel] = useState("");
@@ -53,11 +58,56 @@ export const MintForm = () => {
   const [registrationStep, setRegistrationStep] = useState(
     RegistrationStep.START
   );
+  const [whitelistConfig, setWhitelistConfig] = useState<{
+    featureEnabled: boolean;
+    isWhitelisted: boolean;
+    isChecking: boolean;
+  }>({
+    featureEnabled: false,
+    isWhitelisted: true,
+    isChecking: true,
+  });
+
+  useEffect(() => {
+
+    if (!address) {
+      return;
+    }
+
+    getWhitelist("mainnet", namehash(LISTEN_NAME.fullName))
+      .then((res) => {
+        let isWhitelisted = true;
+        let featureEnabled =
+          res.whitelistType !== undefined && res.whitelistType !== 0;
+
+        if (featureEnabled) {
+          const whitelisted = res.whitelist || [];
+          isWhitelisted =
+            whitelisted.find(
+              (i) => i.toLocaleLowerCase() === address!.toLocaleLowerCase()
+            ) !== undefined;
+        }
+
+        setWhitelistConfig({
+          featureEnabled: featureEnabled,
+          isChecking: false,
+          isWhitelisted: isWhitelisted,
+        });
+      })
+      .catch((err) => {
+        console.error(err)
+        setWhitelistConfig({
+          featureEnabled: false,
+          isChecking: false,
+          isWhitelisted: true,
+        });
+      });
+  }, [address]);
 
   useEffect(() => {
     setRegistrationStep(RegistrationStep.START);
   }, []);
-  
+
   const nameChainId = 8453;
 
   const [mintIndicators, setMintIndicator] = useState<{
@@ -65,27 +115,23 @@ export const MintForm = () => {
     btnLabel: string;
   }>({ waiting: false, btnLabel: "Register" });
 
-
   let reverseRegistarAbi;
   let reverseRegistar;
   let chainForPrimaryName;
   if (LISTEN_NAME.network === "mainnet") {
     reverseRegistar = "0xa58E81fe9b61B5c3fE2AFD33CF304c454AbFc7Cb" as Address;
-    reverseRegistarAbi = parseAbi([
-      "function setName(string name)"
-    ]);
+    reverseRegistarAbi = parseAbi(["function setName(string name)"]);
     chainForPrimaryName = mainnet.id;
   } else {
     reverseRegistar = "0xCF75B92126B02C9811d8c632144288a3eb84afC8" as Address;
-    reverseRegistarAbi = parseAbi([
-      "function setName(string _name)"
-    ]);
+    reverseRegistarAbi = parseAbi(["function setName(string _name)"]);
     chainForPrimaryName = sepolia.id;
   }
 
-
   const publicClient = usePublicClient({ chainId: chainForPrimaryName });
-  const { data: walletClient } = useWalletClient({ chainId: chainForPrimaryName });
+  const { data: walletClient } = useWalletClient({
+    chainId: chainForPrimaryName,
+  });
 
   const ETH_COIN = 60;
 
@@ -97,12 +143,10 @@ export const MintForm = () => {
     L2_COIN = l2Address.coinType;
   }
 
-
   const [primaryNameIndicators, setPrimaryNameIndicators] = useState<{
     waiting: boolean;
     btnLabel: string;
   }>({ waiting: false, btnLabel: "Set primary name!" });
-
 
   const handleUpdateLabel = (value: string) => {
     const _value = value.toLocaleLowerCase();
@@ -125,17 +169,14 @@ export const MintForm = () => {
   };
 
   useEffect(() => {
-
     if (indicators.checking && label.length > 0) {
       setButtonText(`Checking...`);
     } else if (!indicators.available) {
-      setButtonText("Subname Taken")
-    } 
-    else {
+      setButtonText("Subname Taken");
+    } else {
       setButtonText("Register");
     }
   }, [indicators]);
-
 
   const check = async (label: string) => {
     const subnameAvailable = await checkAvailable(label);
@@ -217,18 +258,16 @@ export const MintForm = () => {
     !indicators.available ||
     mintIndicators.waiting;
 
-
-  
-
   const handlePrimaryName = async () => {
-
     if (chainId !== chainForPrimaryName) {
       await switchChainAsync({ chainId: chainForPrimaryName });
     }
 
     try {
-
-      setPrimaryNameIndicators({ btnLabel: "Waiting for wallet", waiting: true });
+      setPrimaryNameIndicators({
+        btnLabel: "Waiting for wallet",
+        waiting: true,
+      });
 
       const resp = await publicClient!!.simulateContract({
         abi: reverseRegistarAbi,
@@ -242,17 +281,18 @@ export const MintForm = () => {
         const tx = await walletClient!!.writeContract(resp.request);
         setPrimaryNameIndicators({ btnLabel: "Processing...", waiting: true });
 
-        await publicClient?.waitForTransactionReceipt({ hash: tx, confirmations: 1 });
+        await publicClient?.waitForTransactionReceipt({
+          hash: tx,
+          confirmations: 1,
+        });
         setRegistrationStep(RegistrationStep.COMPLETE);
 
         toast.success("Primary name set successfully!");
-
       } catch (err: any) {
         if (err.details) {
           toast.error(err.details);
         }
       }
-
     } catch (err: any) {
       if (err.details) {
         toast.error(err.details);
@@ -263,16 +303,19 @@ export const MintForm = () => {
         toast.error("Unknown error occurred :(");
       }
     } finally {
-      setPrimaryNameIndicators({ btnLabel: "Set primary name!", waiting: false });
-    };
+      setPrimaryNameIndicators({
+        btnLabel: "Set primary name!",
+        waiting: false,
+      });
+    }
   };
 
+  const showNotWhitelistedBtn = !whitelistConfig.isChecking && (whitelistConfig.featureEnabled && !whitelistConfig.isWhitelisted);
 
   return (
-    <div
-      className={'flex w-full max-w-80 flex-col gap-2'}
-    >
-        {registrationStep != RegistrationStep.COMPLETE && registrationStep != RegistrationStep.PRIMARY_NAME && (
+    <div className={"flex w-full max-w-80 flex-col gap-2"}>
+      {registrationStep != RegistrationStep.COMPLETE &&
+        registrationStep != RegistrationStep.PRIMARY_NAME && (
           <>
             <Input
               name="name"
@@ -280,57 +323,69 @@ export const MintForm = () => {
               suffix={`.shefi.eth`}
               onChange={(e) => handleUpdateLabel(e.target.value)}
             />
-        
-            <Button
+
+           {!showNotWhitelistedBtn && <Button
               loading={indicators.checking}
               disabled={mintBtnDisabled}
-              className={!indicators.available ? 'bg-red-400 hover:bg-red-500' : ''}
+              className={
+                `${!indicators.available ? "bg-red-400 hover:bg-red-500" : ""} disabled:bg-gray-300`
+              }
               onClick={(e) => {
-                e.preventDefault()
-                handleMint()
+                e.preventDefault();
+                handleMint();
               }}
             >
               {buttonText}
-            </Button>
-          </>
-        )}
-        {registrationStep === RegistrationStep.PRIMARY_NAME && (
-          <>
-            <h1 className="text-lg font-bold">You can set {label}.shefi.eth as your primary name!</h1>
-            <Button
-              disabled={primaryNameIndicators.waiting}
-              loading={primaryNameIndicators.waiting}
-              onClick={() => {
-                handlePrimaryName();
-              }
+            </Button>}
+            {showNotWhitelistedBtn && <Button
+              disabled={true}
+              className={
+                `disabled:bg-gray-300`
               }
             >
-              {primaryNameIndicators.btnLabel}
-            </Button>
-            <Button
-              onClick={() => {
-                setLabel("");
-                setRegistrationStep(RegistrationStep.START)}
-              }
-            >
-              Skip
-            </Button>
+              Not whitelisted
+            </Button>}
           </>
         )}
-        {registrationStep === RegistrationStep.COMPLETE && (
-          <>
-            <h1 className="text-lg font-bold">You have successfully registred {label}.shefi.eth</h1>
-            <Button
-              onClick={() => {
-                setLabel("");
-                setRegistrationStep(RegistrationStep.START)}
-              }
-            >
-              Done!
-            </Button>
-          </>
-        )}
+      {registrationStep === RegistrationStep.PRIMARY_NAME && (
+        <>
+          <h1 className="text-lg font-bold">
+            You can set {label}.shefi.eth as your primary name!
+          </h1>
+          <Button
+            disabled={primaryNameIndicators.waiting}
+            loading={primaryNameIndicators.waiting}
+            onClick={() => {
+              handlePrimaryName();
+            }}
+          >
+            {primaryNameIndicators.btnLabel}
+          </Button>
+          <Button
+            onClick={() => {
+              setLabel("");
+              setRegistrationStep(RegistrationStep.START);
+            }}
+          >
+            Skip
+          </Button>
+        </>
+      )}
+      {registrationStep === RegistrationStep.COMPLETE && (
+        <>
+          <h1 className="text-lg font-bold">
+            You have successfully registred {label}.shefi.eth
+          </h1>
+          <Button
+            onClick={() => {
+              setLabel("");
+              setRegistrationStep(RegistrationStep.START);
+            }}
+          >
+            Done!
+          </Button>
+        </>
+      )}
     </div>
   );
 };
-
