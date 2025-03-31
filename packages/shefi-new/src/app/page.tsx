@@ -109,9 +109,9 @@ export default function Home() {
         <h2 className="text-2xl sm:text-4xl">Connect with each other</h2>
 
         <div className="grid w-full max-w-4xl grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
-          {profiles.map((profile) => (
-            <Link href={`https://app.ens.domains/${profile.name}`} key={profile.name} target="_blank" style={{cursor: "pointer"}}>
-              <ProfileCard key={profile.name} profile={profile} />
+          {profiles.map((profile, index) => (
+            <Link href={`https://app.ens.domains/${profile.name}`} key={`${profile.name}-${index}`} target="_blank" style={{cursor: "pointer"}}>
+              <ProfileCard profile={profile} />
             </Link>
           ))}
         </div>
