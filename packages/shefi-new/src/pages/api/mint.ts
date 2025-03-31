@@ -11,6 +11,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
 import { createNamespaceClient, Listing } from "namespace-sdk";
 import { AxiosError } from "axios";
+import { getWhitelist } from "@/api/api";
 
 
 const ETH_COIN = 60;
@@ -50,7 +51,24 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
+
     const body = req.body as { owner: Address; label: string };
+    
+    try {
+      const whitelist = await getWhitelist("mainnet", "shefi.eth")
+      if (whitelist?.whitelistType !== 0) {
+        const minter = body.owner
+        const isWhitelisted = (whitelist.whitelist || []).find(i => i.toLocaleLowerCase() === minter.toLocaleLowerCase())
+
+        if (!isWhitelisted) {
+          res.status(400).json({mesasge: "Not Whitelisted"})
+          return
+        }
+      }
+    } catch(err) {
+
+    }
+    
     const parameters = await namespaceClient.getMintTransactionParameters(LISTING, {
         minterAddress: wallet.address,
         subnameLabel: body.label,

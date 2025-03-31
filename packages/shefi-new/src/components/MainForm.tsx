@@ -88,19 +88,19 @@ export const MintForm = () => {
             ) !== undefined;
         }
 
-        // setWhitelistConfig({
-        //   featureEnabled: featureEnabled,
-        //   isChecking: false,
-        //   isWhitelisted: isWhitelisted,
-        // });
-            setWhitelistConfig({
-          featureEnabled: true,
+        setWhitelistConfig({
+          featureEnabled: featureEnabled,
           isChecking: false,
-          isWhitelisted: false,
+          isWhitelisted: isWhitelisted,
         });
       })
       .catch((err) => {
-        console.log(err, "ERROR!");
+        console.error(err)
+        setWhitelistConfig({
+          featureEnabled: false,
+          isChecking: false,
+          isWhitelisted: true,
+        });
       });
   }, [address]);
 
@@ -256,9 +256,7 @@ export const MintForm = () => {
     noLabel ||
     indicators.checking ||
     !indicators.available ||
-    mintIndicators.waiting ||
-    whitelistConfig.isChecking ||
-    (whitelistConfig.featureEnabled && !whitelistConfig.isWhitelisted);
+    mintIndicators.waiting;
 
   const handlePrimaryName = async () => {
     if (chainId !== chainForPrimaryName) {
@@ -312,6 +310,7 @@ export const MintForm = () => {
     }
   };
 
+  const showNotWhitelistedBtn = !whitelistConfig.isChecking && (whitelistConfig.featureEnabled && !whitelistConfig.isWhitelisted);
 
   return (
     <div className={"flex w-full max-w-80 flex-col gap-2"}>
@@ -325,11 +324,11 @@ export const MintForm = () => {
               onChange={(e) => handleUpdateLabel(e.target.value)}
             />
 
-            <Button
+           {!showNotWhitelistedBtn && <Button
               loading={indicators.checking}
               disabled={mintBtnDisabled}
               className={
-                !indicators.available ? "bg-red-400 hover:bg-red-500" : ""
+                `${!indicators.available ? "bg-red-400 hover:bg-red-500" : ""} disabled:bg-gray-300`
               }
               onClick={(e) => {
                 e.preventDefault();
@@ -337,7 +336,15 @@ export const MintForm = () => {
               }}
             >
               {buttonText}
-            </Button>
+            </Button>}
+            {showNotWhitelistedBtn && <Button
+              disabled={true}
+              className={
+                `disabled:bg-gray-300`
+              }
+            >
+              Not whitelisted
+            </Button>}
           </>
         )}
       {registrationStep === RegistrationStep.PRIMARY_NAME && (
