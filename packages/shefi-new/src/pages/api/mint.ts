@@ -100,9 +100,8 @@ export default async function handler(
     })
     res.status(200).json({ tx: tx });
   } catch (err: any) {
-
+    console.error(err)
     if (err instanceof AxiosError) {
-
         const axiosErr = err as AxiosError;
         res.status(500).json(axiosErr)
 
