@@ -198,10 +198,6 @@ export const MintForm = () => {
       return;
     }
 
-    if (chainId !== nameChainId) {
-      await switchChainAsync({ chainId: nameChainId });
-    }
-
     try {
       setMintIndicator({ btnLabel: "Waiting for wallet", waiting: true });
       setButtonText("Registering...");

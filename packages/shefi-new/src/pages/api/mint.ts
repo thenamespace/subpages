@@ -13,7 +13,6 @@ import { createNamespaceClient, Listing } from "namespace-sdk";
 import { AxiosError } from "axios";
 import { getWhitelist } from "@/api/api";
 
-
 const ETH_COIN = 60;
 const BASE_COIN = 2147492101;
 
@@ -26,8 +25,8 @@ const LISTING: Listing = {
   registryNetwork: "base",
 };
 
-
-const SHEFI_AVATAR = "https://ipfs.io/ipfs/bafkreiac2vzw6ky2mk4e27rkvb7n26xfsvhljgo3mxcbutkcamn2s3qene";
+const SHEFI_AVATAR =
+  "https://ipfs.io/ipfs/bafkreiac2vzw6ky2mk4e27rkvb7n26xfsvhljgo3mxcbutkcamn2s3qene";
 const wallet_key = process.env.WALLET_KEY as Hash;
 const alchemy_key = process.env.ALCHEMY_KEY;
 const base_rpc = `https://base-mainnet.g.alchemy.com/v2/${alchemy_key}`;
@@ -35,10 +34,10 @@ const base_rpc = `https://base-mainnet.g.alchemy.com/v2/${alchemy_key}`;
 const wallet = privateKeyToAccount(wallet_key);
 
 const namespaceClient = createNamespaceClient({
-    chainId: base.id,
-    customTransport: http(base_rpc),
-    mintSource: "shefi",
-  });
+  chainId: base.id,
+  customTransport: http(base_rpc),
+  mintSource: "shefi",
+});
 
 const walletClient = createWalletClient({
   transport: http(base_rpc),
@@ -51,63 +50,72 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-
     const body = req.body as { owner: Address; label: string };
-    
+
     try {
-      const whitelist = await getWhitelist("mainnet", "shefi.eth")
+      const whitelist = await getWhitelist("mainnet", "shefi.eth");
       if (whitelist?.whitelistType !== 0) {
-        const minter = body.owner
-        const isWhitelisted = (whitelist.whitelist || []).find(i => i.toLocaleLowerCase() === minter.toLocaleLowerCase())
+        const minter = body.owner;
+        const isWhitelisted = (whitelist.whitelist || []).find(
+          (i) => i.toLocaleLowerCase() === minter.toLocaleLowerCase()
+        );
 
         if (!isWhitelisted) {
-          res.status(400).json({mesasge: "Not Whitelisted"})
-          return
+          res.status(400).json({ mesasge: "Not Whitelisted" });
+          return;
         }
       }
-    } catch(err) {
+    } catch (err) {}
 
-    }
-    
-    const parameters = await namespaceClient.getMintTransactionParameters(LISTING, {
+    const parameters = await namespaceClient.getMintTransactionParameters(
+      LISTING,
+      {
         minterAddress: wallet.address,
         subnameLabel: body.label,
         records: {
-            addresses: [
-                {
-                    address: body.owner,
-                    coinType: ETH_COIN
-                },
-                {
-                    address: body.owner,
-                    coinType: BASE_COIN
-                }
-            ],
-            texts: [{
-                key: "avatar",
-                value: SHEFI_AVATAR
-            }]
+          addresses: [
+            {
+              address: body.owner,
+              coinType: ETH_COIN,
+            },
+            {
+              address: body.owner,
+              coinType: BASE_COIN,
+            },
+          ],
+          texts: [
+            {
+              key: "avatar",
+              value: SHEFI_AVATAR,
+            },
+          ],
         },
-        subnameOwner: body.owner
-    })
+        subnameOwner: body.owner,
+      }
+    );
 
     const tx = await walletClient.writeContract({
-        abi: parameters.abi,
-        address: parameters.contractAddress,
-        functionName: parameters.functionName,
-        args: parameters.args,
-        value: parameters.value
-    })
+      abi: parameters.abi,
+      address: parameters.contractAddress,
+      functionName: parameters.functionName,
+      args: parameters.args,
+      value: parameters.value,
+    });
     res.status(200).json({ tx: tx });
   } catch (err: any) {
-    console.error(err)
+    console.error(err);
     if (err instanceof AxiosError) {
-        const axiosErr = err as AxiosError;
-        res.status(500).json(axiosErr)
-
+      const axiosErr = err as AxiosError;
+      res.status(500).json(axiosErr);
     } else if (err instanceof ContractFunctionExecutionError) {
       const contractErr = err as ContractFunctionExecutionError;
-      res.status(500).json({ error: JSON.stringify(contractErr.cause) });
+      res
+        .status(500)
+        .json({
+          error: JSON.stringify(contractErr.cause || contractErr.details),
+        });
+    } else {
+      res.status(500).json("Unknown error");
     }
   }
 }
