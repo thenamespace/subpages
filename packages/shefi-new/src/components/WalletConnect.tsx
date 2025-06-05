@@ -9,10 +9,6 @@ import { PropsWithChildren } from "react";
 import { merge } from "lodash";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 
-
-
-
-
 const config = getDefaultConfig({
   appName: "LSU",
   projectId: "a5f353014d529c8f85633e3c6250ac28",

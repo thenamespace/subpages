@@ -49,6 +49,18 @@ For more information, or assistance, ping @thecaphimself on Telegram or read thr
 yarn install
 ```
 
+### Configure
+
+Create .env file in the folder root and add required environment variables
+```
+VITE_APP_LISTED_NAME=namespace.eth // YOUR listed name
+VITE_APP_LISTING_CHAIN=base // Listed name chain, supported values are [mainnet, base, optimism] or [baseSepolia, sepolia] for testnet
+VITE_APP_ALCHEMY_TOKEN=dF2... // Optional alchemy token, if not provided, public RPC used by default
+VITE_APP_DEFAULT_AVATAR=https://avatar-uri // Default avatar for minted subnames
+VITE_APP_IS_TESTNET=false // Optional, specify wheter listed names is on mainnet or sepolia
+VITE_APP_MINT_SOURCE=// Optional, mint source can be used to track where the mints come from
+```
+
 ### Development
 
 To run the project in development mode with hot module replacement:

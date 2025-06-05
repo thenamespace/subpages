@@ -2,43 +2,34 @@ import { Box, Button, Flex, Text, Image, Input } from "@chakra-ui/react";
 import { Subname } from "./Types";
 import { useAccount, usePublicClient, useSwitchChain, useWalletClient } from "wagmi";
 import { useEffect, useMemo, useState } from "react";
-import { Address, encodeFunctionData, Hash, hexToBytes, isAddress, namehash, parseAbi, toHex } from "viem";
-import { AppEnv } from "@/environment";
+import { Address, encodeFunctionData, Hash, hexToBytes, isAddress, namehash, parseAbi, toHex, zeroAddress } from "viem";
 import { getCoderByCoinType } from "@ensdomains/address-encoder";
 import { KnownAddresses, WalletAddress } from "./records/Addresses";
 import { KnownText, KnownTexts } from "./records/TextRecords";
 import { validate as isValidBtcAddress } from "bitcoin-address-validation";
 import { toast, ToastContainer } from "react-toastify";
-import { getChainName, getL2ChainContracts, L2Chain } from "namespace-sdk";
 import { themeVariables } from "@/styles/themeVariables";
 import { CgProfile } from "react-icons/cg";
 import { IoShareSocialSharp } from "react-icons/io5";
 import chainIcon from "../assets/chains/circle.svg";
 import { mainnet, sepolia } from "viem/chains";
-
-
-
-const nameChainId = Number(AppEnv.chainId);
+import { getL2NamespaceContracts, getEnsContracts } from "@namespacesdk/addresses"
+import { useAppConfig } from "./AppConfigContext";
 
 const resolverAbi = parseAbi([
   "function setText(bytes32 node, string key, string value) external",
   "function setAddr(bytes32 node, uint256 coinType, bytes value) external",
 ]);
-let resolver;
-if (nameChainId === mainnet.id) {
-  resolver = "0x231b0Ee14048e9dCcD1d247744d114a4EB5E8E63" as Address;
-} else if (nameChainId === sepolia.id) {
-  resolver = "0x8948458626811dd0c23EB25Cc74291247077cC51" as Address;
-} else {
-  resolver = getL2ChainContracts(getChainName(nameChainId) as L2Chain).resolver;
-}
+
 
 
 
 export const SingleSubname = ({subname, onUpdate}: {subname: Subname; onUpdate: () => void;}) => {
 
-    const publicClient = usePublicClient({ chainId: nameChainId });
-    const { data: walletClient } = useWalletClient({ chainId: nameChainId });
+    const { listingChainId } = useAppConfig()
+
+    const publicClient = usePublicClient({ chainId: listingChainId });
+    const { data: walletClient } = useWalletClient({ chainId: listingChainId });
     const { switchChain } = useSwitchChain();
     const { chain, address } = useAccount();
   
@@ -208,6 +199,8 @@ export const SingleSubname = ({subname, onUpdate}: {subname: Subname; onUpdate: 
       const nameNode = namehash(subname.name);
       const { texts, addrs } = getRecordsToUpdate();
   
+      console.log("Converting to resolver data", subname.name)
+
       texts.forEach((txt) => {
         data.push(
           encodeFunctionData({
@@ -239,17 +232,27 @@ export const SingleSubname = ({subname, onUpdate}: {subname: Subname; onUpdate: 
     };
   
     const handleUpdate = async () => {
-      if (chain?.id !== nameChainId) {
-        switchChain({ chainId: nameChainId });
+      if (chain?.id !== listingChainId) {
+        switchChain({ chainId: listingChainId });
       }
   
       const resolverData = toResolverData();
+
+      let resolver: string = zeroAddress;
+      if (listingChainId === mainnet.id) {
+        resolver = getEnsContracts(false).publicResolver
+      } else if (listingChainId === sepolia.id) {
+        resolver = getEnsContracts(true).publicResolver
+      } else {
+        resolver = getL2NamespaceContracts(listingChainId).resolver
+      }
+
 
   
       try {
         const resp = await publicClient!!.simulateContract({
           abi: parseAbi(["function multicall(bytes[] data) external"]),
-          address: resolver,
+          address: resolver as Address,
           functionName: "multicall",
           args: [resolverData],
           account: address!!,
@@ -271,6 +274,7 @@ export const SingleSubname = ({subname, onUpdate}: {subname: Subname; onUpdate: 
           },3000)
   
         } catch(err: any) {
+          console.error(err);
           if (err.details) {
             sendToast(err.details)
           }
@@ -286,6 +290,7 @@ export const SingleSubname = ({subname, onUpdate}: {subname: Subname; onUpdate: 
         } else {
           sendToast("Unknown error ocurred :(")
         }
+        console.error(err)
   
       }
     };

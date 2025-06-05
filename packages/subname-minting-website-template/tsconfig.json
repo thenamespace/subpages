@@ -3,8 +3,5 @@
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
-  ],
-  "paths": {
-    "@namespacesdk/indexer-manager": ["node_modules/@namespacesdk/indexer-manager"]
-  }
+  ]
 }
