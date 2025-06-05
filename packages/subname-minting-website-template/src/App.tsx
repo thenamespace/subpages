@@ -5,7 +5,7 @@ import { Footer } from "./components/Footer";
 import { MintForm } from "./components/MintForm";
 import { MySubnames } from "./components/MySubnames";
 import { useState } from "react";
-import { Flex, Box } from "@chakra-ui/react";
+import { Flex, Box, Spinner } from "@chakra-ui/react";
 import { themeVariables } from "./styles/themeVariables";
 import { ReferralProvider } from "./components/ReferralContext";
 import { AppContextProvider, useAppConfig } from "./components/AppConfigContext";
@@ -29,7 +29,9 @@ const AppContainer = () => {
   const state = useAppConfig()
 
   if (state.isLoading) {
-    return <div>Loading...</div>
+    return   <Flex flex="1" height="100vh" width="100%" alignItems="center" justifyContent="center">
+        <Spinner color="blue.400" size="xl"/>
+      </Flex>
   }
 
   if (state.isError) {
