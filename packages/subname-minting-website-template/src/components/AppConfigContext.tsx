@@ -30,7 +30,7 @@ interface IAppConfigContext {
   listingChainId: number;
   isTestnet: boolean;
   isRenting: boolean;
-  listingType: "l1" | "l2";
+  listingType: "L1" | "L2";
   isError: boolean;
   isLoading: boolean;
   defaultAvatarUri?: string
@@ -41,7 +41,7 @@ const defaultContext: IAppConfigContext = {
   isTestnet: false,
   listedName: "",
   listingChainId: 1,
-  listingType: "l1",
+  listingType: "L1",
   isError: false,
   isLoading: true,
 };
@@ -76,7 +76,7 @@ export const AppContextProvider = ({ children }: PropsWithChildren) => {
 
     const listingNetwork = isTestnet ? "SEPOLIA" : "MAINNET";
     const backendUri = `https://${isTestnet ? "staging." : ""}list-manager.namespace.ninja/api/v1/listing/network/${listingNetwork}/name/${listedName}`;
-    let listingType = "l1";
+    let listingType = "L1";
 
     let isExpirable = false;
 

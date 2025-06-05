@@ -39,7 +39,7 @@ export const useNamepsaceClient = () => {
   const { data: walletClient } = useWalletClient({ chainId: listingChainId });
 
   const checkAvailable = async (label: string) => {
-    if (listingType === "l1") {
+    if (listingType === "L1") {
       return mintClient.isL1SubnameAvailable(`${label}.${listedName}`);
     }
     return mintClient.isL2SubnameAvailable(
