@@ -3,14 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAccount, useDisconnect, usePublicClient } from "wagmi";
-import {
-  addEnsContracts,
-  ensPublicActions,
-  ensSubgraphActions,
-} from "@ensdomains/ensjs";
-import { mainnet } from "viem/chains";
-import { createPublicClient, http } from "viem";
-
 
 export const UserProfile = () => {
   const publicClient = usePublicClient({ chainId: 1 });

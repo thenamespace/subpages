@@ -16,7 +16,6 @@ import chainIcon from "../assets/chains/circle.svg";
 import { KnownText, KnownTexts } from "./records/TextRecords";
 import { CgProfile } from "react-icons/cg";
 import { IoShareSocialSharp } from "react-icons/io5";
-import { getChainName, getL2ChainContracts } from "namespace-sdk";
 import {
   useAccount,
   usePublicClient,
@@ -27,13 +26,13 @@ import { base } from "viem/chains";
 import { validate as isValidBtcAddress } from "bitcoin-address-validation";
 import { toast } from "react-toastify";
 import { LISTING_CHAIN_ID } from "./Listing";
+import { getL2NamespaceContracts } from "@namespacesdk/addresses"
 
 const resolverAbi = parseAbi([
   "function setText(bytes32 node, string key, string value) external",
   "function setAddr(bytes32 node, uint256 coinType, bytes value) external",
 ]);
-const listingNetwork = getChainName(LISTING_CHAIN_ID);
-const opResolver = getL2ChainContracts(listingNetwork as any).resolver;
+const opResolver = getL2NamespaceContracts(LISTING_CHAIN_ID).resolver
 
 export const SingleSubname = ({
   subname,
