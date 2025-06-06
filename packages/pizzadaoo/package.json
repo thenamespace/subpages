@@ -11,8 +11,8 @@
   "dependencies": {
     "@ensdomains/address-encoder": "^1.1.2",
     "@ensdomains/ensjs": "^4.0.2",
-    "@rainbow-me/rainbowkit": "^2.2.1",
-    "@tanstack/react-query": "^5.62.8",
+    "@rainbow-me/rainbowkit": "^2.2.6",
+    "@tanstack/react-query": "^5.80.6",
     "@types/lodash.merge": "^4.6.9",
     "axios": "^1.7.9",
     "bitcoin-address-validation": "^2.2.3",
@@ -26,8 +26,9 @@
     "react-icons": "^5.4.0",
     "react-toastify": "^11.0.0",
     "sass": "^1.83.0",
-    "viem": "^2.21.55",
-    "wagmi": "^2.14.3"
+    "use-sync-external-store": "^1.5.0",
+    "viem": "^2.30.6",
+    "wagmi": "^2.15.5"
   },
   "devDependencies": {
     "@types/node": "^20",
