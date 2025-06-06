@@ -10,7 +10,7 @@ import { Subname } from "./Models";
 import { useRouter } from "next/router";
 import { LISTED_NAMES } from "./Listing";
 
-const indexer = "https://indexer.namespace.tech/api/v1/nodes";
+const indexer = "https://indexer.namespace.ninja/api/v1/nodes";
 
 const fetchSubnames = async (owner: string) => {
 

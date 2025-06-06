@@ -1,7 +1,5 @@
 import {
-  createNamespaceClient,
   Listing,
-  MintTransactionParameters,
 } from "namespace-sdk";
 import { PlainBtn } from "./TechBtn";
 import { useCallback, useState } from "react";
@@ -17,16 +15,16 @@ import {
 import { toast } from "react-toastify";
 import Link from "next/link";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { SideModal } from "./SideModal";
 import { normalise } from "@ensdomains/ensjs/utils";
 import pizzaChar from "../assets/PizzaCharacter.png";
 import { LISTED_NAMES, LISTING_CHAIN_ID } from "./Listing";
 import Image from "next/image";
+import { createMintClient, MintTransactionResponse } from "@namespacesdk/mint-manager"
 
-const namespaceClient = createNamespaceClient({
-  chainId: LISTING_CHAIN_ID,
-  mintSource: "pizzadao",
-});
+
+const mintClient = createMintClient({
+  mintSource: "pizzadao"
+})
 
 const defaultAvatar = "https://avatars.namespace.ninja/pizzadaoo.png";
 
@@ -95,10 +93,8 @@ export const MintForm = () => {
   const checkAvailable = async (value: string) => {
 
     try {
-      const isAvailable = await namespaceClient.isSubnameAvailable(
-        selectedPizzaName,
-        value
-      );
+      const fullName = `${value}.${selectedPizzaName.fullName}`
+      const isAvailable = await mintClient.isL2SubnameAvailable(fullName, LISTING_CHAIN_ID);
       setIndicator({
         isChecking: false,
         isAvailable: isAvailable,
@@ -120,23 +116,18 @@ export const MintForm = () => {
     }
 
     setMintState({ ...mintState, waitingWallet: true });
-    let params: MintTransactionParameters;
+    let params: MintTransactionResponse;
+    let mintRequest: any;
     try {
       if (!chain || chain.id !== LISTING_CHAIN_ID) {
         await switchChainAsync({ chainId: LISTING_CHAIN_ID });
       }
 
-      const tokens = await namespaceClient.generateAuthToken(
-        address,
-        signTypedDataAsync,
-        "Verify your address"
-      );
-
-      params = await namespaceClient.getMintTransactionParameters(
-        selectedPizzaName,
-        {
+      params = await mintClient.getMintTransactionParameters(
+          {
+            parentName: selectedPizzaName.fullName,
           minterAddress: address,
-          subnameLabel: searchLabel,
+          label: searchLabel,
           expiryInYears: 1,
           records: {
             texts: [
@@ -147,19 +138,29 @@ export const MintForm = () => {
             ],
             addresses: [
               {
-                address: address,
-                coinType: ETH_COIN,
+                value: address,
+                coin: ETH_COIN,
               },
               {
-                address: address,
-                coinType: OP_COIN,
+                value: address,
+                coin: OP_COIN,
               },
             ],
           },
-          subnameOwner: address,
-          token: tokens.accessToken,
+          owner: address,
         }
       );
+
+      const { request } = await publicClient!.simulateContract({
+        abi: params.abi,
+        address: params.contractAddress,
+        functionName: params.functionName,
+        args: params.args,
+        account: address,
+        value: params.value
+      })
+
+      mintRequest = request;
 
     } catch (err: any) {
       setMintState({ ...mintState, waitingWallet: false });
@@ -212,13 +213,7 @@ export const MintForm = () => {
 
     try {
       //@ts-ignore
-      const tx = await walletClient.writeContract({
-        address: params.contractAddress,
-        value: params.value,
-        function: params.functionName,
-        args: params.args,
-        abi: params.abi,
-      });
+      const tx = await walletClient.writeContract(mintRequest);
       setMintStep(MintSteps.PendingTx);
       setTxHash(tx as any);
       setMintState({ waitingWallet: false, waitingTx: true, txHash: tx });
