@@ -1,8 +1,7 @@
 name: Deploy SheFi New
 
 on:
-  push:
-    branches: [master]
+  workflow_dispatch:
 
 jobs:
   Build_and_Deploy:
