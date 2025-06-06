@@ -1,6 +1,3 @@
-import {
-  Listing,
-} from "namespace-sdk";
 import { PlainBtn } from "./TechBtn";
 import { useCallback, useState } from "react";
 import { Spinner } from "./Spinner";
@@ -17,7 +14,7 @@ import Link from "next/link";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { normalise } from "@ensdomains/ensjs/utils";
 import pizzaChar from "../assets/PizzaCharacter.png";
-import { LISTED_NAMES, LISTING_CHAIN_ID } from "./Listing";
+import { LISTED_NAMES, Listing, LISTING_CHAIN_ID } from "./Listing";
 import Image from "next/image";
 import { createMintClient, MintTransactionResponse } from "@namespacesdk/mint-manager"
 

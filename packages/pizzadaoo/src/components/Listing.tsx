@@ -1,6 +1,14 @@
-import { Listing } from "namespace-sdk";
 import { namehash } from "viem";
 import { base } from "viem/chains";
+
+export interface Listing {
+  fullName: string
+  label: string
+  network: string
+  node: string
+  listingType: string
+  registryNetwork: string
+}
 
 export const RAREPIZZA_ETH: Listing = {
   fullName: "rarepizzas.eth",
