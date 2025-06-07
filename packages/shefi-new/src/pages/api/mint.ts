@@ -9,21 +9,14 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
-import { createNamespaceClient, Listing } from "namespace-sdk";
 import { AxiosError } from "axios";
 import { getWhitelist } from "@/api/api";
+import { createMintClient } from "@namespacesdk/mint-manager";
 
 const ETH_COIN = 60;
 const BASE_COIN = 2147492101;
 
-const LISTING: Listing = {
-  fullName: "shefi.eth",
-  label: "shefi",
-  network: "mainnet",
-  node: namehash("shefi.eth"),
-  listingType: "l2",
-  registryNetwork: "base",
-};
+const ENS_NAME = "shefi.eth"
 
 const SHEFI_AVATAR =
   "https://ipfs.io/ipfs/bafkreiac2vzw6ky2mk4e27rkvb7n26xfsvhljgo3mxcbutkcamn2s3qene";
@@ -33,10 +26,11 @@ const base_rpc = `https://base-mainnet.g.alchemy.com/v2/${alchemy_key}`;
 
 const wallet = privateKeyToAccount(wallet_key);
 
-const namespaceClient = createNamespaceClient({
-  chainId: base.id,
-  customTransport: http(base_rpc),
+const namespaceClient = createMintClient({
   mintSource: "shefi",
+  cursomRpcUrls: {
+    [base.id]: base_rpc
+  }
 });
 
 const walletClient = createWalletClient({
@@ -53,10 +47,10 @@ export default async function handler(
     const body = req.body as { owner: Address; label: string };
 
     try {
-      const whitelist = await getWhitelist("mainnet", "shefi.eth");
-      if (whitelist?.whitelistType !== 0) {
+      const whitelist = await getWhitelist();
+      if (whitelist?.whitelist.type !== 0) {
         const minter = body.owner;
-        const isWhitelisted = (whitelist.whitelist || []).find(
+        const isWhitelisted = (whitelist.whitelist.wallets || []).find(
           (i) => i.toLocaleLowerCase() === minter.toLocaleLowerCase()
         );
 
@@ -68,19 +62,20 @@ export default async function handler(
     } catch (err) {}
 
     const parameters = await namespaceClient.getMintTransactionParameters(
-      LISTING,
       {
         minterAddress: wallet.address,
-        subnameLabel: body.label,
+        label: body.label,
+        parentName: ENS_NAME,
+        owner: body.owner,
         records: {
           addresses: [
             {
-              address: body.owner,
-              coinType: ETH_COIN,
+              value: body.owner,
+              coin: ETH_COIN,
             },
             {
-              address: body.owner,
-              coinType: BASE_COIN,
+              value: body.owner,
+              coin: BASE_COIN,
             },
           ],
           texts: [
@@ -89,8 +84,7 @@ export default async function handler(
               value: SHEFI_AVATAR,
             },
           ],
-        },
-        subnameOwner: body.owner,
+        }
       }
     );
 
