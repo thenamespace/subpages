@@ -6,7 +6,6 @@ import baseIcon from "../../assets/chains/base.svg";
 import opIcon from "../../assets/chains/op.svg";
 import arbIcon from "../../assets/chains/arb.svg";
 import maticIcon from "../../assets/chains/matic.svg";
-import { getChainName } from "namespace-sdk";
 
 
 export interface WalletAddress {
@@ -54,11 +53,4 @@ export const KnownAddresses: Record<number, WalletAddress> = {
         name: "Polygon"
     },
 
-}
-
-
-
-export const getKnownAddress = (chainId: number): WalletAddress => {
-    const chainName = getChainName(chainId);
-    return Object.values(KnownAddresses).find(address => address.name.toLowerCase() === chainName.toLowerCase())!;
 }

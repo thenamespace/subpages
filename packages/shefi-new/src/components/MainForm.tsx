@@ -10,11 +10,10 @@ import {
   useWalletClient,
 } from "wagmi";
 import { ENS_NAME, useNamepsaceClient } from "./useNamespaceClient";
-import { debounce, set } from "lodash";
+import { debounce } from "lodash";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { Address, Hash, namehash, parseAbi } from "viem";
-import { getKnownAddress } from "./records/Addresses";
-import { mainnet, sepolia } from "wagmi/chains";
+import { Address, Hash, parseAbi } from "viem";
+import { mainnet } from "wagmi/chains";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { getWhitelist } from "@/api/api";
@@ -97,8 +96,6 @@ export const MintForm = () => {
     setRegistrationStep(RegistrationStep.START);
   }, []);
 
-  const nameChainId = 8453;
-
   const [mintIndicators, setMintIndicator] = useState<{
     waiting: boolean;
     btnLabel: string;
@@ -116,15 +113,6 @@ export const MintForm = () => {
     chainId: chainForPrimaryName,
   });
 
-  const ETH_COIN = 60;
-
-  let L2_COIN = null;
-
-  const l2Address = getKnownAddress(nameChainId);
-
-  if (l2Address) {
-    L2_COIN = l2Address.coinType;
-  }
 
   const [primaryNameIndicators, setPrimaryNameIndicators] = useState<{
     waiting: boolean;
