@@ -9,19 +9,15 @@ import {
   useSwitchChain,
   useWalletClient,
 } from "wagmi";
-import { LISTEN_NAME, useNamepsaceClient } from "./useNamespaceClient";
+import { ENS_NAME, useNamepsaceClient } from "./useNamespaceClient";
 import { debounce, set } from "lodash";
-import { Spinner } from "./Spinner";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Address, Hash, namehash, parseAbi } from "viem";
 import { getKnownAddress } from "./records/Addresses";
-import { AddressRecord } from "namespace-sdk/dist/clients";
 import { mainnet, sepolia } from "wagmi/chains";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { getWhitelist } from "@/api/api";
-
-
 
 enum RegistrationStep {
   START = 0,
@@ -37,13 +33,7 @@ export const MintForm = () => {
   const [mintError, setMintError] = useState<string>("");
   const [txHash, setTxHash] = useState<Hash>();
   const { switchChainAsync } = useSwitchChain();
-  const {
-    checkAvailable,
-    mintParameters,
-    generateAuthToken,
-    executeTx,
-    waitForTx,
-  } = useNamepsaceClient();
+  const { checkAvailable, waitForTx } = useNamepsaceClient();
 
   const [indicators, setIndicators] = useState<{
     checking: boolean;
@@ -69,19 +59,18 @@ export const MintForm = () => {
   });
 
   useEffect(() => {
-
     if (!address) {
       return;
     }
 
-    getWhitelist("mainnet", namehash(LISTEN_NAME.fullName))
+    getWhitelist()
       .then((res) => {
         let isWhitelisted = true;
         let featureEnabled =
-          res.whitelistType !== undefined && res.whitelistType !== 0;
+          res.whitelist?.type !== undefined && res?.whitelist.type !== 0;
 
         if (featureEnabled) {
-          const whitelisted = res.whitelist || [];
+          const whitelisted = res.whitelist?.wallets || [];
           isWhitelisted =
             whitelisted.find(
               (i) => i.toLocaleLowerCase() === address!.toLocaleLowerCase()
@@ -95,7 +84,7 @@ export const MintForm = () => {
         });
       })
       .catch((err) => {
-        console.error(err)
+        console.error(err);
         setWhitelistConfig({
           featureEnabled: false,
           isChecking: false,
@@ -118,15 +107,9 @@ export const MintForm = () => {
   let reverseRegistarAbi;
   let reverseRegistar;
   let chainForPrimaryName;
-  if (LISTEN_NAME.network === "mainnet") {
-    reverseRegistar = "0xa58E81fe9b61B5c3fE2AFD33CF304c454AbFc7Cb" as Address;
-    reverseRegistarAbi = parseAbi(["function setName(string name)"]);
-    chainForPrimaryName = mainnet.id;
-  } else {
-    reverseRegistar = "0xCF75B92126B02C9811d8c632144288a3eb84afC8" as Address;
-    reverseRegistarAbi = parseAbi(["function setName(string _name)"]);
-    chainForPrimaryName = sepolia.id;
-  }
+  reverseRegistar = "0xa58E81fe9b61B5c3fE2AFD33CF304c454AbFc7Cb" as Address;
+  reverseRegistarAbi = parseAbi(["function setName(string name)"]);
+  chainForPrimaryName = mainnet.id;
 
   const publicClient = usePublicClient({ chainId: chainForPrimaryName });
   const { data: walletClient } = useWalletClient({
@@ -191,7 +174,6 @@ export const MintForm = () => {
     []
   );
 
-
   const handleMint = async () => {
     if (!address) {
       openConnectModal?.();
@@ -202,10 +184,10 @@ export const MintForm = () => {
       setMintIndicator({ btnLabel: "Waiting for wallet", waiting: true });
       setButtonText("Registering...");
 
-      const { data } = await axios.post<{tx: Hash}>("/api/mint", {
+      const { data } = await axios.post<{ tx: Hash }>("/api/mint", {
         owner: address,
         label: label,
-      })
+      });
 
       setTxHash(data.tx);
       setRegistrationStep(RegistrationStep.TX_SENT);
@@ -269,7 +251,7 @@ export const MintForm = () => {
         abi: reverseRegistarAbi,
         address: reverseRegistar,
         functionName: "setName",
-        args: [`${label}.${LISTEN_NAME.fullName}`],
+        args: [`${label}.${ENS_NAME}`],
         account: address!!,
       });
 
@@ -306,7 +288,10 @@ export const MintForm = () => {
     }
   };
 
-  const showNotWhitelistedBtn = !whitelistConfig.isChecking && (whitelistConfig.featureEnabled && !whitelistConfig.isWhitelisted);
+  const showNotWhitelistedBtn =
+    !whitelistConfig.isChecking &&
+    whitelistConfig.featureEnabled &&
+    !whitelistConfig.isWhitelisted;
 
   return (
     <div className={"flex w-full max-w-80 flex-col gap-2"}>
@@ -320,27 +305,24 @@ export const MintForm = () => {
               onChange={(e) => handleUpdateLabel(e.target.value)}
             />
 
-           {!showNotWhitelistedBtn && <Button
-              loading={indicators.checking}
-              disabled={mintBtnDisabled}
-              className={
-                `${!indicators.available ? "bg-red-400 hover:bg-red-500" : ""} disabled:bg-gray-300`
-              }
-              onClick={(e) => {
-                e.preventDefault();
-                handleMint();
-              }}
-            >
-              {buttonText}
-            </Button>}
-            {showNotWhitelistedBtn && <Button
-              disabled={true}
-              className={
-                `disabled:bg-gray-300`
-              }
-            >
-              Not whitelisted
-            </Button>}
+            {!showNotWhitelistedBtn && (
+              <Button
+                loading={indicators.checking}
+                disabled={mintBtnDisabled}
+                className={`${!indicators.available ? "bg-red-400 hover:bg-red-500" : ""} disabled:bg-gray-300`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleMint();
+                }}
+              >
+                {buttonText}
+              </Button>
+            )}
+            {showNotWhitelistedBtn && (
+              <Button disabled={true} className={`disabled:bg-gray-300`}>
+                Not whitelisted
+              </Button>
+            )}
           </>
         )}
       {registrationStep === RegistrationStep.PRIMARY_NAME && (
