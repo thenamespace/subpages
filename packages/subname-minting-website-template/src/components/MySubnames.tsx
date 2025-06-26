@@ -10,87 +10,41 @@ import {
   useBreakpointValue,
 } from "@chakra-ui/react";
 import { hexToRgba, themeVariables } from "@/styles/themeVariables";
-import { Subname } from "./Types";
-import axios from "axios";
 import { useAccount } from "wagmi";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { SideModal } from "./SideModal";
 import { SingleSubname } from "./SingleSubname";
 import { ToastContainer } from "react-toastify";
 import { useAppConfig } from "./AppConfigContext";
-
-const fetchSubnames = async (owner: string, parentName: string) => {
-  const { data } = await axios.get<{
-    items: Subname[];
-    totalItems: number;
-  }>(`https://indexer.namespace.ninja/api/v1/nodes`, {
-    params: {
-      owner,
-      parentName: parentName,
-    },
-  });
-  return data;
-};
+import {
+  GenericSubname,
+  useSubnames,
+} from "./useSubnames";
+import noImage from "../assets/no-avatar.png";
 
 interface MySubnamesProps {
   setView: (view: string) => void;
 }
 
 export const MySubnames = ({ setView }: MySubnamesProps) => {
-  const { listedName } = useAppConfig();
+  const { listedName, listingType } = useAppConfig();
   const { address } = useAccount();
-  const [selectedSubname, setSelectedSubname] = useState<Subname>();
+  const [selectedSubname, setSelectedSubname] = useState<GenericSubname>();
+  const { isFetching, items } = useSubnames(listedName, address!, listingType);
+
   const [searchFilter, setSearchFilter] = useState("");
-  const [subnames, setSubnames] = useState<{
-    fetching: boolean;
-    items: Subname[];
-    totalItems: number;
-  }>({
-    fetching: true,
-    items: [],
-    totalItems: 0,
-  });
-
-  useEffect(() => {
-    if (!address) {
-      return;
-    }
-
-    fetchSubnames(address, listedName).then((res) => {
-      setSubnames({
-        fetching: false,
-        items: res.items,
-        totalItems: res.totalItems,
-      });
-    });
-  }, [address]);
-
-  const refreshSubnames = async () => {
-    fetchSubnames(address!!, listedName).then((res) => {
-      setSubnames({
-        fetching: false,
-        items: res.items,
-        totalItems: res.totalItems,
-      });
-    });
-  };
-
-  let sbnms: Subname[] = [];
-  for (let i = 0; i < 10; i++) {
-    sbnms = [...sbnms, ...subnames.items];
-  }
   const filterApplied = searchFilter.length > 0;
 
   const allSubnames = useMemo(() => {
-    return subnames.items.filter((i) => {
+    return items.filter((i) => {
       if (searchFilter.length === 0) {
         return true;
       }
       return i.name.includes(searchFilter.toLocaleLowerCase());
     });
-  }, [subnames, searchFilter]);
+  }, [items, searchFilter]);
 
-  const boxWidth = useBreakpointValue({ base: "90%", md: "600px" });
+  const boxWidth = useBreakpointValue({ base: "90%", md: "600px", xs: "100%" });
   const boxPadding = useBreakpointValue({ base: 4, md: 6 });
   const headlineFontSize = useBreakpointValue({ base: "40px", md: "70px" });
 
@@ -101,13 +55,11 @@ export const MySubnames = ({ setView }: MySubnamesProps) => {
       alignItems="flex-start"
       justifyContent="flex-start"
       paddingTop="50px"
+      width={"100%"}
     >
       {selectedSubname !== undefined && (
         <SideModal open={true} onClose={() => setSelectedSubname(undefined)}>
-          <SingleSubname
-            onUpdate={() => refreshSubnames()}
-            subname={selectedSubname}
-          />
+          <SingleSubname onUpdate={() => {}} subname={selectedSubname} />
         </SideModal>
       )}
       <Box
@@ -136,7 +88,7 @@ export const MySubnames = ({ setView }: MySubnamesProps) => {
             marginLeft="15px"
             mb={0}
           >
-            {subnames.fetching ? "" : `Total: ${allSubnames.length}`}
+            {isFetching ? "" : `Total: ${items.length}`}
           </Text>
           <Input
             value={searchFilter}
@@ -151,6 +103,7 @@ export const MySubnames = ({ setView }: MySubnamesProps) => {
         </Flex>
       </Box>
       <Box
+        overflowY="auto"
         bg={hexToRgba(themeVariables.main, 0.8)}
         p={boxPadding}
         alignSelf="center"
@@ -162,7 +115,7 @@ export const MySubnames = ({ setView }: MySubnamesProps) => {
         border="1px solid"
         borderColor={themeVariables.accent}
       >
-        {subnames.fetching && (
+        {isFetching && (
           <Flex alignItems="center" justifyContent="center" height="100%">
             <Spinner
               color={themeVariables.accent}
@@ -173,7 +126,7 @@ export const MySubnames = ({ setView }: MySubnamesProps) => {
             />
           </Flex>
         )}
-        {!subnames.fetching && (
+        {!isFetching && (
           <>
             {allSubnames.length === 0 && (
               <>
@@ -242,7 +195,7 @@ export const MySubnames = ({ setView }: MySubnamesProps) => {
                       }}
                     >
                       <Image
-                        src={subname.texts["avatar"]}
+                        src={subname.texts?.avatar || noImage}
                         width="50px"
                         height="50px"
                         borderRadius="full"
