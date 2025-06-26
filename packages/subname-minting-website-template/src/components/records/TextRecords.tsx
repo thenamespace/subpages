@@ -13,12 +13,12 @@ export const KnownTexts: Record<string, KnownText> = {
     type: "profile",
     placeholder: "ex. John Wick",
   },
-//   avatar: {
-//     key: "avatar",
-//     label: "Avatar",
-//     type: "profile",
-//     placeholder: "Your avatar url",
-//   },
+  avatar: {
+    key: "avatar",
+    label: "Avatar",
+    type: "profile",
+    placeholder: "Your avatar url",
+  },
   url: {
     key: "url",
     label: "Website",
