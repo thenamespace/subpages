@@ -864,6 +864,11 @@
   resolved "https://registry.npmjs.org/@floating-ui/utils/-/utils-0.2.9.tgz"
   integrity sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg==
 
+"@fontsource/inter@^5.2.6":
+  version "5.2.6"
+  resolved "https://registry.yarnpkg.com/@fontsource/inter/-/inter-5.2.6.tgz#2c705ea57d7af283a05bb1ca59fb0f06fc5de3be"
+  integrity sha512-CZs9S1CrjD0jPwsNy9W6j0BhsmRSQrgwlTNkgQXTsAeDRM42LBRLo3eo9gCzfH4GvV7zpyf78Ozfl773826csw==
+
 "@graphql-typed-document-node/core@^3.2.0":
   version "3.2.0"
   resolved "https://registry.npmjs.org/@graphql-typed-document-node/core/-/core-3.2.0.tgz"
@@ -2664,7 +2669,7 @@
   resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.80.6.tgz#d2e54fa9eabebc953c675b74b17d6cd45a2a4cb4"
   integrity sha512-nl7YxT/TAU+VTf+e2zTkObGTyY8YZBMnbgeA1ee66lIVqzKlYursAII6z5t0e6rXgwUMJSV4dshBTNacNpZHbQ==
 
-"@tanstack/react-query@^5.52.2", "@tanstack/react-query@^5.62.3", "@tanstack/react-query@^5.62.7", "@tanstack/react-query@^5.62.8":
+"@tanstack/react-query@^5.52.2", "@tanstack/react-query@^5.62.7", "@tanstack/react-query@^5.62.8":
   version "5.64.1"
   resolved "https://registry.npmjs.org/@tanstack/react-query/-/react-query-5.64.1.tgz"
   integrity sha512-vW5ggHpIO2Yjj44b4sB+Fd3cdnlMJppXRBJkEHvld6FXh3j5dwWJoQo7mGtKI2RbSFyiyu/PhGAy0+Vv5ev9Eg==
@@ -10590,7 +10595,7 @@ varint@^6.0.0:
   resolved "https://registry.npmjs.org/varint/-/varint-6.0.0.tgz"
   integrity sha512-cXEIW6cfr15lFv563k4GuVuW/fiwjknytD37jIOLSdSWuOI6WnO/oKwmP2FQTU2l01LP8/M5TSAJpzUaGe3uWg==
 
-viem@2.23.2, viem@^2.1.1, viem@^2.17.4, viem@^2.21.54, viem@^2.21.55:
+viem@2.23.2, viem@^2.1.1, viem@^2.17.4, viem@^2.21.55:
   version "2.23.2"
   resolved "https://registry.npmjs.org/viem/-/viem-2.23.2.tgz"
   integrity sha512-NVmW/E0c5crMOtbEAqMF0e3NmvQykFXhLOc/CkLIXOlzHSA6KXVz3CYVmaKqBF8/xtjsjHAGjdJN3Ru1kFJLaA==
@@ -10652,7 +10657,7 @@ vite@^6.0.1:
   optionalDependencies:
     fsevents "~2.3.3"
 
-wagmi@^2.13.5, wagmi@^2.14.1, wagmi@^2.14.3:
+wagmi@^2.14.1, wagmi@^2.14.3:
   version "2.14.13"
   resolved "https://registry.npmjs.org/wagmi/-/wagmi-2.14.13.tgz"
   integrity sha512-CX+NpyTczVIST5DqLtasKZ3VrhImKQZ9XM9aDUVgOM46MRN/CykgGGAJfuIfpQ80LZ91GCY+JuitGknHUz7MNQ==

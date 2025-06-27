@@ -84,7 +84,6 @@ export const AppContextProvider = ({ children }: PropsWithChildren) => {
 
     try {
       const { data } = await axios.get<EnsListing>(backendUri);
-      console.log(data, "DATA HERE!", backendUri)
 
       listingType = data.type;
       if (data.l2Metadata) {
