@@ -31,7 +31,7 @@ jobs:
     - name: Build and push
       uses: docker/build-push-action@v4
       with:
-        context: ./packages/pizzadaoo
-        file: ./packages/pizzadaoo/Dockerfile
+        context: ./packages/book-of-ethereum
+        file: ./packages/book-of-ethereum/Dockerfile
         push: true
         tags: ${{secrets.CR_URL}}/book-of-ethereum:latest
