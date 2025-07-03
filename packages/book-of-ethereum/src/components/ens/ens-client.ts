@@ -1,5 +1,5 @@
 import { addEnsContracts, ensPublicActions, ensSubgraphActions } from "@ensdomains/ensjs";
-import { createPublicClient, publicActions } from "viem";
+import { createPublicClient } from "viem";
 import { mainnet } from "viem/chains";
 import { http } from "viem";
 

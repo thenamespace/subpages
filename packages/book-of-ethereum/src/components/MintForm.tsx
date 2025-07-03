@@ -27,6 +27,7 @@ import { mainnet, sepolia } from "viem/chains";
 import { useAppConfig } from "./AppConfigContext";
 
 import "./_styles.scss";
+//@ts-ignore
 import { MintDetailsResponse } from "@namespacesdk/mint-manager";
 
 enum RegistrationStep {
@@ -178,7 +179,7 @@ export const MintForm = () => {
     if (chainId !== listingChainId) {
       await switchChainAsync({ chainId: listingChainId });
     }
-    const addresses: { coin: number; value: string }[] = [
+    const addresses: any[] = [
       {
         value: address,
         coin: ETH_COIN,
