@@ -47,11 +47,6 @@ const fetchL1Subnames = async (
 ): Promise<GenericSubname[]> => {
   const allSubs = await ENS_CLIENT.getNamesForAddress({
     filter: {
-      owner: true,
-      allowDeleted: false,
-      allowExpired: false,
-      allowReverseRecord: false,
-      resolvedAddress: false,
       searchType: "name",
       searchString: `${parentName}`,
     },
