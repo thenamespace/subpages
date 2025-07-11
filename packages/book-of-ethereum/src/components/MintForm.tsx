@@ -471,25 +471,30 @@ export const MintForm = () => {
                   mt={5}
                   mb={0}
                 >
-                  Subname is already registered
+                  <Alert.Root status="warning" marginTop={"10px"} position="relative">
+                <Alert.Indicator />
+                <Alert.Content>
+                  <Alert.Description>
+                   Name not available
+                  </Alert.Description>
+                </Alert.Content>
+              </Alert.Root>
                 </Text>
               )}
               {mintError.length > 0 && (
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="space-between"
-                  mt={5}
-                  mb={0}
-                >
-                  <Text color={themeVariables.error} mb={0}>
-                    {mintError}
-                  </Text>
-                  <FaX
-                    style={{ cursor: "pointer", color: themeVariables.accent }}
+                <Alert.Root status="warning" marginTop={"10px"} position="relative">
+                <Alert.Indicator />
+                <Alert.Content>
+                  <Alert.Description>
+                   {mintError}
+                   <FaX
+                    size="10px"
+                    style={{ position:"absolute", top:"10px", right:"10px", cursor: "pointer", color: themeVariables.accent }}
                     onClick={() => setMintError("")}
                   />
-                </Box>
+                  </Alert.Description>
+                </Alert.Content>
+              </Alert.Root>
               )}
               {notEnoughBoe && <Alert.Root status="warning" marginTop={"10px"}>
                 <Alert.Indicator />
