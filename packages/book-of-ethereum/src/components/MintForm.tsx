@@ -8,8 +8,7 @@ import {
   Spinner,
   Text,
   useBreakpointValue,
-  Alert,
-  Card
+  Alert
 } from "@chakra-ui/react";
 import { useNamepsaceClient } from "./useNamespaceClient";
 import { normalize } from "viem/ens";
@@ -22,7 +21,7 @@ import {
 } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Address, Hash, parseAbi } from "viem";
-import { FaArrowDown, FaArrowUp, FaX, FaEthereum } from "react-icons/fa6";
+import { FaX } from "react-icons/fa6";
 import { hexToRgba, themeVariables } from "@/styles/themeVariables";
 import { toast, ToastContainer } from "react-toastify";
 import { mainnet, sepolia } from "viem/chains";
@@ -47,7 +46,7 @@ const BASE_COIN = 2147492101;
 const OP_COIN = 2147483658;
 
 export const MintForm = () => {
-  const { isRenting, listedName, listingChainId, isTestnet, defaultAvatarUri, listing } =
+  const { listedName, listingChainId, isTestnet, defaultAvatarUri, listing } =
     useAppConfig();
 
   const [label, setLabel] = useState("");
@@ -59,10 +58,8 @@ export const MintForm = () => {
     mintParameters,
     executeTx,
     waitForTx,
-    getMintDetails,
   } = useNamepsaceClient();
   const [mintError, setMintError] = useState<string>("");
-  const [isReserved, setIsReserved] = useState<boolean>(false);
   const [mintPrice, setMintPrice] = useState<{
     mintPrice: number;
     isFetching: boolean;
@@ -111,7 +108,6 @@ export const MintForm = () => {
   const { data: walletClient } = useWalletClient({
     chainId: chainForPrimaryName,
   });
-  const [expiryYears, setExpiryYears] = useState(1);
 
   const handleUpdateLabel = (value: string) => {
     const _value = value.toLocaleLowerCase();
@@ -200,7 +196,7 @@ export const MintForm = () => {
       setMintIndicator({ btnLabel: "Waiting for wallet", waiting: true });
       const params = await mintParameters({
         minterAddress: address,
-        expiryInYears: expiryYears,
+        expiryInYears: 1,
         records: {
           addresses: addresses,
           texts: texts,
