@@ -1,6 +1,11 @@
 @import "./theme.scss";
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English&display=swap');
 
-
+body {
+    * {
+         font-family: 'IM Fell English', serif !important;
+    }
+}
 
 Button {
     border-radius: 5px !important;

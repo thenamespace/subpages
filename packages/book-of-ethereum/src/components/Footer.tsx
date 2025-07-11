@@ -18,7 +18,7 @@ export const Footer = () => {
     >
       <Text fontSize={fontSize} textAlign="center" mb={0}>
         <Link
-          href="https://github.com/thenamespace/subpages"
+          href="https://namespace.ninja"
           target="_blank"
           color={themeVariables.light}
           fontWeight="bold"
@@ -28,7 +28,7 @@ export const Footer = () => {
             textDecorationColor: themeVariables.accent,
           }}
         >
-          Built by Namespace 🤝 Create your subpage today
+          Built by Namespace 🤝
         </Link>
       </Text>
     </Grid>

@@ -83,7 +83,7 @@ export const TopNavigation = ({ setView }: TopNavigationProps) => {
             </Box>
           )}
           {!isConnected ? (
-            <Button onClick={() => openConnectModal?.()} bg={themeVariables.accent} color={themeVariables.light} borderRadius="20px !important">Connect Wallet</Button>
+            <Button onClick={() => openConnectModal?.()} bg={themeVariables.accent} color={"black"} borderRadius="20px !important">Connect Wallet</Button>
           ) : (
             <ConnectButton chainStatus="none" showBalance={false} accountStatus="address"/>
           )}

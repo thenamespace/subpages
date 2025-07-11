@@ -8,6 +8,7 @@ import {
   Spinner,
   Text,
   useBreakpointValue,
+  Alert
 } from "@chakra-ui/react";
 import { useNamepsaceClient } from "./useNamespaceClient";
 import { normalize } from "viem/ens";
@@ -20,7 +21,7 @@ import {
 } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Address, Hash, parseAbi } from "viem";
-import { FaArrowDown, FaArrowUp, FaX } from "react-icons/fa6";
+import { FaX } from "react-icons/fa6";
 import { hexToRgba, themeVariables } from "@/styles/themeVariables";
 import { toast, ToastContainer } from "react-toastify";
 import { mainnet, sepolia } from "viem/chains";
@@ -29,6 +30,7 @@ import { useAppConfig } from "./AppConfigContext";
 import "./_styles.scss";
 //@ts-ignore
 import { MintDetailsResponse } from "@namespacesdk/mint-manager";
+import { getSubnamePrice } from "./Utils";
 
 enum RegistrationStep {
   START = 0,
@@ -37,23 +39,25 @@ enum RegistrationStep {
   COMPLETE = 3,
 }
 
+const swapBoeUri = "https://app.uniswap.org/swap?chain=mainnet&inputCurrency=NATIVE&outputCurrency=0x289ff00235d2b98b0145ff5d4435d3e92f9540a6"
+
 const ETH_COIN = 60;
 const BASE_COIN = 2147492101;
 const OP_COIN = 2147483658;
 
 export const MintForm = () => {
-  const { isRenting, listedName, listingChainId, isTestnet, defaultAvatarUri } =
+  const { listedName, listingChainId, isTestnet, defaultAvatarUri, listing } =
     useAppConfig();
 
   const [label, setLabel] = useState("");
   const { address, chainId } = useAccount();
   const { openConnectModal } = useConnectModal();
+  const [notEnoughBoe, setNotEnoughBoe] = useState<boolean>(false);
   const {
     checkAvailable,
     mintParameters,
     executeTx,
     waitForTx,
-    getMintDetails,
   } = useNamepsaceClient();
   const [mintError, setMintError] = useState<string>("");
   const [mintPrice, setMintPrice] = useState<{
@@ -104,7 +108,6 @@ export const MintForm = () => {
   const { data: walletClient } = useWalletClient({
     chainId: chainForPrimaryName,
   });
-  const [expiryYears, setExpiryYears] = useState(1);
 
   const handleUpdateLabel = (value: string) => {
     const _value = value.toLocaleLowerCase();
@@ -119,34 +122,23 @@ export const MintForm = () => {
     setLabel(_value);
 
     if (_value.length > 0) {
-      setMintPrice({...mintPrice, isFetching: true})
+      setMintPrice({ ...mintPrice, isFetching: true })
       setIndicators({ available: false, checking: true });
       debouncedCheck(_value);
-      debouncedFetchPrice(_value);
+      fetchPrice(label)
     } else {
       setIndicators({ available: false, checking: false });
     }
   };
 
-  const debouncedFetchPrice = useCallback(
-    debounce((label) => fetchPrice(label), 200),
-    [address, listedName]
-  );
 
   const fetchPrice = async (label: string) => {
     try {
-      const mintDetails = await getMintDetails({
-        label: label,
-        minterAddress: address!,
-        parentName: listedName,
-      });
-      const mintPrice = mintDetails.isStandardFee
-        ? mintDetails.estimatedFeeEth + mintDetails.estimatedPriceEth
-        : mintDetails.estimatedPriceEth;
+      const price = getSubnamePrice(label, listing.prices);
       setMintPrice({
         isError: false,
         isFetching: false,
-        mintPrice: mintPrice,
+        mintPrice: price,
       });
     } catch (err) {
       setMintPrice({
@@ -204,7 +196,7 @@ export const MintForm = () => {
       setMintIndicator({ btnLabel: "Waiting for wallet", waiting: true });
       const params = await mintParameters({
         minterAddress: address,
-        expiryInYears: expiryYears,
+        expiryInYears: 1,
         records: {
           addresses: addresses,
           texts: texts,
@@ -239,7 +231,7 @@ export const MintForm = () => {
 
   const parseError = (errMessage: string) => {
     if (errMessage.includes("MINTER_NOT_TOKEN_OWNER")) {
-      setMintError("Not enough tokens!");
+      setNotEnoughBoe(true)
     } else if (errMessage.includes("SUBNAME_TAKEN")) {
       setMintError("Subname is already taken");
     } else if (errMessage.includes("MINTER_NOT_WHITELISTED")) {
@@ -266,8 +258,8 @@ export const MintForm = () => {
 
   const boxWidth = useBreakpointValue({ base: "90%", md: "400px" });
   const boxPadding = useBreakpointValue({ base: 4, md: 6 });
-  const headlineFontSize = useBreakpointValue({ base: "40px", md: "70px" });
-  const subHeadlineFontSize = useBreakpointValue({ base: "46px", md: "40px" });
+  const headlineFontSize = useBreakpointValue({ base: "35px", md: "50px" });
+  const subHeadlineFontSize = useBreakpointValue({ base: "15px", md: "20px" });
 
   const handlePrimaryName = async () => {
     if (chainId !== chainForPrimaryName) {
@@ -325,6 +317,14 @@ export const MintForm = () => {
     }
   };
 
+  const getMintBoeTokenAmmount = () => {
+    if (listing?.tokenGatedAccess && listing.tokenGatedAccess.length > 0) {
+      const boe = listing.tokenGatedAccess[0]
+      return boe.erc20MinTokenBalance
+    }
+    return 1;
+  }
+
   return (
     <Grid
       display="flex"
@@ -335,6 +335,7 @@ export const MintForm = () => {
     >
       <Box
         display="flex"
+        marginTop={25}
         flexDirection="column"
         alignItems="center"
         mb={10}
@@ -362,6 +363,18 @@ export const MintForm = () => {
         >
           ENS for the BOOELIEVERS
         </Text>
+        <Box display="flex" alignItems={"center"} marginTop={"10px"}>
+          <Box background={themeVariables.accent} padding={"8px"} textAlign={"center"} minWidth={"90px"} borderRadius={10} marginRight={2}>
+            <Link fontSize={16} color="black" textDecoration={"none"} href="https://www.bookofeth.xyz" target="_blank" rel="noopener noreferrer">
+              Website
+            </Link>
+          </Box>
+          <Box background={themeVariables.accent} padding={"8px"} textAlign={"center"} minWidth={"90px"} borderRadius={10} marginRight={2}>
+            <Link fontSize={16} color="black" textDecoration={"none"} href="https://booemerch.com" target="_blank" rel="noopener noreferrer">
+              Merch
+            </Link>
+          </Box>
+        </Box>
       </Box>
       <Box
         bg={hexToRgba(themeVariables.main, 0.8)}
@@ -400,6 +413,10 @@ export const MintForm = () => {
                   {label.length === 0 ? "{name}" : label}
                 </Box>
                 .{listedName}
+                {(indicators.checking && <>
+
+
+                </>)}
               </Text>
               <Box mb={1} position="relative">
                 <Input
@@ -420,47 +437,26 @@ export const MintForm = () => {
                     {indicators.checking && <Spinner color={themeVariables.accent} height={21} />}
                   </Box>
                 )}
-              </Box>
-              {isRenting && (
-                <Box display="flex" alignItems="center" mb={3} mt={3}>
-                  <Text
-                    color={themeVariables.light}
-                    fontSize={14}
-                    marginRight="0px"
-                    mb={0}
-                    marginLeft="5px"
+                {(!indicators.checking && label.length > 0) && (
+                  <Box
+                    position="absolute"
+                    top="50%"
+                    right="0.5rem"
+                    display="flex"
+                    alignItems="center"
+                    transform="translateY(-50%)"
                   >
-                    Expiration in years:
-                  </Text>
-                  <FaArrowDown
-                    style={{
-                      cursor: "pointer",
-                      color: themeVariables.accent,
-                      marginLeft: "10px",
-                      marginRight: "10px",
-                    }}
-                    onClick={() => setExpiryYears(Math.max(1, expiryYears - 1))}
-                  />
-                  <Text color={themeVariables.light} fontSize={14} mb={0}>
-                    {expiryYears}
-                  </Text>
-                  <FaArrowUp
-                    style={{
-                      cursor: "pointer",
-                      color: themeVariables.accent,
-                      marginLeft: "10px",
-                    }}
-                    onClick={() => setExpiryYears(expiryYears + 1)}
-                  />
-                </Box>
-              )}
+                    <Text fontWeight={"bold"} fontSize={16} padding={0} margin={0} marginRight={1}>{mintPrice.mintPrice} ETH</Text>
+                  </Box>
+                )}
+              </Box>
               <Button
                 onClick={() => handleMint()}
                 width="100%"
                 disabled={mintBtnDisabled}
-                color={themeVariables.light}
+                color={"black"}
                 bg={themeVariables.accent}
-                mt={isRenting ? 0 : 4}
+                marginTop={"5px"}
               >
                 {mintIndicators.btnLabel}
               </Button>
@@ -471,26 +467,44 @@ export const MintForm = () => {
                   mt={5}
                   mb={0}
                 >
-                  Subname is already registered
+                  <Alert.Root status="warning" marginTop={"10px"} position="relative">
+                <Alert.Indicator />
+                <Alert.Content>
+                  <Alert.Description>
+                   Name not available
+                  </Alert.Description>
+                </Alert.Content>
+              </Alert.Root>
                 </Text>
               )}
               {mintError.length > 0 && (
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="space-between"
-                  mt={5}
-                  mb={0}
-                >
-                  <Text color={themeVariables.error} mb={0}>
-                    {mintError}
-                  </Text>
-                  <FaX
-                    style={{ cursor: "pointer", color: themeVariables.accent }}
+                <Alert.Root status="warning" marginTop={"10px"} position="relative">
+                <Alert.Indicator />
+                <Alert.Content>
+                  <Alert.Description>
+                   {mintError}
+                   <FaX
+                    size="10px"
+                    style={{ position:"absolute", top:"10px", right:"10px", cursor: "pointer", color: themeVariables.accent }}
                     onClick={() => setMintError("")}
                   />
-                </Box>
+                  </Alert.Description>
+                </Alert.Content>
+              </Alert.Root>
               )}
+              {notEnoughBoe && <Alert.Root status="warning" marginTop={"10px"}>
+                <Alert.Indicator />
+                <Alert.Content>
+                  <Alert.Description>
+                    To mint a subname, you need at least <b>{getMintBoeTokenAmmount()} BOOE tokens</b> in your wallet.
+                    <br />
+                    <Link href={swapBoeUri} target="_blank" color={themeVariables.accent}>
+                      Swap tokens
+                    </Link>{" "}
+                    to continue.
+                  </Alert.Description>
+                </Alert.Content>
+              </Alert.Root>}
             </>
           )}
           {registrationStep === RegistrationStep.TX_SENT && (
@@ -575,7 +589,7 @@ export const MintForm = () => {
               <Button
                 onClick={() => handlePrimaryName()}
                 bg={themeVariables.accent}
-                color={themeVariables.light}
+                color={"black"}
                 width="100%"
                 mb={2}
                 disabled={primaryNameIndicators.waiting}
@@ -620,7 +634,7 @@ export const MintForm = () => {
                 />
               </Box>
               <Link
-                href={`https://app.ens.domains/${label}.${listedName}`}
+                href={`https://app.namespace.ninja/${label}.${listedName}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 mb={2}

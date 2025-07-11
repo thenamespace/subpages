@@ -34,6 +34,7 @@ interface IAppConfigContext {
   isError: boolean;
   isLoading: boolean;
   defaultAvatarUri?: string;
+  listing: EnsListing
 }
 
 const defaultContext: IAppConfigContext = {
@@ -44,6 +45,8 @@ const defaultContext: IAppConfigContext = {
   listingType: "L1",
   isError: false,
   isLoading: true,
+  //@ts-ignore
+  listing: null
 };
 
 const AppContext = createContext<IAppConfigContext>({ ...defaultContext });
@@ -81,11 +84,14 @@ export const AppContextProvider = ({ children }: PropsWithChildren) => {
     let listingType = "L1";
 
     let isExpirable = false;
+    let listing: EnsListing | undefined = undefined;
 
     try {
       const { data } = await axios.get<EnsListing>(backendUri);
 
       listingType = data.type;
+      listing = data;
+
       if (data.l2Metadata) {
         isExpirable = data.l2Metadata.isExpirable;
       }
@@ -103,6 +109,7 @@ export const AppContextProvider = ({ children }: PropsWithChildren) => {
       listingChainId: supportedChainIds[listingChainName as SupportedChain],
       listingType: listingType as any,
       defaultAvatarUri: defaultAvatar,
+      listing: listing
     });
   };
 
