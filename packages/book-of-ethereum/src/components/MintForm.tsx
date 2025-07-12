@@ -125,7 +125,7 @@ export const MintForm = () => {
       setMintPrice({ ...mintPrice, isFetching: true })
       setIndicators({ available: false, checking: true });
       debouncedCheck(_value);
-      fetchPrice(label)
+      fetchPrice(_value)
     } else {
       setIndicators({ available: false, checking: false });
     }
