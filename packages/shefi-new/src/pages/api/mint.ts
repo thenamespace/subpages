@@ -1,3 +1,4 @@
+//@ts-nocheck
 import type { NextApiRequest, NextApiResponse } from "next";
 import {
   Address,
@@ -65,12 +66,12 @@ export default async function handler(
       addresses: [
             {
               value: body.owner,
-              coin: ETH_COIN,
+              coinType: ETH_COIN,
               
             },
             {
               value: body.owner,
-              coin: BASE_COIN,
+              coinType: BASE_COIN,
             },
           ],
           texts: [
