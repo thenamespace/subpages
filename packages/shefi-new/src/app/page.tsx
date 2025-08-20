@@ -45,7 +45,7 @@ export default function Home() {
   const getProfiles = async (page: number) => {
     setLoading(true);
     const response = await axios.get<{ items: L2SubnameResponse[] }>(
-      `https://staging.indexer.namespace.ninja/api/v1/subnames?network=base&parentName=shefi.eth&pageSize=50&page=${page}`,
+      `https://indexer.namespace.ninja/api/v1/subnames?network=base&parentName=shefi.eth&pageSize=50&page=${page}`,
       {}
     );
 
