@@ -4,8 +4,9 @@ import localFont from 'next/font/local'
 import { cn } from '@/lib/utils'
 
 import './globals.css'
-import { WalletConnector } from '@/components/WalletConnect'
+import { WalletConnector } from '../components/WalletConnect';
 import { Metadata } from 'next'
+import { PropsWithChildren } from 'react';
 
 const seasonsFont = localFont({
   src: '../assets/fonts/TheSeasons-reg.woff2',
@@ -54,9 +55,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+}: PropsWithChildren) {
   return (
     <html
       lang="en"
