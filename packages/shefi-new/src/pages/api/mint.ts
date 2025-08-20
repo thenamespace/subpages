@@ -1,4 +1,3 @@
-//@ts-nocheck
 import type { NextApiRequest, NextApiResponse } from "next";
 import {
   Address,
@@ -12,7 +11,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
 import { AxiosError } from "axios";
 import { getWhitelist } from "@/api/api";
-import { createMintClient, EnsRecords } from "@namespacesdk/mint-manager";
+import { ChainName, createMintClient, EnsRecords } from "@namespacesdk/mint-manager";
 
 const ETH_COIN = 60;
 const BASE_COIN = 2147492101;
@@ -66,12 +65,12 @@ export default async function handler(
       addresses: [
             {
               value: body.owner,
-              coinType: ETH_COIN,
+              chain: ChainName.Ethereum,
               
             },
             {
               value: body.owner,
-              coinType: BASE_COIN,
+              chain: ChainName.Base,
             },
           ],
           texts: [

@@ -11,7 +11,7 @@
   "dependencies": {
     "@namespacesdk/addresses": "^1.0.15",
     "@namespacesdk/indexer-manager": "^1.0.1",
-    "@namespacesdk/mint-manager": "^1.0.9",
+    "@namespacesdk/mint-manager": "^1.0.15",
     "@rainbow-me/rainbowkit": "^2.2.4",
     "@tanstack/react-query": "^5.52.2",
     "@upstash/redis": "^1.34.0",
