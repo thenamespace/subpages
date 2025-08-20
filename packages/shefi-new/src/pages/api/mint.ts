@@ -11,7 +11,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
 import { AxiosError } from "axios";
 import { getWhitelist } from "@/api/api";
-import { createMintClient } from "@namespacesdk/mint-manager";
+import { createMintClient, EnsRecords } from "@namespacesdk/mint-manager";
 
 const ETH_COIN = 60;
 const BASE_COIN = 2147492101;
@@ -61,17 +61,12 @@ export default async function handler(
       }
     } catch (err) {}
 
-    const parameters = await namespaceClient.getMintTransactionParameters(
-      {
-        minterAddress: wallet.address,
-        label: body.label,
-        parentName: ENS_NAME,
-        owner: body.owner,
-        records: {
-          addresses: [
+    const records: EnsRecords = {
+      addresses: [
             {
               value: body.owner,
               coin: ETH_COIN,
+              
             },
             {
               value: body.owner,
@@ -84,7 +79,15 @@ export default async function handler(
               value: SHEFI_AVATAR,
             },
           ],
-        }
+    }
+    const parameters = await namespaceClient.getMintTransactionParameters(
+      {
+        minterAddress: wallet.address,
+        label: body.label,
+        parentName: ENS_NAME,
+        owner: body.owner,
+        //@ts-ignore
+        records: records
       }
     );
 
