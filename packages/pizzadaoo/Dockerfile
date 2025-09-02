@@ -8,13 +8,13 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN yarn install
+RUN npm install
 
 # Copy the rest of the application code
 COPY . .
 
 # Build the Next.js app
-RUN yarn run build
+RUN npm run build
 
 # Expose the port the app runs on
 EXPOSE 3000
