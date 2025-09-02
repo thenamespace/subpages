@@ -250,6 +250,19 @@ export const MintForm = () => {
     setSelectedPizza(listing);
   };
 
+  const getInstructionText = (domainName: string) => {
+  switch (domainName) {
+    case 'pizzadao.eth':
+      return 'Ask a Capo or DPR to mint your crew number for you.';
+    case 'pizzamafia.eth':
+      return 'Anyone with a Rare Pizza Box NFT can mint a pizza mafia name.';
+    case 'rarepizzas.eth':
+      return 'Ask a Capo or DPR to mint your topping for you.';
+    default:
+      return '';
+    }
+  };
+
   const mintBtnDisabled =
     searchLabel.length === 0 ||
     indicator.isChecking ||
@@ -288,6 +301,17 @@ export const MintForm = () => {
                 </div>
               </div>
               <div className="d-flex flex-column align-items-center"></div>
+              <div className="instruction-text-container mb-3">
+                <p className="instruction-text text-center" style={{ 
+                  color: 'rgba(255, 255, 255, 0.8)', 
+                  fontSize: '14px',
+                  margin: '0 auto',
+                  maxWidth: '300px',
+                  lineHeight: '1.4'
+                }}>
+                  {getInstructionText(selectedPizzaName.fullName)}
+                </p>
+              </div>
               <p className="text-center" style={{ fontSize: 18 }}>
                 <span style={{ fontSize: 18 }} className="input-name">
                   {searchLabel.length ? searchLabel : "{name}"}.
