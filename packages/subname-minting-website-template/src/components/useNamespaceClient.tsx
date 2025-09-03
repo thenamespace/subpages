@@ -26,6 +26,8 @@ const getRPCUrls = () => {
 const mintClient = createMintClient({
   mintSource: appSource,
   cursomRpcUrls: getRPCUrls(),
+  environment: "staging",
+  isTestnet: true,
 });
 
 function generateAlchemyUri(alchemyNetwork: string, token: string) {

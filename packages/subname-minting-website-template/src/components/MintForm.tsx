@@ -72,6 +72,9 @@ export const MintForm = () => {
   let reverseRegistarAbi;
   let reverseRegistar;
   let chainForPrimaryName;
+
+  console.log("isTestnet isTestnet ==> ", isTestnet);  
+
   if (!isTestnet) {
     reverseRegistar = "0xa58E81fe9b61B5c3fE2AFD33CF304c454AbFc7Cb" as Address;
     reverseRegistarAbi = parseAbi(["function setName(string name)"]);
@@ -131,18 +134,18 @@ export const MintForm = () => {
     if (chainId !== listingChainId) {
       await switchChainAsync({ chainId: listingChainId });
     }
-    const addresses: { coin: number; value: string }[] = [
+    const addresses: { chain: number; value: string }[] = [
       {
         value: address,
-        coin: ETH_COIN,
+        chain: ETH_COIN,
       },
       {
         value: address,
-        coin: BASE_COIN
+        chain: BASE_COIN
       },
       {
         value: address,
-        coin: OP_COIN
+        chain: OP_COIN
       }
     ];
 
