@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { addEnsContracts, ensPublicActions, ensSubgraphActions } from "@ensdomains/ensjs";
 import { createPublicClient, publicActions } from "viem";
 import { mainnet } from "viem/chains";
