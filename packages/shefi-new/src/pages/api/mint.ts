@@ -11,7 +11,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
 import { AxiosError } from "axios";
 import { getWhitelist } from "@/api/api";
-import { ChainName, createMintClient, EnsRecords } from "@namespacesdk/mint-manager";
+import { ChainName, createMintClient, EnsRecords } from "@thenamespace/mint-manager";
 
 const ETH_COIN = 60;
 const BASE_COIN = 2147492101;
@@ -86,7 +86,6 @@ export default async function handler(
         label: body.label,
         parentName: ENS_NAME,
         owner: body.owner,
-        //@ts-ignore
         records: records
       }
     );
