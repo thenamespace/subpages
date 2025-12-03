@@ -65,6 +65,7 @@ export const MintForm = () => {
     waitingTx: false,
     waitingWallet: false,
   });
+  const [mintedName, setMintedName] = useState<string | null>(null);
   const [txHash, setTxHash] = useState();
 
   const handleSearch = async (value: string) => {
@@ -113,6 +114,10 @@ export const MintForm = () => {
     }
 
     setMintState({ ...mintState, waitingWallet: true });
+    // Freeze the name being minted so that changing the selected domain
+    // while the transaction is pending doesn't change the success screen label.
+    const currentMintedName = `${searchLabel}.${selectedPizzaName.fullName}`;
+    setMintedName(currentMintedName);
     let params: MintTransactionResponse;
     let mintRequest: any;
     try {
@@ -341,7 +346,7 @@ export const MintForm = () => {
               </div>
               <div className="err-container mt-2">
                 {isTaken && (
-                  <p className="err-message m-0">Already Registered</p>
+                  <p className="err-message m-0">You don't have minting permissions</p>
                 )}
               </div>
             </>
@@ -352,7 +357,7 @@ export const MintForm = () => {
           {mintStep === MintSteps.Success && (
             <SuccessScreen
               avatar={pizzaChar.src}
-              name={`${searchLabel}.${selectedPizzaName.fullName}`}
+              name={mintedName || `${searchLabel}.${selectedPizzaName.fullName}`}
             />
           )}
         </div>

@@ -16,9 +16,36 @@
     .mainnav {
         font-size: 18px;
         cursor: pointer;
+        padding: 6px 18px;
+        margin: 0 4px 12px;
+        border-radius: 999px;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        box-shadow: 0 3px 0 rgba(0, 0, 0, 0.7);
+        transition: all 0.15s ease-out;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 120px;
+
+        &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.7);
+            border-color: $yellow;
+        }
+
+        &:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+        }
+
         &.active {
             cursor: default;
-            color: $yellow;
+            color: black;
+            background: $yellow;
+            border-color: $yellow;
+            box-shadow: 0 3px 0 rgba(0, 0, 0, 0.9);
         }
     }
 
