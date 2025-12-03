@@ -79,4 +79,10 @@ export const KnownTexts: Record<string, KnownText> = {
     label: "Youtube",
     placeholder: "ex. @johndoe",
   },
+  "pizzatopping": {
+    key: "pizzatopping",
+    type: "profile",
+    label: "Favorite Pizza Topping",
+    placeholder: "ex. tomato",
+  },
 };

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Subname } from "./Models";
 import { KnownAddresses, WalletAddress } from "./records/Addresses";
 import { getCoderByCoinType } from "@ensdomains/address-encoder";
@@ -62,6 +62,8 @@ export const SingleSubname = ({
 
   const [textValues, setTextValues] = useState<Record<string, string>>({});
   const [currentNav, setCurrentNav] = useState<"text" | "addr">("addr");
+  const addressInputRef = useRef<HTMLInputElement | null>(null);
+  const textInputRef = useRef<HTMLInputElement | null>(null);
 
   const hasAddress = (coin: number) => {
     const addrs = subname.addresses || {};
@@ -321,29 +323,22 @@ export const SingleSubname = ({
         <p className="subtext mt-3 mb-0">{subname.name}</p>
       </div>
       <div className="d-flex justify-content-center">
-        <div
+        <button
+          type="button"
           className={`mainnav me-2 ${currentNav === "addr" ? "active" : ""}`}
           onClick={() => setCurrentNav("addr")}
         >
           Addresses
-        </div>
-        <div
+        </button>
+        <button
+          type="button"
           className={`mainnav ${currentNav === "text" ? "active" : ""}`}
           onClick={() => setCurrentNav("text")}
         >
           Texts
-        </div>
+        </button>
       </div>
-      <div className="update-btn">
-        <PlainBtn
-          loading={mintBtnLoading}
-          disabled={!hasRecordUpdates || mintBtnLoading}
-          onClick={handleUpdate}
-          className="w-100"
-        >
-         {mintBtnLabel}
-        </PlainBtn>
-      </div>
+
       {/* ADDRESSES */}
       {currentNav === "addr" && (
         <>
@@ -352,7 +347,10 @@ export const SingleSubname = ({
             <div className="d-flex flex-wrap justify-content-center">
               {Object.values(KnownAddresses).map((knownAddr) => (
                 <div
-                  onClick={() => setSelectedCoin(knownAddr.coinType)}
+                  onClick={() => {
+                    setSelectedCoin(knownAddr.coinType);
+                    addressInputRef.current?.focus();
+                  }}
                   className={`record-badge ${
                     isSelected(knownAddr.coinType) ? "selected" : ""
                   } ${isAddressSet(knownAddr.coinType) ? "" : "unset"}`}
@@ -368,6 +366,7 @@ export const SingleSubname = ({
                 {addressMetadata.name} address
               </div>
               <input
+                ref={addressInputRef}
                 placeholder={`Set ${addressMetadata.name} address...`}
                 onChange={(e) =>
                   handleAddressChange(selectedCoin, e.target.value)
@@ -398,7 +397,10 @@ export const SingleSubname = ({
                     isTextSet(txt.key) ? "" : "unset"
                   } ${selectedText === txt.key ? "selected" : ""}`}
                   key={txt.key}
-                  onClick={() => setSelectedText(txt.key)}
+                  onClick={() => {
+                    setSelectedText(txt.key);
+                    textInputRef.current?.focus();
+                  }}
                 >
                   {txt.type === "profile" ? (
                     <CgProfile color="#1FE5B5" className="me-2" />
@@ -415,7 +417,10 @@ export const SingleSubname = ({
                   <div
                     className={`record-badge ${isTextSet(txt) ? "" : "unset"}`}
                     key={txt + "-custom"}
-                    onClick={() => setSelectedText(txt)}
+                    onClick={() => {
+                      setSelectedText(txt);
+                      textInputRef.current?.focus();
+                    }}
                   >
                     <CgProfile color="#2c124f" className="me-2" />
                     <div>{txt}</div>
@@ -428,6 +433,7 @@ export const SingleSubname = ({
                   {textMetadata.label} record
                 </div>
                 <input
+                  ref={textInputRef}
                   value={textValues[selectedText] || ""}
                   onChange={(e) =>
                     handleTextChange(selectedText, e.target.value)
@@ -440,6 +446,17 @@ export const SingleSubname = ({
           </div>
         </>
       )}
+
+<div className="update-btn">
+        <PlainBtn
+          loading={mintBtnLoading}
+          disabled={!hasRecordUpdates || mintBtnLoading}
+          onClick={handleUpdate}
+          className="w-100"
+        >
+         {mintBtnLabel}
+        </PlainBtn>
+      </div>
     </div>
   );
 }
