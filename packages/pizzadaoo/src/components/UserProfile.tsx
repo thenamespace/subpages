@@ -17,22 +17,31 @@ export const UserProfile = () => {
   });
 
   useEffect(() => {
-    if (address && publicClient) {
-      const init = async () => {
-        let ensName: string;
-        let ensAvatar: string;
-        const name = await publicClient.getEnsName({ address: address})
-        if (name && name.length > 0) {
-          const avatar = await publicClient.getEnsAvatar({name: name});
+    if (!address || !publicClient) {
+      return;
+    }
+
+    const init = async () => {
+      let ensName: string | undefined = undefined;
+      let ensAvatar: string | undefined = undefined;
+
+      try {
+        const resolvedName = await publicClient.getEnsName({ address });
+        if (resolvedName) {
+          ensName = resolvedName;
+          const avatar = await publicClient.getEnsAvatar({ name: resolvedName });
           if (avatar) {
             ensAvatar = avatar;
           }
         }
-        //@ts-ignore
+      } catch (error) {
+        console.error("Failed to resolve ENS profile", error);
+      } finally {
         setProfile({ fetching: false, name: ensName, avatar: ensAvatar });
-      };
-      init();
-    }
+      }
+    };
+
+    init();
   }, [address, publicClient]);
 
   if (!address || profile.fetching) {
@@ -63,11 +72,13 @@ export const UserProfile = () => {
                 className="m-0 mb-1"
                 style={{ color: "white", lineHeight: "15px", fontSize:14 }}
               >
-                {profile.name || "Anonymous"}
+                {shortedAddr(profile.name ?? "" ) || "Anonymous"}
               </p>
-              <p className="m-0" style={{ fontSize: 12, lineHeight: "12px" }}>
-                {shortedAddr(address)}
-              </p>
+              {!profile.name && (
+                <p className="m-0" style={{ fontSize: 12, lineHeight: "12px" }}>
+                  {shortedAddr(address)}
+                </p>
+              )}
             </div>
           </div>
           <p onClick={() => disconnectAsync()} className="dc">
@@ -84,5 +95,9 @@ const shortedAddr = (addr: string) => {
     return;
   }
 
-  return addr.substring(0, 5) + "..." + addr.substring(addr.length - 5);
+  if (addr.length <= 12) {
+    return addr;
+  }
+
+  return addr.substring(0, 9) + "...";
 };
