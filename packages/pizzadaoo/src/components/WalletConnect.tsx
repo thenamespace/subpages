@@ -7,7 +7,7 @@ import {
   lightTheme,
 } from "@rainbow-me/rainbowkit";
 import { WagmiProvider } from "wagmi";
-import { mainnet, polygon, optimism, arbitrum, base, baseSepolia } from "wagmi/chains";
+import { base } from "wagmi/chains";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 
 const myTheme = merge(lightTheme(), {
@@ -22,7 +22,7 @@ const myTheme = merge(lightTheme(), {
 const config = getDefaultConfig({
   appName: "LSU",
   projectId: "a5f353014d529c8f85633e3c6250ac28",
-  chains: [mainnet, polygon, optimism, arbitrum, base, baseSepolia],
+  chains: [base],
   ssr: true, // If your dApp uses server side rendering (SSR)
 });
 
