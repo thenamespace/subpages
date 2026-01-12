@@ -113,6 +113,23 @@ export const MintForm = () => {
       return;
     }
 
+    // Check chain first before proceeding
+    if (!chain || chain.id !== LISTING_CHAIN_ID) {
+      try {
+        await switchChainAsync({ chainId: LISTING_CHAIN_ID });
+      } catch (error: any) {
+        if (error.details && error.details.includes("User rejected")) {
+          // User rejected the switch, don't show error
+          return;
+        }
+        toast("Please switch to Base network to register", {
+          className: "tech-toasty",
+          type: "error",
+        });
+        return;
+      }
+    }
+
     setMintState({ ...mintState, waitingWallet: true });
     // Freeze the name being minted so that changing the selected domain
     // while the transaction is pending doesn't change the success screen label.
@@ -121,9 +138,6 @@ export const MintForm = () => {
     let params: MintTransactionResponse;
     let mintRequest: any;
     try {
-      if (!chain || chain.id !== LISTING_CHAIN_ID) {
-        await switchChainAsync({ chainId: LISTING_CHAIN_ID });
-      }
 
       params = await mintClient.getMintTransactionParameters(
           {
@@ -268,12 +282,15 @@ export const MintForm = () => {
     }
   };
 
+  const isWrongChain = chain && chain.id !== LISTING_CHAIN_ID;
   const mintBtnDisabled =
     searchLabel.length === 0 ||
     indicator.isChecking ||
     !indicator.isAvailable ||
     mintState.waitingTx ||
-    mintState.waitingWallet || indicator.isError;
+    mintState.waitingWallet || 
+    indicator.isError ||
+    isWrongChain;
   const isTaken =
     searchLabel.length > 0 && !indicator.isChecking && !indicator.isAvailable;
 
@@ -348,6 +365,11 @@ export const MintForm = () => {
                 {isTaken && (
                   <p className="err-message m-0">You don't have minting permissions</p>
                 )}
+                {isWrongChain && address && (
+                  <p className="err-message m-0" style={{ color: "#ff6b6b" }}>
+                    Please switch to Base network to register
+                  </p>
+                )}
               </div>
             </>
           )}
@@ -398,13 +420,13 @@ export const TransactionPending = ({ hash }: { hash: string }) => {
     >
       <Spinner size="big" />
       <p className="mt-3 mb-0" style={{ fontSize: "22px" }}>
-        Generating a subname
+        Baking your name
       </p>
       {hash && (
         <a
           href={`https://basescan.org/tx/${hash}`}
           target="_blank"
-          style={{ color: "rgb(255,255,255,0.8)", cursor: "pointer" }}
+          style={{ color: "white", cursor: "pointer" }}
         >
           Transaction
         </a>
