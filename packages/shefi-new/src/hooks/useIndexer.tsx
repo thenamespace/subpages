@@ -47,18 +47,25 @@ export function useIndexer() {
     setError(null);
 
     try {
-      const fullName = `${label}.${PARENT_NAME}`;
-      const response = await axios.get<IndexerSubname>(
-        `${INDEXER_URL}/subname`,
+      // Use /subnames endpoint with label filter and find exact match
+      const response = await axios.get<SubnamePagedResponse>(
+        `${INDEXER_URL}/subnames`,
         {
           params: {
             network: 'base',
-            name: fullName,
+            parentName: PARENT_NAME,
+            label: label,
+            pageSize: 10,
           },
         }
       );
 
-      return response.data || null;
+      // Find exact match (label filter may return partial matches)
+      const exactMatch = response.data.items?.find(
+        (item) => item.label.toLowerCase() === label.toLowerCase()
+      );
+
+      return exactMatch || null;
     } catch (err: any) {
       // 404 means name doesn't exist, not an error
       if (err.response?.status === 404) {
