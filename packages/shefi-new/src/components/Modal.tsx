@@ -64,7 +64,7 @@ export function Modal({
     >
       <div
         className={cn(
-          'relative max-h-[90vh] w-full max-w-md overflow-auto rounded-2xl border-2 border-brand-orange bg-white p-6 shadow-xl animate-in zoom-in-95 duration-200',
+          'relative max-h-[90vh] w-full max-w-md overflow-auto rounded-2xl bg-white p-6 shadow-xl animate-in zoom-in-95 duration-200',
           className
         )}
       >

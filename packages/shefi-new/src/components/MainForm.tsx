@@ -390,7 +390,7 @@ export const MintForm = () => {
               </Button>
             ) : (
               <div
-                className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-brand-orange bg-brand-yellowBtn/30 p-4"
+                className="flex cursor-pointer items-center gap-3 rounded-2xl bg-transparent p-3 focus:outline-none active:outline-none"
                 onClick={() => setIsProfileModalOpen(true)}
               >
                 {avatarUrl ? (
@@ -472,15 +472,13 @@ export const MintForm = () => {
         title="Set Profile"
         className="max-w-lg"
       >
-        <div className="max-h-[60vh] overflow-y-auto">
-          <SelectRecordsForm
-            records={records}
-            onRecordsUpdated={(updatedRecords: EnsRecords) => {
-              setRecords(updatedRecords);
-            }}
-          />
-        </div>
-        <div className="mt-4 flex gap-3 border-t border-brand-orange/20 pt-4">
+        <SelectRecordsForm
+          records={records}
+          onRecordsUpdated={(updatedRecords: EnsRecords) => {
+            setRecords(updatedRecords);
+          }}
+        />
+        <div className="mt-4 flex gap-3 border-t border-gray-100 pt-4">
           <Button
             variant="outline"
             onClick={() => setIsProfileModalOpen(false)}
