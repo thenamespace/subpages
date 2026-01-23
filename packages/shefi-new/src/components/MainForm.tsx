@@ -1,52 +1,76 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { Button } from "./Button";
 import { Input } from "./Input";
+import { Modal } from "./Modal";
+import { Text } from "./Text";
+import { Spinner } from "./Spinner";
 import { normalize } from "viem/ens";
-import {
-  useAccount,
-  usePublicClient,
-  useSwitchChain,
-  useWalletClient,
-} from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { ENS_NAME, useNamepsaceClient } from "./useNamespaceClient";
 import { debounce } from "lodash";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { Address, Hash, parseAbi } from "viem";
-import { mainnet } from "wagmi/chains";
+import { Hash } from "viem";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { getWhitelist } from "@/api/api";
+import { SuccessModal } from "./SuccessModal";
+import { SetPrimaryNameModal } from "./SetPrimaryNameModal";
+import { L2_CHAIN_ID, PARENT_NAME } from "@/constants";
+import { usePrimaryName } from "@/contexts/PrimaryNameContext";
+import {
+  SelectRecordsForm,
+  type EnsRecords,
+  getSupportedAddressByName,
+  type SupportedEnsAddress,
+} from "@thenamespace/ens-components";
+
+const MIN_NAME_LENGTH = 3;
+const eth_address = getSupportedAddressByName("eth") as SupportedEnsAddress;
 
 enum RegistrationStep {
-  START = 0,
-  TX_SENT = 1,
-  PRIMARY_NAME = 2,
-  COMPLETE = 3,
+  AVAILABILITY = "availability",
+  REGISTER_RECEIPT = "register_receipt",
+  TX_PENDING = "tx_pending",
+  SUCCESS = "success",
 }
 
 export const MintForm = () => {
   const [label, setLabel] = useState("");
-  const { address, chainId } = useAccount();
+  const { address, chainId, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const [mintError, setMintError] = useState<string>("");
-  const [txHash, setTxHash] = useState<Hash>();
   const { switchChainAsync } = useSwitchChain();
   const { checkAvailable, waitForTx } = useNamepsaceClient();
+  const { refreshPrimaryName } = usePrimaryName();
 
-  const [indicators, setIndicators] = useState<{
-    checking: boolean;
-    available: boolean;
+  const [nameAvailable, setNameAvailable] = useState<{
+    isChecking: boolean;
+    isAvailable: boolean;
   }>({
-    available: true,
-    checking: false,
+    isChecking: false,
+    isAvailable: false,
   });
 
-  const [buttonText, setButtonText] = useState("Register");
-
-  const [registrationStep, setRegistrationStep] = useState(
-    RegistrationStep.START
+  const [registrationStep, setRegistrationStep] = useState<RegistrationStep>(
+    RegistrationStep.AVAILABILITY
   );
+
+  const [isWaitingWallet, setIsWaitingWallet] = useState(false);
+  const [txHash, setTxHash] = useState<Hash>();
+
+  // Profile/Records state
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [records, setRecords] = useState<EnsRecords>({
+    addresses: [],
+    texts: [],
+  });
+  const [profileSet, setProfileSet] = useState(false);
+
+  // Success/Primary name modals
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showPrimaryNameModal, setShowPrimaryNameModal] = useState(false);
+
+  // Whitelist state
   const [whitelistConfig, setWhitelistConfig] = useState<{
     featureEnabled: boolean;
     isWhitelisted: boolean;
@@ -57,23 +81,32 @@ export const MintForm = () => {
     isChecking: true,
   });
 
+  // Initialize records with user's address when connected
   useEffect(() => {
-    if (!address) {
-      return;
+    if (address && records.addresses.length === 0) {
+      setRecords({
+        ...records,
+        addresses: [{ coinType: eth_address.coinType, value: address }],
+      });
     }
+  }, [address]);
+
+  // Check whitelist
+  useEffect(() => {
+    if (!address) return;
 
     getWhitelist()
       .then((res) => {
         let isWhitelisted = true;
-        let featureEnabled =
-          res.whitelist?.type !== undefined && res?.whitelist.type !== 0;
+        // Check if whitelist feature is enabled (type !== 0) and whitelist data exists
+        const hasWhitelist = res?.whitelist && typeof res.whitelist.type === 'number';
+        let featureEnabled = hasWhitelist && res.whitelist.type !== 0;
 
-        if (featureEnabled) {
-          const whitelisted = res.whitelist?.wallets || [];
-          isWhitelisted =
-            whitelisted.find(
-              (i) => i.toLocaleLowerCase() === address!.toLocaleLowerCase()
-            ) !== undefined;
+        if (featureEnabled && res.whitelist) {
+          const wallets = res.whitelist.wallets || [];
+          isWhitelisted = wallets.find(
+            (i) => i.toLocaleLowerCase() === address!.toLocaleLowerCase()
+          ) !== undefined;
         }
 
         setWhitelistConfig({
@@ -83,7 +116,8 @@ export const MintForm = () => {
         });
       })
       .catch((err) => {
-        console.error(err);
+        console.error("Whitelist check error:", err);
+        // If whitelist check fails, allow minting (don't block users)
         setWhitelistConfig({
           featureEnabled: false,
           isChecking: false,
@@ -92,188 +126,173 @@ export const MintForm = () => {
       });
   }, [address]);
 
-  useEffect(() => {
-    setRegistrationStep(RegistrationStep.START);
-  }, []);
+  // Count records set
+  const recordsCount = useMemo(() => {
+    let count = 0;
+    records.texts.forEach((text) => {
+      if (text.value && text.value.length > 0) count++;
+    });
+    records.addresses.forEach((addr) => {
+      if (addr.value && addr.value.length > 0) count++;
+    });
+    return count;
+  }, [records]);
 
-  const [mintIndicators, setMintIndicator] = useState<{
-    waiting: boolean;
-    btnLabel: string;
-  }>({ waiting: false, btnLabel: "Register" });
+  // Get avatar from records
+  const avatarUrl = useMemo(() => {
+    const avatarRecord = records.texts.find((text) => text.key === "avatar");
+    return avatarRecord?.value || undefined;
+  }, [records]);
 
-  let reverseRegistarAbi;
-  let reverseRegistar;
-  let chainForPrimaryName;
-  reverseRegistar = "0xa58E81fe9b61B5c3fE2AFD33CF304c454AbFc7Cb" as Address;
-  reverseRegistarAbi = parseAbi(["function setName(string name)"]);
-  chainForPrimaryName = mainnet.id;
+  const handleLabelChanged = (value: string) => {
+    if (value.includes(".")) return;
+    const _value = value.toLowerCase();
 
-  const publicClient = usePublicClient({ chainId: chainForPrimaryName });
-  const { data: walletClient } = useWalletClient({
-    chainId: chainForPrimaryName,
-  });
-
-
-  const [primaryNameIndicators, setPrimaryNameIndicators] = useState<{
-    waiting: boolean;
-    btnLabel: string;
-  }>({ waiting: false, btnLabel: "Set primary name!" });
-
-  const handleUpdateLabel = (value: string) => {
-    const _value = value.toLocaleLowerCase();
-    if (_value.includes(".")) {
-      return;
-    }
     try {
       normalize(_value);
     } catch (err) {
       return;
     }
+
     setLabel(_value);
 
-    if (_value.length > 0) {
-      setIndicators({ available: false, checking: true });
-      debouncedCheck(_value);
+    if (_value.length >= MIN_NAME_LENGTH) {
+      setNameAvailable({ ...nameAvailable, isChecking: true });
+      debouncedCheckName(_value);
     } else {
-      setIndicators({ available: true, checking: false });
+      setNameAvailable({ isChecking: false, isAvailable: false });
     }
   };
 
-  useEffect(() => {
-    if (indicators.checking && label.length > 0) {
-      setButtonText(`Checking...`);
-    } else if (!indicators.available) {
-      setButtonText("Subname Taken");
-    } else {
-      setButtonText("Register");
-    }
-  }, [indicators]);
-
-  const check = async (label: string) => {
-    const subnameAvailable = await checkAvailable(label);
-    setIndicators({
-      available: subnameAvailable,
-      checking: false,
-    });
-  };
-
-  const debouncedCheck = useCallback(
-    debounce((label) => check(label), 200),
+  const debouncedCheckName = useCallback(
+    debounce(async (label: string) => {
+      const available = await checkAvailable(label);
+      setNameAvailable({
+        isChecking: false,
+        isAvailable: available,
+      });
+    }, 500),
     []
   );
 
-  const handleMint = async () => {
-    if (!address) {
+  const handleNext = async () => {
+    if (!isConnected) {
+      openConnectModal?.();
+      return;
+    } else if (chainId !== L2_CHAIN_ID) {
+      await switchChainAsync({ chainId: L2_CHAIN_ID });
+      return;
+    } else {
+      setRegistrationStep(RegistrationStep.REGISTER_RECEIPT);
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!isConnected) {
       openConnectModal?.();
       return;
     }
 
+    if (label.length < MIN_NAME_LENGTH) {
+      toast.error(`Name must be at least ${MIN_NAME_LENGTH} characters`);
+      return;
+    }
+
+    if (!nameAvailable.isAvailable) {
+      toast.error("This name is not available");
+      return;
+    }
+
+    setIsWaitingWallet(true);
+
     try {
-      setMintIndicator({ btnLabel: "Waiting for wallet", waiting: true });
-      setButtonText("Registering...");
+      // Prepare records for API
+      const recordsPayload = {
+        texts: records.texts.filter((t) => t.value && t.value.length > 0),
+        addresses: records.addresses.filter((a) => a.value && a.value.length > 0),
+      };
 
       const { data } = await axios.post<{ tx: Hash }>("/api/mint", {
         owner: address,
         label: label,
+        records: recordsPayload,
       });
 
       setTxHash(data.tx);
-      setRegistrationStep(RegistrationStep.TX_SENT);
-      setMintIndicator({ btnLabel: "Registering...", waiting: true });
+      setRegistrationStep(RegistrationStep.TX_PENDING);
+
       await waitForTx(data.tx);
-      setRegistrationStep(RegistrationStep.PRIMARY_NAME);
+
+      // Show success modal
+      setShowSuccessModal(true);
+      setRegistrationStep(RegistrationStep.SUCCESS);
     } catch (err: any) {
-      console.error(err);
-      if (err?.cause?.details?.includes("User denied transaction signature")) {
-        return;
-      } else if (err?.cause?.details?.includes("insufficient funds for")) {
-        setMintError(`Insufficient balance`);
-      } else {
-        parseError(err?.message || "Unknown error ocurred");
-      }
-    } finally {
-      setMintIndicator({ btnLabel: "Register", waiting: false });
-      setButtonText("Register");
-    }
-  };
+      console.error("Mint error:", err);
 
-  const parseError = (errMessage: string) => {
-    if (errMessage.includes("MINTER_NOT_TOKEN_OWNER")) {
-      setMintError("You don't have enought tokens for minting!");
-    } else if (errMessage.includes("SUBNAME_TAKEN")) {
-      setMintError("Subname is already taken");
-    } else if (errMessage.includes("MINTER_NOT_WHITELISTED")) {
-      setMintError("You are not whitelisted");
-    } else if (errMessage.includes("LISTING_EXPIRED")) {
-      setMintError("Listing has expired");
-    } else if (errMessage.includes("SUBNAME_RESERVED")) {
-      setMintError("Subname is reserved");
-    } else if (errMessage.includes("VERIFIED_MINTER_ADDRESS_REQUIRED")) {
-      setMintError("Verification required");
-    } else {
-      setMintError("Unknown error ocurred. Check console for more info");
-    }
-  };
-
-  const noLabel = label.length === 0;
-  const subnameTakenErr =
-    !noLabel && !indicators.checking && !indicators.available;
-  const mintBtnDisabled =
-    noLabel ||
-    indicators.checking ||
-    !indicators.available ||
-    mintIndicators.waiting;
-
-  const handlePrimaryName = async () => {
-    if (chainId !== chainForPrimaryName) {
-      await switchChainAsync({ chainId: chainForPrimaryName });
-    }
-
-    try {
-      setPrimaryNameIndicators({
-        btnLabel: "Waiting for wallet",
-        waiting: true,
-      });
-
-      const resp = await publicClient!!.simulateContract({
-        abi: reverseRegistarAbi,
-        address: reverseRegistar,
-        functionName: "setName",
-        args: [`${label}.${ENS_NAME}`],
-        account: address!!,
-      });
-
-      try {
-        const tx = await walletClient!!.writeContract(resp.request);
-        setPrimaryNameIndicators({ btnLabel: "Processing...", waiting: true });
-
-        await publicClient?.waitForTransactionReceipt({
-          hash: tx,
-          confirmations: 1,
-        });
-        setRegistrationStep(RegistrationStep.COMPLETE);
-
-        toast.success("Primary name set successfully!");
-      } catch (err: any) {
-        if (err.details) {
-          toast.error(err.details);
+      if (err?.response?.data?.error) {
+        const errorMsg = err.response.data.error;
+        if (errorMsg.includes("SUBNAME_TAKEN")) {
+          toast.error("This name is already taken");
+        } else if (errorMsg.includes("MINTER_NOT_WHITELISTED")) {
+          toast.error("You are not whitelisted");
+        } else {
+          toast.error("Registration failed. Please try again.");
         }
-      }
-    } catch (err: any) {
-      if (err.details) {
-        toast.error(err.details);
-      } else if (err.response) {
-        toast.error(err.response?.data?.message);
+      } else if (err?.message?.includes("User denied") || err?.message?.includes("rejected")) {
+        // User rejected - no toast
       } else {
-        console.log(err);
-        toast.error("Unknown error occurred :(");
+        toast.error("Registration failed. Please try again.");
       }
     } finally {
-      setPrimaryNameIndicators({
-        btnLabel: "Set primary name!",
-        waiting: false,
-      });
+      setIsWaitingWallet(false);
     }
+  };
+
+  const handleProfileSave = () => {
+    const anyRecordsSet =
+      records.texts.length > 0 &&
+      records.texts.find((txt) => txt.value && txt.value.length > 0) !== undefined;
+    setProfileSet(anyRecordsSet);
+    setIsProfileModalOpen(false);
+  };
+
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    // Reset form
+    setLabel("");
+    setRecords({ addresses: [], texts: [] });
+    setProfileSet(false);
+    setRegistrationStep(RegistrationStep.AVAILABILITY);
+  };
+
+  const handleOpenPrimaryNameModal = () => {
+    setShowSuccessModal(false);
+    setShowPrimaryNameModal(true);
+  };
+
+  const handlePrimaryNameSuccess = async () => {
+    setShowPrimaryNameModal(false);
+    await refreshPrimaryName(true);
+    // Reset form
+    setLabel("");
+    setRecords({ addresses: [], texts: [] });
+    setProfileSet(false);
+    setRegistrationStep(RegistrationStep.AVAILABILITY);
+  };
+
+  const getNextButtonLabel = () => {
+    if (!isConnected) return "Connect Wallet";
+    if (chainId !== L2_CHAIN_ID) return "Switch to Base";
+    return "Continue";
+  };
+
+  const isNextButtonEnabled = () => {
+    if (!isConnected || chainId !== L2_CHAIN_ID) return true;
+    return (
+      label.length >= MIN_NAME_LENGTH &&
+      !nameAvailable.isChecking &&
+      nameAvailable.isAvailable
+    );
   };
 
   const showNotWhitelistedBtn =
@@ -281,77 +300,215 @@ export const MintForm = () => {
     whitelistConfig.featureEnabled &&
     !whitelistConfig.isWhitelisted;
 
-  return (
-    <div className={"flex w-full max-w-80 flex-col gap-2"}>
-      {registrationStep != RegistrationStep.COMPLETE &&
-        registrationStep != RegistrationStep.PRIMARY_NAME && (
-          <>
-            <Input
-              name="name"
-              placeholder="Enter your name"
-              suffix={`.shefi.eth`}
-              onChange={(e) => handleUpdateLabel(e.target.value)}
-            />
+  const fullName = `${label}.${PARENT_NAME}`;
 
+  return (
+    <>
+      <div className="flex w-full max-w-md flex-col gap-4">
+        {/* Step 1: Availability Check */}
+        {registrationStep === RegistrationStep.AVAILABILITY && (
+          <>
+            <div className="space-y-2">
+              <Text size="sm" color="gray">
+                Choose your name
+              </Text>
+              <Input
+                name="name"
+                placeholder="Enter your name"
+                suffix={`.${PARENT_NAME}`}
+                onChange={(e) => handleLabelChanged(e.target.value)}
+                value={label}
+              />
+            </div>
+
+            {/* Name length warning */}
+            {label.length > 0 && label.length < MIN_NAME_LENGTH && (
+              <Text size="sm" color="gray">
+                Name must be at least {MIN_NAME_LENGTH} characters
+              </Text>
+            )}
+
+            {/* Availability status */}
+            {label.length >= MIN_NAME_LENGTH && (
+              <div className="flex items-center gap-2">
+                {nameAvailable.isChecking ? (
+                  <>
+                    <Spinner />
+                    <Text size="sm" color="gray">
+                      Checking availability...
+                    </Text>
+                  </>
+                ) : (
+                  <Text
+                    size="sm"
+                    color={nameAvailable.isAvailable ? "green" : "red"}
+                    weight="medium"
+                  >
+                    {fullName} is{" "}
+                    {nameAvailable.isAvailable ? "available!" : "unavailable"}
+                  </Text>
+                )}
+              </div>
+            )}
+
+            {/* Next button */}
             {!showNotWhitelistedBtn && (
               <Button
-                loading={indicators.checking}
-                disabled={mintBtnDisabled}
-                className={`${!indicators.available ? "bg-red-400 hover:bg-red-500" : ""} disabled:bg-gray-300`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleMint();
-                }}
+                onClick={handleNext}
+                disabled={!isNextButtonEnabled()}
+                loading={nameAvailable.isChecking}
               >
-                {buttonText}
+                {getNextButtonLabel()}
               </Button>
             )}
+
             {showNotWhitelistedBtn && (
-              <Button disabled={true} className={`disabled:bg-gray-300`}>
-                Not whitelisted
-              </Button>
+              <Button disabled>Not whitelisted</Button>
             )}
           </>
         )}
-      {registrationStep === RegistrationStep.PRIMARY_NAME && (
-        <>
-          <h1 className="text-lg font-bold">
-            You can set {label}.shefi.eth as your primary name!
-          </h1>
-          <Button
-            disabled={primaryNameIndicators.waiting}
-            loading={primaryNameIndicators.waiting}
-            onClick={() => {
-              handlePrimaryName();
+
+        {/* Step 2: Register Receipt (with profile setup) */}
+        {registrationStep === RegistrationStep.REGISTER_RECEIPT && (
+          <>
+            <div className="rounded-2xl border-2 border-brand-orange bg-white p-6 text-center">
+              <Text size="sm" color="gray">
+                Registering
+              </Text>
+              <Text size="2xl" weight="bold" className="mt-1">
+                {fullName}
+              </Text>
+            </div>
+
+            {/* Set Profile Button */}
+            {!profileSet ? (
+              <Button
+                variant="secondary"
+                onClick={() => setIsProfileModalOpen(true)}
+              >
+                + Set Profile
+              </Button>
+            ) : (
+              <div
+                className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-brand-orange bg-brand-yellowBtn/30 p-4"
+                onClick={() => setIsProfileModalOpen(true)}
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Avatar"
+                    className="h-12 w-12 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-orange/20 text-brand-orange">
+                    <span className="text-lg font-bold">
+                      {label.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                <div className="flex-1 text-left">
+                  <Text size="sm" weight="medium">
+                    Profile Set
+                  </Text>
+                  <Text size="xs" color="gray">
+                    {recordsCount} record{recordsCount !== 1 ? "s" : ""} configured
+                  </Text>
+                </div>
+                <Text size="sm" color="orange">
+                  Edit
+                </Text>
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setRegistrationStep(RegistrationStep.AVAILABILITY)}
+                className="flex-1"
+              >
+                Back
+              </Button>
+              <Button
+                onClick={handleRegister}
+                loading={isWaitingWallet}
+                disabled={isWaitingWallet}
+                className="flex-1"
+              >
+                {isWaitingWallet ? "Waiting..." : "Register"}
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* Step 3: Transaction Pending */}
+        {registrationStep === RegistrationStep.TX_PENDING && (
+          <div className="flex flex-col items-center gap-4 py-8">
+            <Spinner />
+            <Text size="lg" weight="medium">
+              Registering {fullName}...
+            </Text>
+            <Text size="sm" color="gray">
+              Please wait while your transaction is being processed
+            </Text>
+            {txHash && (
+              <a
+                href={`https://basescan.org/tx/${txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-brand-orange underline"
+              >
+                View on Basescan
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Profile Modal with SelectRecordsForm */}
+      <Modal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        title="Set Profile"
+        className="max-w-lg"
+      >
+        <div className="max-h-[60vh] overflow-y-auto">
+          <SelectRecordsForm
+            records={records}
+            onRecordsUpdated={(updatedRecords: EnsRecords) => {
+              setRecords(updatedRecords);
             }}
-          >
-            {primaryNameIndicators.btnLabel}
-          </Button>
+          />
+        </div>
+        <div className="mt-4 flex gap-3 border-t border-brand-orange/20 pt-4">
           <Button
-            onClick={() => {
-              setLabel("");
-              setRegistrationStep(RegistrationStep.START);
-            }}
+            variant="outline"
+            onClick={() => setIsProfileModalOpen(false)}
+            className="flex-1"
           >
-            Skip
+            Cancel
           </Button>
-        </>
-      )}
-      {registrationStep === RegistrationStep.COMPLETE && (
-        <>
-          <h1 className="text-lg font-bold">
-            You have successfully registred {label}.shefi.eth
-          </h1>
-          <Button
-            onClick={() => {
-              setLabel("");
-              setRegistrationStep(RegistrationStep.START);
-            }}
-          >
-            Done!
+          <Button onClick={handleProfileSave} className="flex-1">
+            Save ({recordsCount})
           </Button>
-        </>
-      )}
-    </div>
+        </div>
+      </Modal>
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleSuccessModalClose}
+        mintedName={fullName}
+        onSetPrimaryName={handleOpenPrimaryNameModal}
+      />
+
+      {/* Primary Name Modal */}
+      <SetPrimaryNameModal
+        isOpen={showPrimaryNameModal}
+        onClose={() => setShowPrimaryNameModal(false)}
+        onSuccess={handlePrimaryNameSuccess}
+        mintedName={fullName}
+      />
+    </>
   );
 };

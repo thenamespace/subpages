@@ -9,12 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@namespacesdk/addresses": "^1.0.15",
-    "@namespacesdk/indexer-manager": "^1.0.1",
-    "@namespacesdk/mint-manager": "^1.0.15",
     "@rainbow-me/rainbowkit": "^2.2.4",
     "@tanstack/react-query": "^5.52.2",
-    "@thenamespace/mint-manager": "^1.0.1",
+    "@thenamespace/mint-manager": "^1.1.1",
+    "@thenamespace/ens-components": "^0.29.0",
     "@upstash/redis": "^1.34.0",
     "axios": "^1.8.3",
     "buffer": "^6.0.3",
