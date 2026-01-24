@@ -1,47 +1,50 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useAccount, usePublicClient } from 'wagmi';
+import { useState } from 'react';
+import { useAccount, usePublicClient, useSwitchChain } from 'wagmi';
 import toast from 'react-hot-toast';
+import { zeroHash, type Hash } from 'viem';
 import { Modal } from './Modal';
 import { Button } from './Button';
-import { Text } from './Text';
-import { Input } from './Input';
-import { useRegistry, TextRecord } from '@/hooks/useRegistry';
+import { useRegistry } from '@/hooks/useRegistry';
 import { useTransactionModal } from '@/hooks/useTransactionModal';
-import { IndexerSubname } from '@/types/indexer';
-import { L2_CHAIN_ID } from '@/constants';
+import { L2_CHAIN_ID, PARENT_NAME } from '@/constants';
+import { deepCopy, sleep } from '@/lib/resolver-utils';
+import {
+  SelectRecordsForm,
+  getEnsRecordsDiff,
+  getSupportedAddressByCoin,
+  type EnsRecords,
+} from '@thenamespace/ens-components';
+
+const USER_DENIED_TX_ERROR = 'User denied transaction';
 
 interface UpdateRecordsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
-  nameData: IndexerSubname | null;
+  nameLabel: string;
+  initialRecords: EnsRecords;
+  ensRecords: EnsRecords;
+  onRecordsUpdated: (records: EnsRecords) => void;
+  onUpdate: () => void;
 }
-
-// Common record fields to show
-const RECORD_FIELDS = [
-  { key: 'avatar', label: 'Avatar URL', placeholder: 'https://...' },
-  { key: 'description', label: 'Description', placeholder: 'A short bio about yourself' },
-  { key: 'com.twitter', label: 'Twitter', placeholder: 'username (without @)' },
-  { key: 'com.github', label: 'GitHub', placeholder: 'username' },
-  { key: 'org.telegram', label: 'Telegram', placeholder: 'username' },
-  { key: 'url', label: 'Website', placeholder: 'https://yourwebsite.com' },
-];
 
 export function UpdateRecordsModal({
   isOpen,
   onClose,
-  onSuccess,
-  nameData,
+  nameLabel,
+  initialRecords,
+  ensRecords,
+  onRecordsUpdated,
+  onUpdate,
 }: UpdateRecordsModalProps) {
-  const { isConnected } = useAccount();
   const publicClient = usePublicClient({ chainId: L2_CHAIN_ID });
-  const { updateTextRecords, isOnTargetChain, switchToTargetChain } = useRegistry();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
+  const { updateRecords } = useRegistry();
   const {
     showTransactionModal,
     updateTransactionStatus,
-    closeTransactionModal,
     waitForTransaction,
     TransactionModal,
   } = useTransactionModal({
@@ -49,143 +52,139 @@ export function UpdateRecordsModal({
     explorerUrl: 'https://basescan.org/tx/',
     explorerName: 'Basescan',
   });
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<Record<string, string>>({});
-
-  // Initialize form with existing data
-  useEffect(() => {
-    if (isOpen && nameData) {
-      const initialData: Record<string, string> = {};
-      RECORD_FIELDS.forEach(({ key }) => {
-        initialData[key] = nameData.texts?.[key] || '';
-      });
-      setFormData(initialData);
-    }
-  }, [isOpen, nameData]);
-
-  // Reset on close
-  useEffect(() => {
-    if (!isOpen) {
-      setIsLoading(false);
-    }
-  }, [isOpen]);
-
-  const handleInputChange = (key: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
+  const handleCancel = () => {
+    onRecordsUpdated(deepCopy(initialRecords));
+    onClose();
   };
 
-  const handleSave = async () => {
-    if (!isConnected || !nameData) {
-      toast.error('Wallet not connected');
+  // Validate text record
+  const isValidTextRecord = (text: { key: string; value: string }) => {
+    return text.value.length > 0;
+  };
+
+  // Validate address record
+  const isValidAddressRecord = (address: { coinType: number; value: string }) => {
+    if (address.value.length === 0) return false;
+
+    const supportedAddress = getSupportedAddressByCoin(address.coinType);
+    if (!supportedAddress) return false;
+
+    return supportedAddress.validateFunc?.(address.value) || false;
+  };
+
+  // Check if there are any valid changes between initial and current records
+  const hasValidChanges = () => {
+    const diff = getEnsRecordsDiff(initialRecords, ensRecords);
+
+    // Check if there are any changes
+    const hasAnyChanges =
+      diff.textsAdded.length > 0 ||
+      diff.textsModified.length > 0 ||
+      diff.textsRemoved.length > 0 ||
+      diff.addressesAdded.length > 0 ||
+      diff.addressesModified.length > 0 ||
+      diff.addressesRemoved.length > 0 ||
+      diff.contenthashRemoved ||
+      diff.contenthashModified;
+
+    if (!hasAnyChanges) return false;
+
+    // Validate all text records that are being added or modified
+    const allTextsValid = [...diff.textsAdded, ...diff.textsModified].every((text) =>
+      isValidTextRecord(text)
+    );
+
+    // Validate all address records that are being added or modified
+    const allAddressesValid = [...diff.addressesAdded, ...diff.addressesModified].every(
+      (address) => isValidAddressRecord(address)
+    );
+
+    return allTextsValid && allAddressesValid;
+  };
+
+  const handleContractErr = (err: unknown) => {
+    const contractErr = err as { details?: string; message?: string };
+    if (contractErr?.details?.includes(USER_DENIED_TX_ERROR)) {
+      // User denied transaction - no toast needed
+    } else if (contractErr?.details?.includes('insufficient funds')) {
+      toast.error('Insufficient funds. Please add ETH to your wallet.');
+    } else if (contractErr?.message?.includes('User rejected') || contractErr?.message?.includes('denied')) {
+      // User rejected - no toast
+    } else {
+      // Generic error message
+      toast.error('Update failed. Please try again.');
+      console.error('Update error:', err);
+    }
+  };
+
+  const handleUpdateRecords = async () => {
+    if (!hasValidChanges()) {
+      toast.error('No valid changes to update');
       return;
     }
 
-    // Get changed records
-    const changedRecords: TextRecord[] = [];
-    RECORD_FIELDS.forEach(({ key }) => {
-      const newValue = formData[key] || '';
-      const oldValue = nameData.texts?.[key] || '';
-      if (newValue !== oldValue) {
-        changedRecords.push({ key, value: newValue });
+    setIsUpdating(true);
+
+    // Ensure Base chain; do not throw or toast on user cancel
+    if (chain?.id !== L2_CHAIN_ID) {
+      try {
+        await switchChainAsync({ chainId: L2_CHAIN_ID });
+        await sleep(500);
+      } catch (_err) {
+        setIsUpdating(false);
+        return; // silently exit if user cancels or switch fails
       }
-    });
-
-    if (changedRecords.length === 0) {
-      toast('No changes to save');
-      onClose();
-      return;
     }
 
-    setIsLoading(true);
+    let txHash: Hash = zeroHash;
+    try {
+      const fullName = `${nameLabel}.${PARENT_NAME}`;
+      txHash = await updateRecords(fullName, initialRecords, ensRecords);
+    } catch (err) {
+      handleContractErr(err);
+      setIsUpdating(false);
+      return;
+    }
 
     try {
-      // Switch to Base if needed
-      if (!isOnTargetChain) {
-        await switchToTargetChain();
-      }
-
-      // Execute the transaction
-      const txHash = await updateTextRecords(nameData.name, changedRecords);
+      // Show transaction modal
       showTransactionModal(txHash);
 
-      // Wait for confirmation
+      // Wait for transaction confirmation
       await waitForTransaction(publicClient, txHash);
+
       updateTransactionStatus('success');
-
       toast.success('Records updated successfully!');
-
-      // Close modals and callback after delay
-      setTimeout(() => {
-        closeTransactionModal();
-        onSuccess();
-      }, 2000);
+      onUpdate();
+      onClose();
     } catch (err: unknown) {
-      console.error('Error updating records:', err);
-      const error = err as Error;
-
-      // Don't show toast for user rejection
-      if (error?.message?.includes('User rejected') || error?.message?.includes('denied')) {
-        setIsLoading(false);
-        return;
-      }
-
-      updateTransactionStatus('failed', error?.message || 'Failed to update records');
-      toast.error(error?.message || 'Failed to update records');
+      handleContractErr(err);
+      updateTransactionStatus('failed');
     } finally {
-      setIsLoading(false);
+      setIsUpdating(false);
     }
   };
-
-  if (!nameData) return null;
 
   return (
     <>
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        title="Edit Profile"
-        className="max-w-lg"
-      >
-        <div className="flex flex-col gap-4">
-          <Text size="sm" color="gray">
-            Update the records for {nameData.name}
-          </Text>
-
-          <div className="max-h-96 space-y-4 overflow-y-auto">
-            {RECORD_FIELDS.map(({ key, label, placeholder }) => (
-              <div key={key} className="space-y-1">
-                <Text as="label" size="sm" weight="medium">
-                  {label}
-                </Text>
-                <Input
-                  name={key}
-                  placeholder={placeholder}
-                  value={formData[key] || ''}
-                  onChange={(e) => handleInputChange(key, e.target.value)}
-                />
-              </div>
-            ))}
-          </div>
-
-          <div className="flex gap-3 border-t border-brand-orange/20 pt-4">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={isLoading}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSave}
-              loading={isLoading}
-              disabled={isLoading}
-              className="flex-1"
-            >
-              {isLoading ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </div>
+      <Modal isOpen={isOpen} onClose={handleCancel} title="Edit Profile" className="max-w-lg">
+        <div className="max-h-[60vh] overflow-y-auto">
+          <SelectRecordsForm records={ensRecords} onRecordsUpdated={onRecordsUpdated} />
+        </div>
+        <div className="mt-4 flex gap-3 border-t border-brand-orange/20 pt-4">
+          <Button variant="outline" onClick={handleCancel} className="flex-1">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleUpdateRecords}
+            disabled={!hasValidChanges() || isUpdating}
+            loading={isUpdating}
+            className="flex-1"
+          >
+            {isUpdating ? 'Updating...' : 'Update'}
+          </Button>
         </div>
       </Modal>
 

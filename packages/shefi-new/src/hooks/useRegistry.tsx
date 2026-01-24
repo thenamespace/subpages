@@ -5,12 +5,18 @@ import { useAccount, usePublicClient, useSwitchChain, useWalletClient } from 'wa
 import { base } from 'wagmi/chains';
 import { Address, Hash, namehash, encodeFunctionData } from 'viem';
 import { L2_CHAIN_ID } from '@/constants';
+import { convertRecordsDiffToResolverData } from '@/lib/resolver-utils';
+import { getEnsRecordsDiff, type EnsRecords } from '@thenamespace/ens-components';
+import { getL2NamespaceContracts } from '@thenamespace/addresses';
+
+// Get L2 contracts from the addresses package
+const l2Contracts = getL2NamespaceContracts(L2_CHAIN_ID);
 
 // L2 Public Resolver on Base
-const L2_PUBLIC_RESOLVER = '0x6533C94869D28fAA8dF77cc63f9e2b2D6Cf77eBA' as Address;
+const L2_PUBLIC_RESOLVER = l2Contracts.resolver as Address;
 
-// L2 Name Wrapper on Base
-const L2_NAME_WRAPPER = '0x0635513f179D50A207757E05759CbD106d7dFcE8' as Address;
+// L2 Name Registry on Base
+const L2_NAME_REGISTRY = l2Contracts.controller as Address;
 
 // ABIs for the contracts
 const RESOLVER_ABI = [
@@ -37,10 +43,7 @@ const RESOLVER_ABI = [
     type: 'function',
   },
   {
-    inputs: [
-      { name: 'node', type: 'bytes32' },
-      { name: 'data', type: 'bytes[]' },
-    ],
+    inputs: [{ name: 'data', type: 'bytes[]' }],
     name: 'multicall',
     outputs: [{ name: '', type: 'bytes[]' }],
     stateMutability: 'nonpayable',
@@ -48,7 +51,7 @@ const RESOLVER_ABI = [
   },
 ] as const;
 
-const NAME_WRAPPER_ABI = [
+const NAME_REGISTRY_ABI = [
   {
     inputs: [
       { name: 'from', type: 'address' },
@@ -59,17 +62,6 @@ const NAME_WRAPPER_ABI = [
     ],
     name: 'safeTransferFrom',
     outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      { name: 'parentNode', type: 'bytes32' },
-      { name: 'label', type: 'string' },
-      { name: 'newOwner', type: 'address' },
-    ],
-    name: 'setSubnodeOwner',
-    outputs: [{ name: '', type: 'bytes32' }],
     stateMutability: 'nonpayable',
     type: 'function',
   },
@@ -100,7 +92,41 @@ export function useRegistry() {
   }, [isOnTargetChain, switchChainAsync]);
 
   /**
-   * Update multiple text records for a name
+   * Update records using EnsRecords diff (matching naming-services/webapp pattern)
+   */
+  const updateRecords = useCallback(
+    async (fullName: string, oldRecords: EnsRecords, newRecords: EnsRecords): Promise<Hash> => {
+      if (!walletClient || !address || !publicClient) {
+        throw new Error('Wallet not connected');
+      }
+
+      if (!isOnTargetChain) {
+        await switchToTargetChain();
+      }
+
+      const diff = getEnsRecordsDiff(oldRecords, newRecords);
+      const resolverData = convertRecordsDiffToResolverData(fullName, diff);
+
+      if (resolverData.length === 0) {
+        throw new Error('No changes to update');
+      }
+
+      // Simulate first to catch errors early
+      const { request } = await publicClient.simulateContract({
+        address: L2_PUBLIC_RESOLVER,
+        abi: RESOLVER_ABI,
+        functionName: 'multicall',
+        args: [resolverData],
+        account: address,
+      });
+
+      return await walletClient.writeContract(request);
+    },
+    [walletClient, address, publicClient, isOnTargetChain, switchToTargetChain]
+  );
+
+  /**
+   * Update multiple text records for a name (legacy - kept for backwards compatibility)
    */
   const updateTextRecords = useCallback(
     async (fullName: string, records: TextRecord[]): Promise<Hash> => {
@@ -138,7 +164,7 @@ export function useRegistry() {
         address: L2_PUBLIC_RESOLVER,
         abi: RESOLVER_ABI,
         functionName: 'multicall',
-        args: [node, calls],
+        args: [calls],
         chain: base,
       });
     },
@@ -162,8 +188,8 @@ export function useRegistry() {
       const tokenId = BigInt(node);
 
       return await walletClient.writeContract({
-        address: L2_NAME_WRAPPER,
-        abi: NAME_WRAPPER_ABI,
+        address: L2_NAME_REGISTRY,
+        abi: NAME_REGISTRY_ABI,
         functionName: 'safeTransferFrom',
         args: [address, newOwner, tokenId, BigInt(1), '0x'],
         chain: base,
@@ -189,6 +215,7 @@ export function useRegistry() {
   );
 
   return {
+    updateRecords,
     updateTextRecords,
     transferOwnership,
     switchToTargetChain,

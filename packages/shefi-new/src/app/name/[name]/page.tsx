@@ -11,6 +11,7 @@ import { useIndexer } from '@/hooks/useIndexer';
 import { usePrimaryName } from '@/contexts/PrimaryNameContext';
 import { IndexerSubname, getAvatarFromSubname, formatExpiry, isExpired } from '@/types/indexer';
 import { truncateAddress, equalsIgnoreCase } from '@/lib/utils';
+import { deepCopy } from '@/lib/resolver-utils';
 import { RecordsTab } from '@/components/name-profile/RecordsTab';
 import { AddressesTab } from '@/components/name-profile/AddressesTab';
 import { OwnershipTab } from '@/components/name-profile/OwnershipTab';
@@ -19,6 +20,7 @@ import { UpdateRecordsModal } from '@/components/UpdateRecordsModal';
 import { TransferOwnershipModal } from '@/components/TransferOwnershipModal';
 import { PARENT_NAME } from '@/constants';
 import { zeroAddress } from 'viem';
+import { type EnsRecords } from '@thenamespace/ens-components';
 
 type TabType = 'records' | 'addresses' | 'ownership';
 
@@ -27,6 +29,39 @@ const tabs = [
   { id: 'addresses' as const, label: 'Addresses' },
   { id: 'ownership' as const, label: 'Ownership' },
 ];
+
+// Convert IndexerSubname data to EnsRecords format
+const toEnsRecords = (nameData: IndexerSubname | null): EnsRecords => {
+  if (!nameData) {
+    return { texts: [], addresses: [], contenthash: undefined };
+  }
+
+  // Convert texts object to array of { key, value }
+  const texts = Object.entries(nameData.texts || {}).map(([key, value]) => ({
+    key,
+    value: value || '',
+  }));
+
+  // Convert addresses object to array of { coinType, value }
+  const addresses = Object.entries(nameData.addresses || {}).map(([coinType, value]) => ({
+    coinType: parseInt(coinType, 10),
+    value: value || '',
+  }));
+
+  // Parse contenthash if present
+  let contenthash: EnsRecords['contenthash'] = undefined;
+  if (nameData.contenthash) {
+    // contenthash format is typically "ipfs://..." or "ipns://..."
+    const ch = nameData.contenthash;
+    if (ch.startsWith('ipfs://')) {
+      contenthash = { protocol: 'ipfs' as any, value: ch.replace('ipfs://', '') };
+    } else if (ch.startsWith('ipns://')) {
+      contenthash = { protocol: 'ipns' as any, value: ch.replace('ipns://', '') };
+    }
+  }
+
+  return { texts, addresses, contenthash };
+};
 
 export default function NameProfilePage() {
   const params = useParams();
@@ -43,6 +78,18 @@ export default function NameProfilePage() {
   const [showRecordsModal, setShowRecordsModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
 
+  // EnsRecords state for the edit modal
+  const [initialRecords, setInitialRecords] = useState<EnsRecords>({
+    texts: [],
+    addresses: [],
+    contenthash: undefined,
+  });
+  const [ensRecords, setEnsRecords] = useState<EnsRecords>({
+    texts: [],
+    addresses: [],
+    contenthash: undefined,
+  });
+
   useEffect(() => {
     if (nameLabel) {
       fetchName();
@@ -52,6 +99,11 @@ export default function NameProfilePage() {
   const fetchName = async () => {
     const data = await getNameByLabel(nameLabel);
     setNameData(data);
+
+    // Convert to EnsRecords and set both initial and current
+    const records = toEnsRecords(data);
+    setInitialRecords(deepCopy(records));
+    setEnsRecords(deepCopy(records));
   };
 
   const isNameOwner = useMemo(() => {
@@ -70,7 +122,7 @@ export default function NameProfilePage() {
   };
 
   const handleRecordsUpdated = () => {
-    setShowRecordsModal(false);
+    // Refresh name data after successful update
     fetchName();
   };
 
@@ -158,11 +210,10 @@ export default function NameProfilePage() {
                 </p>
                 {nameData!.expiry > 0 && (
                   <p
-                    className={`mt-1 text-sm ${
-                      isExpired(nameData!.expiry)
+                    className={`mt-1 text-sm ${isExpired(nameData!.expiry)
                         ? 'text-red-500'
                         : 'text-brand-dark/60'
-                    }`}
+                      }`}
                   >
                     {isExpired(nameData!.expiry)
                       ? 'Expired'
@@ -225,8 +276,11 @@ export default function NameProfilePage() {
       <UpdateRecordsModal
         isOpen={showRecordsModal}
         onClose={() => setShowRecordsModal(false)}
-        onSuccess={handleRecordsUpdated}
-        nameData={nameData!}
+        nameLabel={nameData?.label || nameLabel}
+        initialRecords={initialRecords}
+        ensRecords={ensRecords}
+        onRecordsUpdated={setEnsRecords}
+        onUpdate={handleRecordsUpdated}
       />
 
       <TransferOwnershipModal

@@ -44,20 +44,17 @@ export function TransferOwnershipModal({
 
   const [isLoading, setIsLoading] = useState(false);
   const [newOwner, setNewOwner] = useState('');
-  const [confirmText, setConfirmText] = useState('');
 
   // Reset on open/close
   useEffect(() => {
     if (!isOpen) {
       setIsLoading(false);
       setNewOwner('');
-      setConfirmText('');
     }
   }, [isOpen]);
 
   const isValidNewOwner = isValidAddress(newOwner) && newOwner.toLowerCase() !== address?.toLowerCase();
-  const isConfirmed = confirmText.toLowerCase() === 'transfer';
-  const canTransfer = isValidNewOwner && isConfirmed;
+  const canTransfer = isValidNewOwner;
 
   const handleTransfer = async () => {
     if (!isConnected || !nameData || !canTransfer) {
@@ -108,37 +105,57 @@ export function TransferOwnershipModal({
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} title="Transfer Ownership">
-        <div className="flex flex-col gap-4">
-          {/* Warning */}
-          <div className="rounded-lg border border-red-300 bg-red-50 p-4">
-            <Text size="sm" color="red" weight="medium">
-              Warning: This action cannot be undone!
-            </Text>
-            <Text size="xs" color="gray" className="mt-1">
-              You will lose control of this name once transferred. Make sure you
-              enter the correct address.
-            </Text>
+      <Modal isOpen={isOpen} onClose={onClose} title="" className="max-w-lg">
+        <div className="flex flex-col gap-5">
+          {/* Warning Banner */}
+          <div className="rounded-lg border-2 border-[#E5A84B] bg-[#FFF9E6] p-4">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5  text-[#E5A84B]">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+              </div>
+              <div>
+                <Text size="sm" weight="bold" className="text-gray-900">
+                  Transfer Ownership
+                </Text>
+                <Text size="sm" color="gray" className="mt-1">
+                  You are transferring ownership of <span className="font-semibold text-gray-900">{nameData.name}</span> to a new owner. This action cannot be undone. Make sure you trust the recipient.
+                </Text>
+              </div>
+            </div>
           </div>
 
-          {/* Name being transferred */}
-          <div className="rounded-lg border border-brand-orange/20 bg-brand-light/50 p-4">
-            <Text size="xs" color="gray" className="mb-1">
-              Transferring
+          {/* Current Owner */}
+          <div className="rounded-lg bg-gray-50 p-4">
+            <Text size="sm" color="gray" className="mb-1">
+              Current Owner
             </Text>
-            <Text size="lg" weight="bold">
-              {nameData.name}
+            <Text size="sm" weight="medium" className="font-mono">
+              {truncateAddress(nameData.owner)}
             </Text>
           </div>
 
           {/* New owner address */}
-          <div className="space-y-1">
+          <div className="space-y-2 w-full">
             <Text as="label" size="sm" weight="medium">
-              New Owner Address
+              New Owner Address or ENS Name
             </Text>
             <Input
               name="newOwner"
-              placeholder="0x..."
+              placeholder="0x... or name.eth"
               value={newOwner}
               onChange={(e) => setNewOwner(e.target.value)}
             />
@@ -154,26 +171,14 @@ export function TransferOwnershipModal({
             )}
           </div>
 
-          {/* Confirmation */}
-          <div className="space-y-1">
-            <Text as="label" size="sm" weight="medium">
-              Type "transfer" to confirm
-            </Text>
-            <Input
-              name="confirm"
-              placeholder="transfer"
-              value={confirmText}
-              onChange={(e) => setConfirmText(e.target.value)}
-            />
-          </div>
-
           {/* Actions */}
-          <div className="flex gap-3 border-t border-brand-orange/20 pt-4">
+          <div className="flex gap-3 pt-2 justify-between">
             <Button
               variant="outline"
               onClick={onClose}
               disabled={isLoading}
-              className="flex-1"
+              // size="sm"
+              className='w-1/2'
             >
               Cancel
             </Button>
@@ -181,9 +186,10 @@ export function TransferOwnershipModal({
               onClick={handleTransfer}
               loading={isLoading}
               disabled={isLoading || !canTransfer}
-              className="flex-1 bg-red-500 hover:bg-red-600 border-red-500"
+              // size="sm"
+              className='w-1/2 '
             >
-              {isLoading ? 'Transferring...' : 'Transfer'}
+              {isLoading ? 'Transferring...' : 'Transfer '}
             </Button>
           </div>
         </div>

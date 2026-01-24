@@ -1,9 +1,10 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { useAccount, usePublicClient } from 'wagmi';
-import { base } from 'wagmi/chains';
-import { L2_CHAIN_ID, BASE_REVERSE_NAMESPACE, PARENT_NAME } from '@/constants';
+import { useAccount, usePublicClient, useEnsName } from 'wagmi';
+import { base, mainnet } from 'wagmi/chains';
+import { toCoinType } from 'viem';
+import { L2_CHAIN_ID, PARENT_NAME } from '@/constants';
 
 interface PrimaryNameContextType {
   primaryName: string | null;
@@ -14,7 +15,6 @@ interface PrimaryNameContextType {
 
 const PrimaryNameContext = createContext<PrimaryNameContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'shefi_primary_name';
 const AVATAR_STORAGE_KEY = 'shefi_primary_avatar';
 
 interface PrimaryNameProviderProps {
@@ -23,120 +23,90 @@ interface PrimaryNameProviderProps {
 
 export function PrimaryNameProvider({ children }: PrimaryNameProviderProps) {
   const { address, isConnected } = useAccount();
-  const publicClient = usePublicClient({ chainId: L2_CHAIN_ID });
+  const baseClient = usePublicClient({ chainId: L2_CHAIN_ID });
 
-  const [primaryName, setPrimaryName] = useState<string | null>(null);
   const [avatar, setAvatar] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [lastFetchedAddress, setLastFetchedAddress] = useState<string | null>(null);
 
-  const fetchPrimaryName = useCallback(
-    async (forceRefresh = false) => {
-      if (!address || !isConnected) {
-        setPrimaryName(null);
+  // Use wagmi's useEnsName hook with coinType for Base L2 primary name
+  // Resolution starts from L1 mainnet with Base coinType
+  const { data: ensName, isLoading, refetch } = useEnsName({
+    address: address,
+    chainId: mainnet.id,
+    coinType: toCoinType(base.id),
+    query: {
+      enabled: !!address && isConnected,
+    },
+  });
+
+  // Filter to only shefi.eth subnames
+  const primaryName = ensName && ensName.endsWith(`.${PARENT_NAME}`) ? ensName : null;
+
+  // Fetch avatar when primary name changes
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      if (!primaryName || !baseClient) {
         setAvatar(null);
         return;
       }
 
-      setIsLoading(true);
+      // Only fetch if we haven't already for this address
+      const addressKey = address?.toLowerCase() || '';
+      if (lastFetchedAddress === addressKey) {
+        return;
+      }
 
       try {
-        // Check localStorage first (unless force refresh)
-        if (!forceRefresh) {
-          const storedPrimaryName = localStorage.getItem(
-            `${STORAGE_KEY}_${address.toLowerCase()}`
-          );
-          const storedAvatar = localStorage.getItem(
-            `${AVATAR_STORAGE_KEY}_${address.toLowerCase()}`
-          );
-
-          if (storedPrimaryName) {
-            setPrimaryName(storedPrimaryName);
-            if (storedAvatar) setAvatar(storedAvatar);
-            setIsLoading(false);
-            return;
-          }
+        // Check localStorage first
+        const storedAvatar = localStorage.getItem(`${AVATAR_STORAGE_KEY}_${addressKey}`);
+        if (storedAvatar) {
+          setAvatar(storedAvatar);
+          setLastFetchedAddress(addressKey);
+          return;
         }
 
-        // Fetch primary name from Base L2 using getEnsName
-        // Note: This uses the L2 reverse registrar namespace (80002105.reverse)
-        if (publicClient) {
-          try {
-            // For Base L2, we need to query the reverse node directly
-            // The reverse namespace is 80002105.reverse for Base
-            const name = await publicClient.getEnsName({
-              address,
-              universalResolverAddress: '0xce01f8eee7E479C928F8919abD53E553a36CeF67', // Base Universal Resolver
-            });
-
-            if (name) {
-              // Check if this is a shefi.eth subname
-              if (name.endsWith(`.${PARENT_NAME}`)) {
-                localStorage.setItem(`${STORAGE_KEY}_${address.toLowerCase()}`, name);
-                setPrimaryName(name);
-
-                // Try to fetch avatar
-                try {
-                  const avatarUrl = await publicClient.getEnsText({
-                    name,
-                    key: 'avatar',
-                    universalResolverAddress: '0xce01f8eee7E479C928F8919abD53E553a36CeF67',
-                  });
-                  if (avatarUrl) {
-                    localStorage.setItem(
-                      `${AVATAR_STORAGE_KEY}_${address.toLowerCase()}`,
-                      avatarUrl
-                    );
-                    setAvatar(avatarUrl);
-                  }
-                } catch (e) {
-                  console.error('Error fetching avatar:', e);
-                  setAvatar(null);
-                }
-              } else {
-                // Primary name exists but isn't a shefi.eth name
-                setPrimaryName(null);
-                setAvatar(null);
-              }
-            } else {
-              setPrimaryName(null);
-              setAvatar(null);
-              localStorage.removeItem(`${STORAGE_KEY}_${address.toLowerCase()}`);
-              localStorage.removeItem(`${AVATAR_STORAGE_KEY}_${address.toLowerCase()}`);
-            }
-          } catch (e) {
-            console.error('Error fetching ENS name:', e);
-            setPrimaryName(null);
-            setAvatar(null);
-          }
+        // Fetch avatar text record from Base L2
+        const avatarUrl = await baseClient.getEnsText({
+          name: primaryName,
+          key: 'avatar',
+          universalResolverAddress: '0xce01f8eee7E479C928F8919abD53E553a36CeF67',
+        });
+        if (avatarUrl) {
+          localStorage.setItem(`${AVATAR_STORAGE_KEY}_${addressKey}`, avatarUrl);
+          setAvatar(avatarUrl);
+        } else {
+          setAvatar(null);
         }
-      } catch (error) {
-        console.error('Error fetching primary name:', error);
-        setPrimaryName(null);
+        setLastFetchedAddress(addressKey);
+      } catch (e) {
+        console.error('Error fetching avatar:', e);
         setAvatar(null);
-      } finally {
-        setIsLoading(false);
+        setLastFetchedAddress(addressKey);
       }
-    },
-    [address, isConnected, publicClient]
-  );
+    };
+
+    fetchAvatar();
+  }, [primaryName, address, baseClient, lastFetchedAddress]);
 
   const refreshPrimaryName = useCallback(
     async (forceRefresh = true) => {
-      await fetchPrimaryName(forceRefresh);
+      if (forceRefresh) {
+        // Clear cached avatar
+        if (address) {
+          localStorage.removeItem(`${AVATAR_STORAGE_KEY}_${address.toLowerCase()}`);
+        }
+        setLastFetchedAddress(null);
+      }
+      await refetch();
     },
-    [fetchPrimaryName]
+    [refetch, address]
   );
-
-  // Fetch on mount and when address/connection changes
-  useEffect(() => {
-    fetchPrimaryName(false);
-  }, [address, isConnected]);
 
   // Clean up on disconnect
   useEffect(() => {
     if (!isConnected) {
-      setPrimaryName(null);
       setAvatar(null);
+      setLastFetchedAddress(null);
     }
   }, [isConnected]);
 

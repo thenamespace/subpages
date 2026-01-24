@@ -65,10 +65,10 @@ export function indexerToEnsRecords(subname: IndexerSubname): EnsRecords {
     addresses,
     contenthash: subname.contenthash
       ? {
-          codec: 'unknown',
-          decoded: subname.contenthash,
-          encoded: subname.contenthash,
-        }
+        codec: 'unknown',
+        decoded: subname.contenthash,
+        encoded: subname.contenthash,
+      }
       : undefined,
   };
 }

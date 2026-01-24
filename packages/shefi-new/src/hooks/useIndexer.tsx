@@ -1,13 +1,35 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import axios from 'axios';
-import { INDEXER_URL, PARENT_NAME, L2_CHAIN_ID } from '@/constants';
-import { IndexerSubname, SubnamePagedResponse } from '@/types/indexer';
+import { useState, useCallback, useMemo } from 'react';
+import { createIndexerClient, L2SubnameResponse } from '@thenamespace/indexer';
+import { PARENT_NAME, L2_CHAIN_ID } from '@/constants';
+import { IndexerSubname } from '@/types/indexer';
 
 export function useIndexer() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const client = useMemo(() => createIndexerClient(), []);
+
+  // Helper to map SDK response to IndexerSubname
+  const mapResponseToSubname = useCallback((item: L2SubnameResponse): IndexerSubname => {
+    return {
+      name: item.name,
+      namehash: item.namehash,
+      label: item.name.split('.')[0], // Safe assumption for 2-level names
+      parentNamehash: item.parentHash,
+      owner: item.owner,
+      texts: item.records.texts || {},
+      addresses: item.records.addresses || {},
+      contenthash: item.records.contenthash,
+      chainId: item.chainId,
+      expiry: item.expiry,
+      mintTransaction: item.metadata ? {
+        price: item.metadata.price,
+        paymentReceiver: '0x0000000000000000000000000000000000000000', // Default if not provided
+      } : undefined
+    };
+  }, []);
 
   /**
    * Get all names owned by an address
@@ -17,19 +39,14 @@ export function useIndexer() {
     setError(null);
 
     try {
-      const response = await axios.get<SubnamePagedResponse>(
-        `${INDEXER_URL}/subnames`,
-        {
-          params: {
-            network: 'base',
-            parentName: PARENT_NAME,
-            owner: ownerAddress,
-            pageSize: 100,
-          },
-        }
-      );
+      const response = await client.getL2Subnames({
+        chainId: L2_CHAIN_ID,
+        parent: PARENT_NAME,
+        owner: ownerAddress,
+        size: 100,
+      });
 
-      return response.data.items || [];
+      return (response.items || []).map(mapResponseToSubname);
     } catch (err) {
       console.error('Error fetching owner names:', err);
       setError('Failed to fetch names');
@@ -37,7 +54,7 @@ export function useIndexer() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [client, mapResponseToSubname]);
 
   /**
    * Get a single name by its label
@@ -46,29 +63,18 @@ export function useIndexer() {
     setLoading(true);
     setError(null);
 
+    const fullName = `${label}.${PARENT_NAME}`;
+
     try {
-      // Use /subnames endpoint with label filter and find exact match
-      const response = await axios.get<SubnamePagedResponse>(
-        `${INDEXER_URL}/subnames`,
-        {
-          params: {
-            network: 'base',
-            parentName: PARENT_NAME,
-            label: label,
-            pageSize: 10,
-          },
-        }
-      );
+      const response = await client.getL2Subname({
+        chainId: L2_CHAIN_ID,
+        nameOrNamehash: fullName,
+      });
 
-      // Find exact match (label filter may return partial matches)
-      const exactMatch = response.data.items?.find(
-        (item) => item.label.toLowerCase() === label.toLowerCase()
-      );
-
-      return exactMatch || null;
+      return mapResponseToSubname(response);
     } catch (err: any) {
-      // 404 means name doesn't exist, not an error
-      if (err.response?.status === 404) {
+      // 404 means name doesn't exist
+      if (err.response?.status === 404 || err.status === 404) {
         return null;
       }
       console.error('Error fetching name:', err);
@@ -77,30 +83,25 @@ export function useIndexer() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [client, mapResponseToSubname]);
 
   /**
    * Get all subnames with pagination
    */
   const getSubnames = useCallback(
-    async (page = 1, pageSize = 50): Promise<{ items: IndexerSubname[]; hasMore: boolean }> => {
+    async (page = 0, pageSize = 50): Promise<{ items: IndexerSubname[]; hasMore: boolean }> => {
       setLoading(true);
       setError(null);
 
       try {
-        const response = await axios.get<SubnamePagedResponse>(
-          `${INDEXER_URL}/subnames`,
-          {
-            params: {
-              network: 'base',
-              parentName: PARENT_NAME,
-              page,
-              pageSize,
-            },
-          }
-        );
+        const response = await client.getL2Subnames({
+          chainId: L2_CHAIN_ID,
+          parent: PARENT_NAME,
+          page,
+          size: pageSize,
+        });
 
-        const items = response.data.items || [];
+        const items = (response.items || []).map(mapResponseToSubname);
         const hasMore = items.length === pageSize;
 
         return { items, hasMore };
@@ -112,7 +113,7 @@ export function useIndexer() {
         setLoading(false);
       }
     },
-    []
+    [client, mapResponseToSubname]
   );
 
   /**
@@ -123,7 +124,6 @@ export function useIndexer() {
       const name = await getNameByLabel(label);
       return name === null;
     } catch {
-      // If we can't check, assume it's not available for safety
       return false;
     }
   }, [getNameByLabel]);

@@ -3,20 +3,11 @@
 import { IndexerSubname } from '@/types/indexer';
 import { Text } from '@/components/Text';
 import { truncateAddress } from '@/lib/utils';
+import { ChainIcon, getSupportedAddressByCoin } from '@thenamespace/ens-components';
 
 interface AddressesTabProps {
   nameData: IndexerSubname;
 }
-
-// Common coin types and their display info
-const COIN_INFO: Record<string, { name: string; symbol: string; icon: string }> = {
-  '60': { name: 'Ethereum', symbol: 'ETH', icon: '/chains/eth.svg' },
-  '0': { name: 'Bitcoin', symbol: 'BTC', icon: '/chains/bitcoin.svg' },
-  '2147483785': { name: 'Base', symbol: 'ETH', icon: '/chains/base.svg' },
-  '2147483658': { name: 'Optimism', symbol: 'ETH', icon: '/chains/op.svg' },
-  '2147492101': { name: 'Arbitrum', symbol: 'ETH', icon: '/chains/arb.svg' },
-  '2147484614': { name: 'Polygon', symbol: 'MATIC', icon: '/chains/matic.svg' },
-};
 
 export function AddressesTab({ nameData }: AddressesTabProps) {
   const addresses = nameData.addresses || {};
@@ -35,17 +26,15 @@ export function AddressesTab({ nameData }: AddressesTabProps) {
     );
   }
 
-  // Sort: known coins first, then others
-  const sortedAddresses = [
-    ...addressKeys.filter((key) => COIN_INFO[key]),
-    ...addressKeys.filter((key) => !COIN_INFO[key]),
-  ];
-
   return (
     <div className="space-y-4">
-      {sortedAddresses.map((coinType) => {
+      {addressKeys.map((coinType) => {
         const value = addresses[coinType];
-        const coinInfo = COIN_INFO[coinType];
+        const coinTypeNum = parseInt(coinType, 10);
+        const supportedAddress = getSupportedAddressByCoin(coinTypeNum);
+
+        // Get chain name for icon
+        const chainName = supportedAddress?.chainName || 'eth';
 
         return (
           <div
@@ -54,30 +43,17 @@ export function AddressesTab({ nameData }: AddressesTabProps) {
           >
             {/* Chain Icon */}
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-white">
-              {coinInfo?.icon ? (
-                <img
-                  src={coinInfo.icon}
-                  alt={coinInfo.name}
-                  className="h-6 w-6"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              ) : (
-                <span className="text-xs font-bold text-brand-dark/40">
-                  {coinType}
-                </span>
-              )}
+              <ChainIcon chain={chainName} size={24} />
             </div>
 
             {/* Chain Info */}
             <div className="flex-1 min-w-0">
               <Text size="sm" weight="medium">
-                {coinInfo?.name || `Coin Type ${coinType}`}
+                {supportedAddress?.label || `Coin Type ${coinType}`}
               </Text>
               <div className="flex items-center gap-2">
                 <Text size="xs" color="gray" className="truncate">
-                  {value}
+                  {truncateAddress(value)}
                 </Text>
                 <button
                   onClick={() => copyToClipboard(value)}
