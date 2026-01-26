@@ -134,10 +134,10 @@ export default function NameProfilePage() {
   // Loading state
   if (loading) {
     return (
-      <main className="min-h-screen bg-brand-light">
+      <main className="min-h-screen bg-gradient-radial">
         <div className="mx-auto flex min-h-[80vh] max-w-4xl flex-col items-center justify-center px-6 py-24 text-center">
           <Spinner />
-          <p className="mt-4 text-lg text-brand-dark/70">Loading name...</p>
+          <p className="mt-4 text-lg sm:text-xl text-brand-dark/70">Loading name...</p>
         </div>
       </main>
     );
@@ -146,10 +146,10 @@ export default function NameProfilePage() {
   // Error or not found state
   if (error || (!loading && !nameData)) {
     return (
-      <main className="min-h-screen bg-brand-light">
+      <main className="min-h-screen bg-gradient-radial">
         <div className="mx-auto flex min-h-[80vh] max-w-4xl flex-col items-center justify-center px-6 py-24 text-center">
-          <h1 className="mb-4 text-4xl sm:text-5xl">Name Not Found</h1>
-          <p className="mb-8 text-lg text-brand-dark/70">
+          <h1 className="mb-4 text-4xl sm:text-6xl">Name Not Found</h1>
+          <p className="mb-8 text-lg sm:text-xl text-brand-dark/70">
             The name &quot;{fullName}&quot; could not be found.
           </p>
           <Link href="/">
@@ -163,8 +163,8 @@ export default function NameProfilePage() {
   const avatar = getAvatarFromSubname(nameData!);
 
   return (
-    <main className="min-h-screen bg-brand-light">
-      <div className="mx-auto max-w-4xl px-6 py-12">
+    <main className="min-h-screen bg-gradient-radial">
+      <div className="mx-auto max-w-4xl px-6 py-16">
         {/* Profile Header */}
         <div className="mb-8 overflow-hidden rounded-2xl border-2 border-brand-accent/30 bg-white shadow-lg shadow-brand-accent/5">
           {/* Cover/Avatar Section */}

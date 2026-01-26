@@ -36,10 +36,10 @@ export default function MyNamesPage() {
   // Not connected state
   if (!isConnected) {
     return (
-      <main className="min-h-screen bg-brand-light">
+      <main className="min-h-screen bg-gradient-radial">
         <div className="mx-auto flex min-h-[80vh] max-w-4xl flex-col items-center justify-center px-6 py-24 text-center">
-          <h1 className="mb-4 text-4xl sm:text-5xl">My Names</h1>
-          <p className="mb-8 text-lg text-brand-dark/70">
+          <h1 className="mb-4 text-4xl sm:text-6xl">My Names</h1>
+          <p className="mb-8 text-lg sm:text-xl text-brand-dark/70">
             Connect your wallet to view your shefi.eth names
           </p>
           <Button onClick={() => openConnectModal?.()}>Connect Wallet</Button>
@@ -51,10 +51,10 @@ export default function MyNamesPage() {
   // Loading state
   if (loading) {
     return (
-      <main className="min-h-screen bg-brand-light">
+      <main className="min-h-screen bg-gradient-radial">
         <div className="mx-auto flex min-h-[80vh] max-w-4xl flex-col items-center justify-center px-6 py-24 text-center">
           <Spinner />
-          <p className="mt-4 text-lg text-brand-dark/70">Loading your names...</p>
+          <p className="mt-4 text-lg sm:text-xl text-brand-dark/70">Loading your names...</p>
         </div>
       </main>
     );
@@ -63,10 +63,10 @@ export default function MyNamesPage() {
   // Error state
   if (error) {
     return (
-      <main className="min-h-screen bg-brand-light">
+      <main className="min-h-screen bg-gradient-radial">
         <div className="mx-auto flex min-h-[80vh] max-w-4xl flex-col items-center justify-center px-6 py-24 text-center">
-          <h1 className="mb-4 text-4xl sm:text-5xl">Oops!</h1>
-          <p className="mb-8 text-lg text-brand-dark/70">
+          <h1 className="mb-4 text-4xl sm:text-6xl">Oops!</h1>
+          <p className="mb-8 text-lg sm:text-xl text-brand-dark/70">
             Something went wrong while loading your names.
           </p>
           <Button onClick={fetchNames}>Try Again</Button>
@@ -78,10 +78,10 @@ export default function MyNamesPage() {
   // Empty state
   if (hasFetched && names.length === 0) {
     return (
-      <main className="min-h-screen bg-brand-light">
+      <main className="min-h-screen bg-gradient-radial">
         <div className="mx-auto flex min-h-[80vh] max-w-4xl flex-col items-center justify-center px-6 py-24 text-center">
-          <h1 className="mb-4 text-4xl sm:text-5xl">No Names Yet</h1>
-          <p className="mb-8 text-lg text-brand-dark/70">
+          <h1 className="mb-4 text-4xl sm:text-6xl">No Names Yet</h1>
+          <p className="mb-8 text-lg sm:text-xl text-brand-dark/70">
             You don&apos;t have any shefi.eth names yet. Register one to get started!
           </p>
           <Link href="/">
@@ -94,11 +94,11 @@ export default function MyNamesPage() {
 
   // Names list
   return (
-    <main className="min-h-screen bg-brand-light">
-      <div className="mx-auto max-w-4xl px-6 py-12">
-        <div className="mb-8 text-center">
-          <h1 className="mb-2 text-4xl sm:text-5xl">My Names</h1>
-          <p className="text-lg text-brand-dark/70">
+    <main className="min-h-screen bg-gradient-radial">
+      <div className="mx-auto max-w-4xl px-6 py-16">
+        <div className="mb-12 pt-8 text-center">
+          <h1 className="mb-3 text-4xl sm:text-6xl">My Names</h1>
+          <p className="text-lg sm:text-xl text-brand-dark/70">
             Manage your shefi.eth names
           </p>
         </div>

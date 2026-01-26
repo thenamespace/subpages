@@ -79,7 +79,7 @@ export default function Home() {
     <div className="overflow-x-hidden">
       <section className="bg-gradient-radial">
         {/* Hero */}
-        <section className="mx-auto flex min-h-[70svh] max-w-3xl flex-col items-center justify-center px-6 py-16 text-center">
+        <section className="mx-auto flex min-h-[80svh] max-w-3xl flex-col items-center justify-center px-6 py-20 text-center">
           <h1 className="text-4xl sm:text-6xl">SheFi Usernames</h1>
 
           <span className="mb-8 mt-3 text-lg sm:text-xl">
