@@ -6,10 +6,10 @@ type InputProps = {
 
 export function Input({ placeholder, suffix, label, ...props }: InputProps) {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col w-full">
       {label && <label className="pl-3 text-left">{label}</label>}
 
-      <div className="flex items-center rounded-full border border-brand-orange bg-white">
+      <div className="flex items-center rounded-full border border-brand-orange bg-white w-full">
         <input
           type="text"
           placeholder={placeholder}

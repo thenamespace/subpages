@@ -1,12 +1,15 @@
-
 import localFont from 'next/font/local'
 
 import { cn } from '@/lib/utils'
 
 import './globals.css'
+import '@thenamespace/ens-components/index.css'
 import { WalletConnector } from '../components/WalletConnect';
-import { Metadata } from 'next'
+import { PrimaryNameProvider } from '@/contexts/PrimaryNameContext';
+import { Navigation } from '@/components/Navigation';
+import { Metadata, Viewport } from 'next'
 import { PropsWithChildren } from 'react';
+import { Toaster } from 'react-hot-toast';
 
 const seasonsFont = localFont({
   src: '../assets/fonts/TheSeasons-reg.woff2',
@@ -23,11 +26,14 @@ const cyGroteskFont = localFont({
   display: 'swap',
 })
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1.0,
+}
 
 export const metadata: Metadata = {
   title: 'SheFi + Namespace',
   description: 'Mint your own shefi.eth subname!',
-  viewport: 'width=device-width, initial-scale=1.0',
   openGraph: {
     title: 'SheFi + Namespace',
     description: 'Mint your own shefi.eth subname!',
@@ -51,8 +57,6 @@ export const metadata: Metadata = {
   },
 }
 
-
-
 export default function RootLayout({
   children,
 }: PropsWithChildren) {
@@ -72,8 +76,14 @@ export default function RootLayout({
         <meta name="twitter:description" content="Mint your own shefi.eth subname!" />
         <meta name="twitter:image" content="https://ipfs.io/ipfs/bafybeibdzhz7lwx6q6oxwrkiufrgncpuv4aeccsycytlnnycpkudt2is4a" />
       </head>
-      <body>
-        <WalletConnector>{children}</WalletConnector>
+      <body className="min-h-screen pb-16 sm:pb-0">
+        <WalletConnector>
+          <PrimaryNameProvider>
+            <Navigation />
+            <main>{children}</main>
+            <Toaster position="bottom-center" />
+          </PrimaryNameProvider>
+        </WalletConnector>
       </body>
     </html>
   )
