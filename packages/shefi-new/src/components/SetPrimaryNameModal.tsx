@@ -109,7 +109,7 @@ export function SetPrimaryNameModal({
             see when they look up your address.
           </Text>
 
-          <div className="rounded-lg border border-brand-orange bg-brand-yellowBtn/30 p-4 text-center">
+          <div className="rounded-lg border border-brand-accent/30 bg-gradient-to-r from-brand-pinkBtn/30 to-brand-lavender/30 p-4 text-center">
             <Text size="lg" weight="bold">
               {mintedName}
             </Text>

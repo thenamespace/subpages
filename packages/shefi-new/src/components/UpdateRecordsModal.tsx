@@ -173,7 +173,7 @@ export function UpdateRecordsModal({
         <div className="max-h-[60vh] overflow-y-auto">
           <SelectRecordsForm records={ensRecords} onRecordsUpdated={onRecordsUpdated} />
         </div>
-        <div className="mt-4 flex gap-3 border-t border-brand-orange/20 pt-4">
+        <div className="mt-4 flex gap-3 border-t border-brand-accent/20 pt-4">
           <Button variant="outline" onClick={handleCancel} className="flex-1">
             Cancel
           </Button>

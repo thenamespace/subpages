@@ -57,11 +57,12 @@ export function SuccessModal({
                   left: `${Math.random() * 100}%`,
                   animationDelay: `${Math.random() * 2}s`,
                   backgroundColor: [
-                    '#ff7223',
-                    '#ecff90',
-                    '#f6cef8',
-                    '#f3f4e7',
-                  ][Math.floor(Math.random() * 4)],
+                    '#E91E8D',
+                    '#FFB5D8',
+                    '#F8B4D9',
+                    '#E8D4F0',
+                    '#FF69B4',
+                  ][Math.floor(Math.random() * 5)],
                 }}
               />
             ))}
@@ -69,9 +70,9 @@ export function SuccessModal({
         )}
 
         {/* Success Icon */}
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-brand-yellowBtn">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-brand-pinkBtn to-brand-lavender shadow-lg shadow-brand-accent/20">
           <svg
-            className="h-10 w-10 text-brand-orange"
+            className="h-10 w-10 text-brand-accent"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

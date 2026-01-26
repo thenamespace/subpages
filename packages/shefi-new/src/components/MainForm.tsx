@@ -371,7 +371,7 @@ export const MintForm = () => {
         {/* Step 2: Register Receipt (with profile setup) */}
         {registrationStep === RegistrationStep.REGISTER_RECEIPT && (
           <>
-            <div className="rounded-2xl border-2 border-brand-orange bg-white p-6 text-center">
+            <div className="rounded-2xl border-2 border-brand-accent bg-white p-6 text-center shadow-lg shadow-brand-accent/10">
               <Text size="sm" color="gray">
                 Registering
               </Text>
@@ -400,7 +400,7 @@ export const MintForm = () => {
                     className="h-12 w-12 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-orange/20 text-brand-orange">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-brand-pinkBtn to-brand-lavender text-brand-accent">
                     <span className="text-lg font-bold">
                       {label.charAt(0).toUpperCase()}
                     </span>
@@ -414,7 +414,7 @@ export const MintForm = () => {
                     {recordsCount} record{recordsCount !== 1 ? "s" : ""} configured
                   </Text>
                 </div>
-                <Text size="sm" color="orange">
+                <Text size="sm" className="text-brand-accent">
                   Edit
                 </Text>
               </div>
@@ -456,7 +456,7 @@ export const MintForm = () => {
                 href={`https://basescan.org/tx/${txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-brand-orange underline"
+                className="text-sm text-brand-accent underline hover:text-brand-dark transition-colors"
               >
                 View on Basescan
               </a>

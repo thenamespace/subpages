@@ -15,10 +15,10 @@ type Props = {
 } & React.ButtonHTMLAttributes<HTMLButtonElement>
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: 'border-brand-orange bg-brand-yellowBtn hover:bg-brand-yellowBg text-brand-dark',
-  secondary: 'border-brand-pink bg-brand-pink/30 hover:bg-brand-pink/50 text-brand-dark',
-  outline: 'border-brand-orange bg-transparent hover:bg-brand-yellowBtn/30 text-brand-dark',
-  ghost: 'border-transparent bg-transparent hover:bg-brand-dark/5 text-brand-dark',
+  primary: 'border-brand-accent bg-brand-pinkBtn hover:bg-brand-pinkBg text-brand-dark shadow-sm hover:shadow-md hover:shadow-brand-accent/10 transition-all btn-shimmer',
+  secondary: 'border-brand-lavender bg-brand-lavender/40 hover:bg-brand-lavender/60 text-brand-dark',
+  outline: 'border-brand-accent bg-transparent hover:bg-brand-pinkBtn/30 text-brand-dark',
+  ghost: 'border-transparent bg-transparent hover:bg-brand-pink/20 text-brand-dark',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
