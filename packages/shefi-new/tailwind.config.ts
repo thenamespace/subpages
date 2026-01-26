@@ -34,11 +34,11 @@ const config: Config = {
       },
       backgroundImage: {
         'gradient-radial':
-          'linear-gradient(0deg, rgba(255, 248, 250, 0.15) 0%, rgba(255, 248, 250, 0.15) 100%), radial-gradient(150% 80% at 50% 30%, #E91E8D 0%, #FFB5D8 20%, #F8B4D9 40%, #E8D4F0 60%, #FFF8FA 100%)',
+          'radial-gradient(ellipse 120% 80% at 50% 0%, rgba(233, 30, 141, 0.08) 0%, rgba(248, 180, 217, 0.06) 30%, transparent 60%)',
         'gradient-card': 'linear-gradient(135deg, #FFD6EB 0%, #E8D4F0 100%)',
-        'gradient-hero': 'linear-gradient(180deg, #FFF0F5 0%, #FFE4F0 50%, #F8D4E8 100%)',
-        'gradient-pink-glow': 'radial-gradient(circle at center, rgba(233, 30, 141, 0.15) 0%, transparent 70%)',
-        'gradient-page': 'radial-gradient(ellipse 150% 100% at 50% 0%, rgba(233, 30, 141, 0.12) 0%, rgba(248, 180, 217, 0.15) 30%, rgba(232, 212, 240, 0.1) 60%, transparent 100%)',
+        'gradient-hero': 'linear-gradient(180deg, #FFFFFF 0%, #FFFBFC 50%, #FFF8FA 100%)',
+        'gradient-pink-glow': 'radial-gradient(circle at center, rgba(233, 30, 141, 0.08) 0%, transparent 70%)',
+        'gradient-page': 'radial-gradient(ellipse 150% 100% at 50% 0%, rgba(233, 30, 141, 0.06) 0%, rgba(248, 180, 217, 0.04) 40%, transparent 70%)',
       },
     },
   },

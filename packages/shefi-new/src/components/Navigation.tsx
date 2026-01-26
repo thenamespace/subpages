@@ -20,7 +20,7 @@ export function Navigation() {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-brand-accent/15 bg-brand-light/95 backdrop-blur-sm">
+    <nav className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         {/* Logo */}
         <Link href="/" className="flex-shrink-0">
@@ -37,8 +37,8 @@ export function Navigation() {
                 href={link.href}
                 className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                   isActive
-                    ? 'bg-brand-pinkBtn text-brand-dark shadow-sm'
-                    : 'text-brand-dark/70 hover:bg-brand-pinkBtn/50 hover:text-brand-dark'
+                    ? 'bg-brand-accent text-white'
+                    : 'text-brand-dark/70 hover:bg-gray-100 hover:text-brand-dark'
                 }`}
               >
                 {link.label}
@@ -51,7 +51,7 @@ export function Navigation() {
         <div className="flex items-center gap-3">
           {/* Primary Name Badge (if set) */}
           {isConnected && primaryName && (
-            <span className="hidden rounded-full bg-gradient-to-r from-brand-pinkBtn/50 to-brand-lavender/50 px-3 py-1 text-xs font-medium text-brand-dark sm:inline-block">
+            <span className="hidden rounded-full bg-brand-accent/10 px-3 py-1 text-xs font-medium text-brand-accent sm:inline-block">
               {primaryName}
             </span>
           )}
@@ -65,7 +65,7 @@ export function Navigation() {
         </div>
 
         {/* Mobile Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 flex border-t border-brand-accent/15 bg-brand-light sm:hidden">
+        <div className="fixed bottom-0 left-0 right-0 flex border-t border-gray-100 bg-white sm:hidden">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -74,7 +74,7 @@ export function Navigation() {
                 href={link.href}
                 className={`flex flex-1 items-center justify-center py-4 text-sm font-medium transition-all ${
                   isActive
-                    ? 'bg-brand-pinkBtn text-brand-dark'
+                    ? 'bg-brand-accent text-white'
                     : 'text-brand-dark/70'
                 }`}
               >

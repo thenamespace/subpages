@@ -118,14 +118,14 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="flex items-center justify-between gap-6 bg-gradient-to-r from-brand-dark via-[#4a2a45] to-brand-dark px-6 py-4 text-brand-light sm:px-8 sm:py-6">
+      <footer className="flex items-center justify-between gap-6 bg-brand-dark px-6 py-4 text-white sm:px-8 sm:py-6">
         <div className="flex flex-col text-sm sm:text-base">
           <span>
             Powered by{" "}
             <a
               href="https://namespace.ninja/"
               target="_blank"
-              className="text-brand-pinkBtn hover:text-white underline transition-colors"
+              className="text-brand-pink hover:text-white underline transition-colors"
             >
               Namespace
             </a>
@@ -134,14 +134,14 @@ export default function Home() {
             <a
               href="https://github.com/thenamespace/subpages"
               target="_blank"
-              className="text-brand-pinkBtn hover:text-white underline transition-colors"
+              className="text-brand-pink hover:text-white underline transition-colors"
             >
               View subpages on GitHub
             </a>
           </span>
         </div>
 
-        <div className="flex gap-3 text-brand-pinkBtn hover:text-white transition-colors">
+        <div className="flex gap-3 text-brand-pink hover:text-white transition-colors">
           <a href="https://x.com/shefiorg" target="_blank">
             <XIcon className="h-6 w-6" />
           </a>

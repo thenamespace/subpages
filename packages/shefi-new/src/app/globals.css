@@ -3,32 +3,28 @@
 @tailwind utilities;
 
 :root {
-  /* SheFi Pink Feminine Palette */
-  --brand-dark: #3d2a3a;
+  /* SheFi Brand Palette - Clean whites with pink accents */
+  --brand-dark: #1a1a1a;
   --brand-accent: #e91e8d;
-  --brand-pink-btn: #ffb5d8;
-  --brand-pink-bg: #ffd6eb;
-  --brand-rose-bg: #fff0f5;
-  --brand-lavender: #e8d4f0;
-  --brand-light: #fff8fa;
-  --brand-pink: #f8b4d9;
+  --brand-pink-btn: #e91e8d;
+  --brand-pink-bg: #ffeef6;
+  --brand-rose-bg: #fff8fa;
+  --brand-lavender: #f5f0f8;
+  --brand-light: #ffffff;
+  --brand-pink: #ffb5d8;
   --brand-rose-gold: #e8a4b8;
   
   /* Legacy aliases for compatibility */
   --brand-orange: #e91e8d;
-  --brand-yellow-btn: #ffb5d8;
-  --brand-yellow-bg: #ffd6eb;
-  --brand-blue-bg: #e8d4f0;
+  --brand-yellow-btn: #e91e8d;
+  --brand-yellow-bg: #ffeef6;
+  --brand-blue-bg: #f5f0f8;
   --brand-blue-btn: #d4a5e8;
 }
 
 body {
   background-color: var(--brand-light);
   color: var(--brand-dark);
-  background-image: 
-    radial-gradient(ellipse at 20% 0%, rgba(248, 180, 217, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 100%, rgba(232, 212, 240, 0.2) 0%, transparent 50%);
-  background-attachment: fixed;
 }
 
 h1,
@@ -111,8 +107,7 @@ h3 {
 
 /* Gradient backgrounds */
 .bg-gradient-card {
-  background: linear-gradient(135deg, var(--brand-pink-bg) 0%, var(--brand-lavender) 100%);
-  box-shadow: 0 2px 12px rgba(233, 30, 141, 0.08);
+  background: linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%);
 }
 
 /* Custom scrollbar */
@@ -122,17 +117,17 @@ h3 {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--brand-light);
+  background: #f5f5f5;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--brand-pink-btn);
+  background: #ddd;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--brand-accent);
+  background: #bbb;
 }
 
 /* Focus styles */
@@ -142,35 +137,9 @@ button:focus {
   outline-offset: 2px;
 }
 
-/* Pink glow effect for interactive elements */
-.pink-glow {
-  box-shadow: 0 0 20px rgba(233, 30, 141, 0.2), 0 0 40px rgba(248, 180, 217, 0.15);
-}
-
-/* Shimmer effect for buttons */
-@keyframes shimmer-pink {
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
-}
-
-.btn-shimmer {
-  background-size: 200% auto;
-  background-image: linear-gradient(
-    90deg,
-    var(--brand-pink-btn) 0%,
-    #ffd1e8 25%,
-    var(--brand-pink-btn) 50%,
-    #ffd1e8 75%,
-    var(--brand-pink-btn) 100%
-  );
-}
-
-.btn-shimmer:hover {
-  animation: shimmer-pink 2s linear infinite;
+/* Accent glow effect for interactive elements */
+.accent-glow {
+  box-shadow: 0 0 20px rgba(233, 30, 141, 0.15);
 }
 
 /* Name card hover animation */
@@ -191,9 +160,9 @@ button:focus {
 .skeleton {
   background: linear-gradient(
     90deg,
-    var(--brand-light) 25%,
-    var(--brand-pink-bg) 50%,
-    var(--brand-light) 75%
+    #f5f5f5 25%,
+    #ebebeb 50%,
+    #f5f5f5 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;

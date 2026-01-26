@@ -111,9 +111,9 @@ export default function MyNamesPage() {
               className="group"
               style={{ animationDelay: `${index * 0.05}s` }}
             >
-              <div className="flex flex-col overflow-hidden rounded-2xl border-2 border-brand-accent/30 bg-white shadow-sm transition-all hover:shadow-lg hover:shadow-brand-accent/10 hover:-translate-y-1 hover:border-brand-accent/50">
+              <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md hover:-translate-y-1 hover:border-brand-accent/30">
                 {/* Avatar section */}
-                <div className="relative h-32 bg-gradient-card">
+                <div className="relative h-32 bg-gray-50">
                   {getAvatarFromSubname(name) ? (
                     <img
                       src={getAvatarFromSubname(name)!}
@@ -124,7 +124,7 @@ export default function MyNamesPage() {
                       }}
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-4xl font-bold text-brand-accent/30">
+                    <div className="flex h-full w-full items-center justify-center text-4xl font-bold text-brand-accent/20">
                       {name.label.charAt(0).toUpperCase()}
                     </div>
                   )}

@@ -166,9 +166,9 @@ export default function NameProfilePage() {
     <main className="min-h-screen bg-gradient-radial">
       <div className="mx-auto max-w-4xl px-6 py-16">
         {/* Profile Header */}
-        <div className="mb-8 overflow-hidden rounded-2xl border-2 border-brand-accent/30 bg-white shadow-lg shadow-brand-accent/5">
+        <div className="mb-8 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
           {/* Cover/Avatar Section */}
-          <div className="relative h-40 bg-gradient-card sm:h-48">
+          <div className="relative h-40 bg-gray-100 sm:h-48">
             {avatar && (
               <img
                 src={avatar}
@@ -181,7 +181,7 @@ export default function NameProfilePage() {
             )}
             {/* Avatar overlay */}
             <div className="absolute -bottom-12 left-6">
-              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-brand-pinkBtn to-brand-lavender text-3xl font-bold text-brand-accent shadow-lg">
+              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-brand-accent/10 text-3xl font-bold text-brand-accent shadow-lg">
                 {avatar ? (
                   <img
                     src={avatar}
@@ -221,7 +221,7 @@ export default function NameProfilePage() {
                   </p>
                 )}
                 {isAlreadyPrimary && (
-                  <span className="mt-2 inline-block rounded-full bg-gradient-to-r from-brand-pinkBtn to-brand-lavender px-3 py-1 text-xs font-medium text-brand-accent">
+                  <span className="mt-2 inline-block rounded-full bg-brand-accent/10 px-3 py-1 text-xs font-medium text-brand-accent">
                     Primary Name
                   </span>
                 )}
@@ -252,7 +252,7 @@ export default function NameProfilePage() {
         />
 
         {/* Tab Content */}
-        <div className="mt-6 rounded-2xl border-2 border-brand-accent/30 bg-white p-6 shadow-sm">
+        <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           {activeTab === 'records' && <RecordsTab nameData={nameData!} />}
           {activeTab === 'addresses' && <AddressesTab nameData={nameData!} />}
           {activeTab === 'ownership' && (
