@@ -4,7 +4,7 @@ import {
   createMintClient,
   MintTransactionRequest,
   MintTransactionResponse,
-} from "@namespacesdk/mint-manager";
+} from "@thenamespace/mint-manager";
 
 export const ENS_NAME = "shefi.eth";
 const nameChainId = 8453;
