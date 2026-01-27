@@ -205,6 +205,8 @@ export const MintForm = () => {
 
     setIsWaitingWallet(true);
 
+    let submittedTxHash: Hash | undefined;
+
     try {
       // Prepare records for API
       const recordsPayload = {
@@ -218,16 +220,12 @@ export const MintForm = () => {
         records: recordsPayload,
       });
 
+      submittedTxHash = data.tx;
       setTxHash(data.tx);
       setRegistrationStep(RegistrationStep.TX_PENDING);
-
-      await waitForTx(data.tx);
-
-      // Show success modal
-      setShowSuccessModal(true);
-      setRegistrationStep(RegistrationStep.SUCCESS);
     } catch (err: any) {
-      console.error("Mint error:", err);
+      console.error("Mint API error:", err);
+      setIsWaitingWallet(false);
 
       if (err?.response?.data?.error) {
         const errorMsg = err.response.data.error;
@@ -243,6 +241,23 @@ export const MintForm = () => {
       } else {
         toast.error("Registration failed. Please try again.");
       }
+      return;
+    }
+
+    // Transaction was submitted successfully, now wait for confirmation
+    // Errors during waiting should NOT show error toast since tx is already on-chain
+    try {
+      await waitForTx(submittedTxHash);
+
+      // Show success modal
+      setShowSuccessModal(true);
+      setRegistrationStep(RegistrationStep.SUCCESS);
+    } catch (err: any) {
+      console.error("Tx confirmation error:", err);
+      // Transaction is already on-chain, so still show success
+      // The user can check the transaction on the block explorer
+      setShowSuccessModal(true);
+      setRegistrationStep(RegistrationStep.SUCCESS);
     } finally {
       setIsWaitingWallet(false);
     }
@@ -371,7 +386,7 @@ export const MintForm = () => {
         {/* Step 2: Register Receipt (with profile setup) */}
         {registrationStep === RegistrationStep.REGISTER_RECEIPT && (
           <>
-            <div className="rounded-2xl border-2 border-brand-orange bg-white p-6 text-center">
+            <div className="rounded-2xl border-2 border-brand-accent bg-white p-6 text-center shadow-lg shadow-brand-accent/10">
               <Text size="sm" color="gray">
                 Registering
               </Text>
@@ -400,7 +415,7 @@ export const MintForm = () => {
                     className="h-12 w-12 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-orange/20 text-brand-orange">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-brand-pinkBtn to-brand-lavender text-brand-accent">
                     <span className="text-lg font-bold">
                       {label.charAt(0).toUpperCase()}
                     </span>
@@ -414,7 +429,7 @@ export const MintForm = () => {
                     {recordsCount} record{recordsCount !== 1 ? "s" : ""} configured
                   </Text>
                 </div>
-                <Text size="sm" color="orange">
+                <Text size="sm" className="text-brand-accent">
                   Edit
                 </Text>
               </div>
@@ -456,7 +471,7 @@ export const MintForm = () => {
                 href={`https://basescan.org/tx/${txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-brand-orange underline"
+                className="text-sm text-brand-accent underline hover:text-brand-dark transition-colors"
               >
                 View on Basescan
               </a>

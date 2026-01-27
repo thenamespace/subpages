@@ -1,11 +1,13 @@
 export function Spinner({
-  color = 'brand-dark',
+  color = 'brand-accent',
 }: {
-  color?: 'brand-dark' | 'brand-light'
+  color?: 'brand-dark' | 'brand-light' | 'brand-accent'
 }) {
+  const colorClass = color === 'brand-accent' ? 'text-brand-accent' : color === 'brand-light' ? 'text-brand-light' : 'text-brand-dark';
+  
   return (
     <svg
-      className={`text-${color} h-4 w-4 animate-spin`}
+      className={`${colorClass} h-4 w-4 animate-spin`}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"

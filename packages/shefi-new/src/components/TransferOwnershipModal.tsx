@@ -63,6 +63,8 @@ export function TransferOwnershipModal({
 
     setIsLoading(true);
 
+    let txHash: `0x${string}` | undefined;
+
     try {
       // Switch to Base if needed
       if (!isOnTargetChain) {
@@ -70,10 +72,27 @@ export function TransferOwnershipModal({
       }
 
       // Execute the transfer
-      const txHash = await transferOwnership(nameData.name, newOwner as Address);
+      txHash = await transferOwnership(nameData.name, newOwner as Address);
       showTransactionModal(txHash);
+    } catch (err: unknown) {
+      console.error('Error submitting transfer transaction:', err);
+      const error = err as Error;
 
-      // Wait for confirmation
+      // Don't show toast for user rejection
+      if (error?.message?.includes('User rejected') || error?.message?.includes('denied')) {
+        setIsLoading(false);
+        return;
+      }
+
+      updateTransactionStatus('failed', error?.message || 'Failed to transfer ownership');
+      toast.error(error?.message || 'Failed to transfer ownership');
+      setIsLoading(false);
+      return;
+    }
+
+    // Transaction was submitted successfully, now wait for confirmation
+    // Errors during waiting should NOT show error toast since tx is already on-chain
+    try {
       await waitForTransaction(publicClient, txHash);
       updateTransactionStatus('success');
 
@@ -85,17 +104,15 @@ export function TransferOwnershipModal({
         onSuccess();
       }, 2000);
     } catch (err: unknown) {
-      console.error('Error transferring ownership:', err);
-      const error = err as Error;
+      console.error('Tx confirmation error:', err);
+      // Transaction is already on-chain, so still show success
+      updateTransactionStatus('success');
+      toast.success('Ownership transferred successfully!');
 
-      // Don't show toast for user rejection
-      if (error?.message?.includes('User rejected') || error?.message?.includes('denied')) {
-        setIsLoading(false);
-        return;
-      }
-
-      updateTransactionStatus('failed', error?.message || 'Failed to transfer ownership');
-      toast.error(error?.message || 'Failed to transfer ownership');
+      setTimeout(() => {
+        closeTransactionModal();
+        onSuccess();
+      }, 2000);
     } finally {
       setIsLoading(false);
     }

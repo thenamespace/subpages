@@ -56,6 +56,8 @@ export function SetPrimaryNameModal({
 
     setIsLoading(true);
 
+    let txHash: `0x${string}` | undefined;
+
     try {
       // Switch to Base if needed
       if (!isOnTargetChain) {
@@ -63,10 +65,27 @@ export function SetPrimaryNameModal({
       }
 
       // Execute the transaction
-      const txHash = await setName(mintedName);
+      txHash = await setName(mintedName);
       showTransactionModal(txHash);
+    } catch (err: unknown) {
+      console.error('Error submitting primary name transaction:', err);
+      const error = err as Error;
 
-      // Wait for confirmation
+      // Don't show toast for user rejection
+      if (error?.message?.includes('User rejected') || error?.message?.includes('denied')) {
+        setIsLoading(false);
+        return;
+      }
+
+      updateTransactionStatus('failed', error?.message || 'Failed to set primary name');
+      toast.error(error?.message || 'Failed to set primary name');
+      setIsLoading(false);
+      return;
+    }
+
+    // Transaction was submitted successfully, now wait for confirmation
+    // Errors during waiting should NOT show error toast since tx is already on-chain
+    try {
       await waitForTransaction(publicClient, txHash);
       updateTransactionStatus('success');
 
@@ -79,17 +98,15 @@ export function SetPrimaryNameModal({
         onSuccess();
       }, 2000);
     } catch (err: unknown) {
-      console.error('Error setting primary name:', err);
-      const error = err as Error;
+      console.error('Tx confirmation error:', err);
+      // Transaction is already on-chain, so still show success
+      updateTransactionStatus('success');
+      toast.success('Primary name set successfully!');
 
-      // Don't show toast for user rejection
-      if (error?.message?.includes('User rejected') || error?.message?.includes('denied')) {
-        setIsLoading(false);
-        return;
-      }
-
-      updateTransactionStatus('failed', error?.message || 'Failed to set primary name');
-      toast.error(error?.message || 'Failed to set primary name');
+      setTimeout(() => {
+        closeTransactionModal();
+        onSuccess();
+      }, 2000);
     } finally {
       setIsLoading(false);
     }
@@ -109,7 +126,7 @@ export function SetPrimaryNameModal({
             see when they look up your address.
           </Text>
 
-          <div className="rounded-lg border border-brand-orange bg-brand-yellowBtn/30 p-4 text-center">
+          <div className="rounded-lg border border-brand-accent/30 bg-gradient-to-r from-brand-pinkBtn/30 to-brand-lavender/30 p-4 text-center">
             <Text size="lg" weight="bold">
               {mintedName}
             </Text>

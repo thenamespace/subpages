@@ -3,14 +3,23 @@
 @tailwind utilities;
 
 :root {
-  --brand-dark: #2a2c28;
-  --brand-orange: #ff7223;
-  --brand-yellow-btn: #ecff90;
-  --brand-yellow-bg: #f0ffa8;
-  --brand-blue-bg: #bdd7f6;
-  --brand-blue-btn: #7b92ef;
-  --brand-light: #f3f4e7;
-  --brand-pink: #f6cef8;
+  /* SheFi Brand Palette - Clean whites with pink accents */
+  --brand-dark: #1a1a1a;
+  --brand-accent: #e91e8d;
+  --brand-pink-btn: #e91e8d;
+  --brand-pink-bg: #ffeef6;
+  --brand-rose-bg: #fff8fa;
+  --brand-lavender: #f5f0f8;
+  --brand-light: #ffffff;
+  --brand-pink: #ffb5d8;
+  --brand-rose-gold: #e8a4b8;
+  
+  /* Legacy aliases for compatibility */
+  --brand-orange: #e91e8d;
+  --brand-yellow-btn: #e91e8d;
+  --brand-yellow-bg: #ffeef6;
+  --brand-blue-bg: #f5f0f8;
+  --brand-blue-btn: #d4a5e8;
 }
 
 body {
@@ -98,7 +107,7 @@ h3 {
 
 /* Gradient backgrounds */
 .bg-gradient-card {
-  background: linear-gradient(135deg, var(--brand-yellow-btn) 0%, var(--brand-pink) 100%);
+  background: linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%);
 }
 
 /* Custom scrollbar */
@@ -108,24 +117,29 @@ h3 {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--brand-light);
+  background: #f5f5f5;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #ddd;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #bbb;
 }
 
 /* Focus styles */
 input:focus,
 button:focus {
-  outline: 2px solid var(--brand-orange);
+  outline: 2px solid var(--brand-accent);
   outline-offset: 2px;
+}
+
+/* Accent glow effect for interactive elements */
+.accent-glow {
+  box-shadow: 0 0 20px rgba(233, 30, 141, 0.15);
 }
 
 /* Name card hover animation */
@@ -146,9 +160,9 @@ button:focus {
 .skeleton {
   background: linear-gradient(
     90deg,
-    var(--brand-light) 25%,
-    #e8e9dc 50%,
-    var(--brand-light) 75%
+    #f5f5f5 25%,
+    #ebebeb 50%,
+    #f5f5f5 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;

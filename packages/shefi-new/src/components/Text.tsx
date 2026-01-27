@@ -39,10 +39,10 @@ const colorClasses: Record<TextColor, string> = {
   dark: 'text-brand-dark',
   light: 'text-brand-light',
   gray: 'text-brand-dark/60',
-  orange: 'text-brand-orange',
-  pink: 'text-brand-pink',
-  green: 'text-green-600',
-  red: 'text-red-500',
+  orange: 'text-brand-accent',
+  pink: 'text-brand-accent',
+  green: 'text-emerald-600',
+  red: 'text-rose-500',
 };
 
 export function Text({
