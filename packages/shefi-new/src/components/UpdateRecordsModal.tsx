@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useAccount, usePublicClient, useSwitchChain } from 'wagmi';
 import toast from 'react-hot-toast';
 import { zeroHash, type Hash } from 'viem';
+import axios from 'axios';
 import { Modal } from './Modal';
 import { Button } from './Button';
-import { useRegistry } from '@/hooks/useRegistry';
 import { useTransactionModal } from '@/hooks/useTransactionModal';
 import { L2_CHAIN_ID, PARENT_NAME } from '@/constants';
 import { deepCopy, sleep } from '@/lib/resolver-utils';
@@ -140,10 +140,23 @@ export function UpdateRecordsModal({
 
     let txHash: Hash = zeroHash;
     try {
-      const fullName = `${nameLabel}.${PARENT_NAME}`;
-      txHash = await updateRecords(fullName, initialRecords, ensRecords);
-    } catch (err) {
-      handleContractErr(err);
+      const { data } = await axios.post<{ tx: Hash }>('/api/update-records', {
+        owner: address,
+        label: nameLabel,
+        oldRecords: initialRecords,
+        newRecords: ensRecords,
+      });
+
+      txHash = data.tx;
+    } catch (err: any) {
+      console.error('Update error:', err);
+      if (err?.response?.data?.error) {
+        toast.error(err.response.data.error);
+      } else if (err?.message) {
+        toast.error(err.message);
+      } else {
+        toast.error('Update failed. Please try again.');
+      }
       setIsUpdating(false);
       return;
     }
