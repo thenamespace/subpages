@@ -205,6 +205,8 @@ export const MintForm = () => {
 
     setIsWaitingWallet(true);
 
+    let submittedTxHash: Hash | undefined;
+
     try {
       // Prepare records for API
       const recordsPayload = {
@@ -218,16 +220,12 @@ export const MintForm = () => {
         records: recordsPayload,
       });
 
+      submittedTxHash = data.tx;
       setTxHash(data.tx);
       setRegistrationStep(RegistrationStep.TX_PENDING);
-
-      await waitForTx(data.tx);
-
-      // Show success modal
-      setShowSuccessModal(true);
-      setRegistrationStep(RegistrationStep.SUCCESS);
     } catch (err: any) {
-      console.error("Mint error:", err);
+      console.error("Mint API error:", err);
+      setIsWaitingWallet(false);
 
       if (err?.response?.data?.error) {
         const errorMsg = err.response.data.error;
@@ -243,6 +241,23 @@ export const MintForm = () => {
       } else {
         toast.error("Registration failed. Please try again.");
       }
+      return;
+    }
+
+    // Transaction was submitted successfully, now wait for confirmation
+    // Errors during waiting should NOT show error toast since tx is already on-chain
+    try {
+      await waitForTx(submittedTxHash);
+
+      // Show success modal
+      setShowSuccessModal(true);
+      setRegistrationStep(RegistrationStep.SUCCESS);
+    } catch (err: any) {
+      console.error("Tx confirmation error:", err);
+      // Transaction is already on-chain, so still show success
+      // The user can check the transaction on the block explorer
+      setShowSuccessModal(true);
+      setRegistrationStep(RegistrationStep.SUCCESS);
     } finally {
       setIsWaitingWallet(false);
     }
