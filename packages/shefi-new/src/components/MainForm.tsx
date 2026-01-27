@@ -24,6 +24,7 @@ import {
   getSupportedAddressByName,
   type SupportedEnsAddress,
 } from "@thenamespace/ens-components";
+import "./MainFormOverride.css";
 
 const MIN_NAME_LENGTH = 3;
 const eth_address = getSupportedAddressByName("eth") as SupportedEnsAddress;
@@ -52,7 +53,7 @@ export const MintForm = () => {
   });
 
   const [registrationStep, setRegistrationStep] = useState<RegistrationStep>(
-    RegistrationStep.AVAILABILITY
+    RegistrationStep.AVAILABILITY,
   );
 
   const [isWaitingWallet, setIsWaitingWallet] = useState(false);
@@ -99,14 +100,16 @@ export const MintForm = () => {
       .then((res) => {
         let isWhitelisted = true;
         // Check if whitelist feature is enabled (type !== 0) and whitelist data exists
-        const hasWhitelist = res?.whitelist && typeof res.whitelist.type === 'number';
+        const hasWhitelist =
+          res?.whitelist && typeof res.whitelist.type === "number";
         let featureEnabled = hasWhitelist && res.whitelist.type !== 0;
 
         if (featureEnabled && res.whitelist) {
           const wallets = res.whitelist.wallets || [];
-          isWhitelisted = wallets.find(
-            (i) => i.toLocaleLowerCase() === address!.toLocaleLowerCase()
-          ) !== undefined;
+          isWhitelisted =
+            wallets.find(
+              (i) => i.toLocaleLowerCase() === address!.toLocaleLowerCase(),
+            ) !== undefined;
         }
 
         setWhitelistConfig({
@@ -172,7 +175,7 @@ export const MintForm = () => {
         isAvailable: available,
       });
     }, 500),
-    []
+    [],
   );
 
   const handleNext = async () => {
@@ -211,7 +214,9 @@ export const MintForm = () => {
       // Prepare records for API
       const recordsPayload = {
         texts: records.texts.filter((t) => t.value && t.value.length > 0),
-        addresses: records.addresses.filter((a) => a.value && a.value.length > 0),
+        addresses: records.addresses.filter(
+          (a) => a.value && a.value.length > 0,
+        ),
       };
 
       const { data } = await axios.post<{ tx: Hash }>("/api/mint", {
@@ -236,7 +241,10 @@ export const MintForm = () => {
         } else {
           toast.error("Registration failed. Please try again.");
         }
-      } else if (err?.message?.includes("User denied") || err?.message?.includes("rejected")) {
+      } else if (
+        err?.message?.includes("User denied") ||
+        err?.message?.includes("rejected")
+      ) {
         // User rejected - no toast
       } else {
         toast.error("Registration failed. Please try again.");
@@ -266,7 +274,8 @@ export const MintForm = () => {
   const handleProfileSave = () => {
     const anyRecordsSet =
       records.texts.length > 0 &&
-      records.texts.find((txt) => txt.value && txt.value.length > 0) !== undefined;
+      records.texts.find((txt) => txt.value && txt.value.length > 0) !==
+        undefined;
     setProfileSet(anyRecordsSet);
     setIsProfileModalOpen(false);
   };
@@ -377,9 +386,7 @@ export const MintForm = () => {
               </Button>
             )}
 
-            {showNotWhitelistedBtn && (
-              <Button disabled>Not whitelisted</Button>
-            )}
+            {showNotWhitelistedBtn && <Button disabled>Not whitelisted</Button>}
           </>
         )}
 
@@ -426,7 +433,8 @@ export const MintForm = () => {
                     Profile Set
                   </Text>
                   <Text size="xs" color="gray">
-                    {recordsCount} record{recordsCount !== 1 ? "s" : ""} configured
+                    {recordsCount} record{recordsCount !== 1 ? "s" : ""}{" "}
+                    configured
                   </Text>
                 </div>
                 <Text size="sm" className="text-brand-accent">
@@ -439,7 +447,9 @@ export const MintForm = () => {
             <div className="flex gap-3">
               <Button
                 variant="outline"
-                onClick={() => setRegistrationStep(RegistrationStep.AVAILABILITY)}
+                onClick={() =>
+                  setRegistrationStep(RegistrationStep.AVAILABILITY)
+                }
                 className="flex-1"
               >
                 Back
@@ -484,26 +494,29 @@ export const MintForm = () => {
       <Modal
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
-        title="Set Profile"
-        className="max-w-lg"
+        className="max-w-lg p-0 max-h-[95vh]"
       >
-        <SelectRecordsForm
-          records={records}
-          onRecordsUpdated={(updatedRecords: EnsRecords) => {
-            setRecords(updatedRecords);
-          }}
-        />
-        <div className="mt-4 flex gap-3 border-t border-gray-100 pt-4">
-          <Button
-            variant="outline"
-            onClick={() => setIsProfileModalOpen(false)}
-            className="flex-1"
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleProfileSave} className="flex-1">
-            Save ({recordsCount})
-          </Button>
+        <div className="shefi-record-form">
+          <SelectRecordsForm
+            records={records}
+            actionButtons={
+              <div className="mt-4 action-btns flex gap-3 border-t border-gray-100 p-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsProfileModalOpen(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleProfileSave} className="flex-1">
+                  Save ({recordsCount})
+                </Button>
+              </div>
+            }
+            onRecordsUpdated={(updatedRecords: EnsRecords) => {
+              setRecords(updatedRecords);
+            }}
+          />
         </div>
       </Modal>
 

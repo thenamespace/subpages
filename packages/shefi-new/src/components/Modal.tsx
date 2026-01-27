@@ -72,7 +72,7 @@ export function Modal({
         {showCloseButton && (
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-brand-dark/60 transition-colors hover:bg-brand-light hover:text-brand-dark"
+            className="absolute z-50 left-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-brand-dark/60 transition-colors hover:bg-brand-light hover:text-brand-dark"
             aria-label="Close modal"
           >
             <svg
