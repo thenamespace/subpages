@@ -495,6 +495,7 @@ export const MintForm = () => {
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
         className="max-w-lg p-0 max-h-[95vh]"
+        showCloseButton={false}
       >
         <div className="shefi-record-form">
           <SelectRecordsForm
