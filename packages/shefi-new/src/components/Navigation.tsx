@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAccount } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
+import { useEffect, useState } from 'react';
 import { Button } from './Button';
 import { ConnectedButton } from './ConnectButton';
 import { usePrimaryName } from '@/contexts/PrimaryNameContext';
@@ -13,6 +14,11 @@ export function Navigation() {
   const { isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
   const { primaryName } = usePrimaryName();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const navLinks = [
     { href: '/', label: 'Register' },
@@ -47,20 +53,27 @@ export function Navigation() {
           })}
         </div>
 
-        {/* Right Section - Wallet */}
+        {/* Right Section - Wallet (deferred until mount to avoid hydration mismatch) */}
         <div className="flex items-center gap-3">
-          {/* Primary Name Badge (if set) */}
-          {isConnected && primaryName && (
-            <span className="hidden rounded-full bg-brand-accent/10 px-3 py-1 text-xs font-medium text-brand-accent sm:inline-block">
-              {primaryName}
-            </span>
-          )}
+          {mounted && (
+            <>
+              {/* Primary Name Badge (if set) */}
+              {isConnected && primaryName && (
+                <span className="hidden rounded-full bg-brand-accent/10 px-3 py-1 text-xs font-medium text-brand-accent sm:inline-block">
+                  {primaryName}
+                </span>
+              )}
 
-          {/* Connect/Connected Button */}
-          {!isConnected ? (
-            <Button onClick={() => openConnectModal?.()}>Connect</Button>
-          ) : (
-            <ConnectedButton />
+              {/* Connect/Connected Button */}
+              {!isConnected ? (
+                <Button onClick={() => openConnectModal?.()}>Connect</Button>
+              ) : (
+                <ConnectedButton />
+              )}
+            </>
+          )}
+          {!mounted && (
+            <div className="h-10 min-w-[120px] rounded-full border border-gray-200 bg-gray-50" aria-hidden />
           )}
         </div>
 
