@@ -91,7 +91,7 @@ export default function Home() {
         </section>
       </section>
 
-      <Squiggle className="bg-gradient-radial" />
+      <Squiggle className="w-full" />
 
       {/* Connect */}
       <section className="flex min-h-[25svh] flex-col items-center justify-center gap-6 px-6 py-10 text-center sm:gap-8 sm:px-8 sm:py-14">
