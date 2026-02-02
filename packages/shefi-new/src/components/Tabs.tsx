@@ -19,7 +19,7 @@ export function Tabs({ tabs, activeTab, onTabChange, className = '' }: TabsProps
   return (
     <div
       className={cn(
-        'flex gap-1 rounded-full border-2 border-brand-accent/30 bg-white p-1',
+        'flex w-full gap-1 rounded-full border-2 border-brand-accent/30 bg-white p-1',
         className
       )}
     >
@@ -31,7 +31,7 @@ export function Tabs({ tabs, activeTab, onTabChange, className = '' }: TabsProps
             onClick={() => !tab.disabled && onTabChange(tab.id)}
             disabled={tab.disabled}
             className={cn(
-              'flex-1 rounded-full px-4 py-2 text-sm font-medium transition-all',
+              'flex-1 whitespace-nowrap rounded-full px-2 py-2 text-xs font-medium transition-all sm:px-4 sm:text-sm',
               isActive
                 ? 'bg-gradient-to-r from-brand-pinkBtn to-brand-lavender text-brand-dark shadow-sm'
                 : 'text-brand-dark/60 hover:text-brand-dark hover:bg-brand-pinkBtn/20',
