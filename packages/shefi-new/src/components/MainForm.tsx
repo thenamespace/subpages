@@ -151,6 +151,13 @@ export const MintForm = () => {
     if (value.includes(".")) return;
     const _value = value.toLowerCase();
 
+    // Allow clearing the input; normalize() throws on empty string
+    if (_value.length === 0) {
+      setLabel("");
+      setNameAvailable({ isChecking: false, isAvailable: false });
+      return;
+    }
+
     try {
       normalize(_value);
     } catch (err) {

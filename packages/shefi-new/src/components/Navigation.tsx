@@ -7,13 +7,11 @@ import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useEffect, useState } from 'react';
 import { Button } from './Button';
 import { ConnectedButton } from './ConnectButton';
-import { usePrimaryName } from '@/contexts/PrimaryNameContext';
 
 export function Navigation() {
   const pathname = usePathname();
   const { isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const { primaryName } = usePrimaryName();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -26,7 +24,7 @@ export function Navigation() {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-sm">
+    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         {/* Logo */}
         <Link href="/" className="flex-shrink-0">
@@ -53,48 +51,52 @@ export function Navigation() {
           })}
         </div>
 
-        {/* Right Section - Wallet (deferred until mount to avoid hydration mismatch) */}
-        <div className="flex items-center gap-3">
+        {/* Right Section - Wallet (desktop & tablet only; mobile wallet lives in bottom nav) */}
+        <div className="hidden items-center gap-3 sm:flex">
           {mounted && (
-            <>
-              {/* Primary Name Badge (if set) */}
-              {isConnected && primaryName && (
-                <span className="hidden rounded-full bg-brand-accent/10 px-3 py-1 text-xs font-medium text-brand-accent sm:inline-block">
-                  {primaryName}
-                </span>
-              )}
-
-              {/* Connect/Connected Button */}
-              {!isConnected ? (
-                <Button onClick={() => openConnectModal?.()}>Connect</Button>
-              ) : (
-                <ConnectedButton />
-              )}
-            </>
+            !isConnected ? (
+              <Button onClick={() => openConnectModal?.()}>Connect</Button>
+            ) : (
+              <ConnectedButton />
+            )
           )}
           {!mounted && (
-            <div className="h-10 min-w-[120px] rounded-full border border-gray-200 bg-gray-50" aria-hidden />
+            <div className="h-10 min-w-[120px] rounded-full border border-brand-accent/30 bg-transparent" aria-hidden />
           )}
         </div>
 
-        {/* Mobile Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 flex border-t border-gray-100 bg-white sm:hidden">
+        {/* Mobile Navigation (bottom bar with nav links + wallet) */}
+        <div className="fixed bottom-4 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center justify-between rounded-full border border-brand-accent/40 bg-black/40 px-2 py-2 backdrop-blur-md sm:hidden">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex flex-1 items-center justify-center py-4 text-sm font-medium transition-all ${
+                className={`flex-1 rounded-full px-3 py-2 text-center text-xs font-medium transition-all ${
                   isActive
-                    ? 'bg-brand-accent text-white'
-                    : 'text-brand-dark/70'
+                    ? 'bg-brand-accent text-white shadow-sm'
+                    : 'text-white/80'
                 }`}
               >
                 {link.label}
               </Link>
             );
           })}
+
+          {/* Mobile Wallet Button */}
+          <div className="ml-2 flex flex-none items-center">
+            {mounted && (
+              !isConnected ? (
+                <Button size="sm" onClick={() => openConnectModal?.()}>Connect</Button>
+              ) : (
+                <ConnectedButton />
+              )
+            )}
+            {!mounted && (
+              <div className="h-9 min-w-[96px] rounded-full border border-brand-accent/30 bg-transparent" aria-hidden />
+            )}
+          </div>
         </div>
       </div>
     </nav>

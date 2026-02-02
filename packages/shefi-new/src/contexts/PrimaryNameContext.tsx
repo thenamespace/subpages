@@ -79,7 +79,12 @@ export function PrimaryNameProvider({ children }: PrimaryNameProviderProps) {
         }
         setLastFetchedAddress(addressKey);
       } catch (e) {
-        console.error('Error fetching avatar:', e);
+        // Network/RPC failures (e.g. Failed to fetch, ERR_NAME_NOT_RESOLVED) are expected
+        // when offline or when Alchemy is unreachable; fail silently and show no avatar.
+        const msg = e instanceof Error ? e.message : String(e);
+        if (!msg.includes('fetch') && !msg.includes('HTTP request failed')) {
+          console.warn('Avatar unavailable:', msg);
+        }
         setAvatar(null);
         setLastFetchedAddress(addressKey);
       }

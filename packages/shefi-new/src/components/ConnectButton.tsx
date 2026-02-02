@@ -1,32 +1,46 @@
-'use client'
-import { useAccount } from "wagmi";
-import { ConnectButton, useConnectModal } from "@rainbow-me/rainbowkit";
+'use client';
 
+import { useAccount } from 'wagmi';
+import { useConnectModal, useAccountModal } from '@rainbow-me/rainbowkit';
+import { Button } from '@/components/Button';
+import { EnsNameDisplay } from '@/components/EnsNameDisplay';
+import { usePrimaryName } from '@/contexts/PrimaryNameContext';
+import { truncateAddress } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 
-import { Button } from '@/components/Button'
-import { useEffect, useState } from "react";
+export function ConnectedButton() {
+  const { openConnectModal } = useConnectModal();
+  const { openAccountModal } = useAccountModal();
+  const { isConnected, address } = useAccount();
+  const { primaryName } = usePrimaryName();
+  const [isClient, setIsClient] = useState(false);
 
-export function ConnectedButton({}) {
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
-    const { openConnectModal } = useConnectModal();
-    const { isConnected } = useAccount();
-    const [isClient, setIsClient] = useState(false);
+  if (!isClient) {
+    return null;
+  }
 
-    useEffect(() => {
-      setIsClient(true);
-    }, []);
-  
-    if (!isClient) {
-      return null;
-    }
+  if (!isConnected) {
+    return <Button onClick={() => openConnectModal?.()}>Connect Wallet</Button>;
+  }
 
-    return (
-      <>
-    {!isConnected ? (
-        <Button onClick={() => openConnectModal?.()} >Connect Wallet</Button>
-      ) : (
-        <ConnectButton chainStatus="none" showBalance={false} accountStatus="address"/>
-      )}
-      </>
-    );
-};
+  return (
+    <Button
+      onClick={() => openAccountModal?.()}
+      className="normal-case"
+    >
+      <span className="min-w-0 flex-1 overflow-hidden">
+        {primaryName ? (
+          <EnsNameDisplay name={primaryName} buffer={8} />
+        ) : address ? (
+          truncateAddress(address)
+        ) : (
+          'Wallet'
+        )}
+      </span>
+    </Button>
+  );
+}

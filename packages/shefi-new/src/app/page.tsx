@@ -76,8 +76,8 @@ export default function Home() {
   }, [loading, hasMore]);
 
   return (
-    <div className="overflow-x-hidden">
-      <section className="bg-gradient-radial">
+    <div className="flex min-h-screen flex-col overflow-x-hidden bg-gradient-radial pb-28 sm:pb-0">
+      <section>
         {/* Hero */}
         <section className="mx-auto flex min-h-[80svh] max-w-3xl flex-col items-center justify-center px-6 py-20 text-center">
           <h1 className="text-4xl sm:text-6xl">SheFi Usernames</h1>
@@ -91,7 +91,7 @@ export default function Home() {
         </section>
       </section>
 
-      <Squiggle className="bg-gradient-to-b from-[#FFF0F5] to-transparent" />
+      <Squiggle className="bg-gradient-radial" />
 
       {/* Connect */}
       <section className="flex min-h-[25svh] flex-col items-center justify-center gap-6 px-6 py-10 text-center sm:gap-8 sm:px-8 sm:py-14">
