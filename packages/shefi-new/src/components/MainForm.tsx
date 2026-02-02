@@ -6,11 +6,12 @@ import { Modal } from "./Modal";
 import { Text } from "./Text";
 import { Spinner } from "./Spinner";
 import { normalize } from "viem/ens";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount, useSwitchChain, useSignMessage } from "wagmi";
 import { ENS_NAME, useNamepsaceClient } from "./useNamespaceClient";
 import { debounce } from "lodash";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { Hash } from "viem";
+import { Hash, Hex, keccak256, encodePacked } from "viem";
+import { base } from "wagmi/chains";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { getWhitelist } from "@/api/api";
@@ -41,8 +42,22 @@ export const MintForm = () => {
   const { address, chainId, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
   const { switchChainAsync } = useSwitchChain();
+  const { signMessageAsync } = useSignMessage();
   const { checkAvailable, waitForTx } = useNamepsaceClient();
   const { refreshPrimaryName } = usePrimaryName();
+
+  const constructMintMessageHash = (owner: `0x${string}`, label: string, expiry: bigint): Hex => {
+    return keccak256(
+      encodePacked(
+        ['address', 'string', 'uint256', 'uint256'],
+        [owner, label, BigInt(base.id), expiry]
+      )
+    );
+  };
+
+  const getSignatureExpiry = (): bigint => {
+    return BigInt(Math.floor(Date.now() / 1000) + 300); // 5 minutes
+  };
 
   const [nameAvailable, setNameAvailable] = useState<{
     isChecking: boolean;
@@ -211,6 +226,13 @@ export const MintForm = () => {
     let submittedTxHash: Hash | undefined;
 
     try {
+      // Generate signature for ownership verification
+      const signatureExpiry = getSignatureExpiry();
+      const messageHash = constructMintMessageHash(address!, label, signatureExpiry);
+      const signature = await signMessageAsync({
+        message: { raw: messageHash },
+      });
+
       // Prepare records for API
       const recordsPayload = {
         texts: records.texts.filter((t) => t.value && t.value.length > 0),
@@ -222,6 +244,8 @@ export const MintForm = () => {
       const { data } = await axios.post<{ tx: Hash }>("/api/mint", {
         owner: address,
         label: label,
+        signature: signature,
+        signatureExpiry: signatureExpiry.toString(),
         records: recordsPayload,
       });
 
