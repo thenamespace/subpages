@@ -6,13 +6,11 @@ import { useAccount } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { Button } from './Button';
 import { ConnectedButton } from './ConnectButton';
-import { usePrimaryName } from '@/contexts/PrimaryNameContext';
 
 export function Navigation() {
   const pathname = usePathname();
   const { isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const { primaryName } = usePrimaryName();
 
   const navLinks = [
     { href: '/', label: 'Register' },
@@ -49,13 +47,6 @@ export function Navigation() {
 
         {/* Right Section - Wallet */}
         <div className="flex items-center gap-3">
-          {/* Primary Name Badge (if set) */}
-          {isConnected && primaryName && (
-            <span className="hidden max-w-[160px] truncate rounded-full bg-brand-accent/10 px-3 py-1 text-xs font-medium text-brand-accent sm:inline-block">
-              {primaryName}
-            </span>
-          )}
-
           {/* Connect/Connected Button */}
           {!isConnected ? (
             <Button onClick={() => openConnectModal?.()}>Connect</Button>
