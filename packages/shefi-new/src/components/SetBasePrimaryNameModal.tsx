@@ -1,38 +1,32 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAccount, useBalance, usePublicClient } from 'wagmi';
-import { parseEther } from 'viem';
+import { useAccount, usePublicClient } from 'wagmi';
 import toast from 'react-hot-toast';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { Text } from './Text';
-import { useMainnetPrimaryName } from '@/hooks/useMainnetPrimaryName';
-import { useSponsoredPrimaryName } from '@/hooks/useSponsoredPrimaryName';
+import { useBasePrimaryName } from '@/hooks/useBasePrimaryName';
 import { useTransactionModal } from '@/hooks/useTransactionModal';
-import { L1_CHAIN_ID, MIN_ETH_FOR_SPONSORSHIP } from '@/constants';
+import { L2_CHAIN_ID } from '@/constants';
 
-interface SetPrimaryNameModalProps {
+interface SetBasePrimaryNameModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   mintedName: string;
 }
 
-export function SetPrimaryNameModal({
+export function SetBasePrimaryNameModal({
   isOpen,
   onClose,
   onSuccess,
   mintedName,
-}: SetPrimaryNameModalProps) {
+}: SetBasePrimaryNameModalProps) {
   const { address, isConnected } = useAccount();
-  const publicClient = usePublicClient({ chainId: L1_CHAIN_ID });
+  const publicClient = usePublicClient({ chainId: L2_CHAIN_ID });
   const { setName, switchToTargetChain, isOnTargetChain, targetChainName } =
-    useMainnetPrimaryName();
-  const {
-    setPrimaryName: sponsoredSetPrimaryName,
-    reset: resetSponsored,
-  } = useSponsoredPrimaryName();
+    useBasePrimaryName();
   const {
     showTransactionModal,
     updateTransactionStatus,
@@ -41,28 +35,18 @@ export function SetPrimaryNameModal({
     TransactionModal,
   } = useTransactionModal({
     successMessage: 'Your primary name has been set successfully!',
-    explorerUrl: 'https://etherscan.io/tx/',
-    explorerName: 'Etherscan',
-  });
-
-  const { data: balanceData } = useBalance({
-    address,
-    chainId: L1_CHAIN_ID,
+    explorerUrl: 'https://basescan.org/tx/',
+    explorerName: 'Basescan',
   });
 
   const [isLoading, setIsLoading] = useState(false);
-
-  const useManualFlow =
-    balanceData !== undefined &&
-    balanceData.value >= parseEther(MIN_ETH_FOR_SPONSORSHIP);
 
   // Reset state when modal opens/closes
   useEffect(() => {
     if (!isOpen) {
       setIsLoading(false);
-      resetSponsored();
     }
-  }, [isOpen, resetSponsored]);
+  }, [isOpen]);
 
   const handleSetPrimaryName = async () => {
     if (!isConnected || !address) {
@@ -75,17 +59,13 @@ export function SetPrimaryNameModal({
     let txHash: `0x${string}` | undefined;
 
     try {
-      if (useManualFlow) {
-        // Direct flow: user pays gas on Ethereum mainnet
-        if (!isOnTargetChain) {
-          await switchToTargetChain();
-        }
-        txHash = await setName(mintedName);
-      } else {
-        // Sponsored flow: user only signs, server pays gas on mainnet
-        txHash = await sponsoredSetPrimaryName(mintedName);
+      // Switch to Base if needed
+      if (!isOnTargetChain) {
+        await switchToTargetChain();
       }
 
+      // Execute the transaction
+      txHash = await setName(mintedName);
       showTransactionModal(txHash);
     } catch (err: unknown) {
       console.error('Error submitting primary name transaction:', err);
@@ -139,7 +119,7 @@ export function SetPrimaryNameModal({
       <Modal isOpen={isOpen} onClose={handleSkip} title="Set Primary Name">
         <div className="flex flex-col gap-4">
           <Text size="sm" color="gray">
-            Set this name as your default ENS primary name. This is what others will
+            Set this name as your primary ENS name on Base. This is what others will
             see when they look up your address.
           </Text>
 
@@ -150,21 +130,11 @@ export function SetPrimaryNameModal({
           </div>
 
           <div className="flex items-center gap-2 rounded-lg bg-brand-light p-3">
-            <img src="/chains/ethereum.svg" alt="Ethereum" className="h-5 w-5" />
+            <img src="/chains/base.svg" alt="Base" className="h-5 w-5" />
             <Text size="sm" color="gray">
-              {useManualFlow
-                ? `Transaction will be submitted on ${targetChainName}`
-                : 'This is a gasless transaction — you only need to sign a message'}
+              Transaction will be submitted on {targetChainName}
             </Text>
           </div>
-
-          {useManualFlow && !isOnTargetChain && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-              <Text size="sm" color="gray">
-                You will be asked to switch to {targetChainName} to submit this transaction.
-              </Text>
-            </div>
-          )}
 
           <div className="flex gap-3 pt-2">
             <Button
@@ -181,11 +151,7 @@ export function SetPrimaryNameModal({
               disabled={isLoading}
               className="flex-1"
             >
-              {isLoading
-                ? 'Setting...'
-                : useManualFlow && !isOnTargetChain
-                  ? `Switch & Set Primary Name`
-                  : 'Set Primary Name'}
+              {isLoading ? 'Setting...' : 'Set Primary Name'}
             </Button>
           </div>
         </div>

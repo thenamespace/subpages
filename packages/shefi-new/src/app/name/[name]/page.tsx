@@ -164,7 +164,7 @@ export default function NameProfilePage() {
 
   return (
     <main className="min-h-screen bg-gradient-radial">
-      <div className="mx-auto max-w-4xl px-6 py-16">
+      <div className="mx-auto max-w-4xl px-4 pb-24 pt-8 sm:px-6 sm:pb-16 sm:pt-16">
         {/* Profile Header */}
         <div className="mb-8 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
           {/* Cover/Avatar Section */}
@@ -202,7 +202,7 @@ export default function NameProfilePage() {
           <div className="px-6 pb-6 pt-16">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-brand-dark sm:text-3xl">
+                <h1 className="max-w-[calc(100vw-4rem)] truncate text-xl font-bold text-brand-dark sm:max-w-none sm:text-3xl">
                   {nameData!.name}
                 </h1>
                 <p className="mt-1 text-sm text-brand-dark/60">
@@ -229,12 +229,12 @@ export default function NameProfilePage() {
 
               {/* Action Buttons (only for owner) */}
               {isNameOwner && (
-                <div className="flex flex-wrap gap-2">
-                  <Button onClick={() => setShowRecordsModal(true)}>
+                <div className="flex flex-row gap-2">
+                  <Button size="sm" onClick={() => setShowRecordsModal(true)}>
                     Edit Profile
                   </Button>
                   {!isAlreadyPrimary && (
-                    <Button onClick={() => setShowPrimaryNameModal(true)}>
+                    <Button size="sm" variant="outline" onClick={() => setShowPrimaryNameModal(true)}>
                       Set as Primary
                     </Button>
                   )}

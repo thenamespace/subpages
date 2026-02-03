@@ -4,18 +4,12 @@ import "@rainbow-me/rainbowkit/styles.css";
 
 import {
   getDefaultConfig,
-  lightTheme,
   RainbowKitProvider,
-  Theme,
 } from "@rainbow-me/rainbowkit";
 import { WagmiProvider } from "wagmi";
 import {
   mainnet,
-  sepolia,
   base,
-  optimism,
-  arbitrum,
-  baseSepolia,
 } from "wagmi/chains";
 import { PropsWithChildren } from "react";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
@@ -28,13 +22,14 @@ const mainnetTransport = alchemyKey
   : http();
 
 const baseTransport = alchemyKey
-  ? http(`https://eth-base.g.alchemy.com/v2/${alchemyKey}`)
+  ? http(`https://base-mainnet.g.alchemy.com/v2/${alchemyKey}`)
   : http();
 
 const config = getDefaultConfig({
   appName: "LSU",
   projectId: "a5f353014d529c8f85633e3c6250ac28",
-  chains: [mainnet, sepolia, base, optimism, arbitrum, baseSepolia],
+  chains: [mainnet, base],
+  ssr: true,
   transports: {
     [mainnet.id]: mainnetTransport,
     [base.id]: baseTransport,

@@ -6,13 +6,11 @@ import { useAccount } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { Button } from './Button';
 import { ConnectedButton } from './ConnectButton';
-import { usePrimaryName } from '@/contexts/PrimaryNameContext';
 
 export function Navigation() {
   const pathname = usePathname();
   const { isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const { primaryName } = usePrimaryName();
 
   const navLinks = [
     { href: '/', label: 'Register' },
@@ -20,7 +18,7 @@ export function Navigation() {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-sm">
+    <nav className="sticky top-0 z-50 bg-transparent">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         {/* Logo */}
         <Link href="/" className="flex-shrink-0">
@@ -49,13 +47,6 @@ export function Navigation() {
 
         {/* Right Section - Wallet */}
         <div className="flex items-center gap-3">
-          {/* Primary Name Badge (if set) */}
-          {isConnected && primaryName && (
-            <span className="hidden rounded-full bg-brand-accent/10 px-3 py-1 text-xs font-medium text-brand-accent sm:inline-block">
-              {primaryName}
-            </span>
-          )}
-
           {/* Connect/Connected Button */}
           {!isConnected ? (
             <Button onClick={() => openConnectModal?.()}>Connect</Button>
@@ -65,17 +56,17 @@ export function Navigation() {
         </div>
 
         {/* Mobile Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 flex border-t border-gray-100 bg-white sm:hidden">
+        <div className="fixed bottom-4 left-4 right-4 z-50 flex gap-2 rounded-full bg-brand-dark p-1.5 shadow-lg sm:hidden">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex flex-1 items-center justify-center py-4 text-sm font-medium transition-all ${
+                className={`flex flex-1 items-center justify-center rounded-full py-2.5 text-sm font-medium transition-all ${
                   isActive
                     ? 'bg-brand-accent text-white'
-                    : 'text-brand-dark/70'
+                    : 'text-white/60'
                 }`}
               >
                 {link.label}

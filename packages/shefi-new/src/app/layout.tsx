@@ -76,7 +76,7 @@ export default function RootLayout({
         <meta name="twitter:description" content="Mint your own shefi.eth subname!" />
         <meta name="twitter:image" content="https://ipfs.io/ipfs/bafybeibdzhz7lwx6q6oxwrkiufrgncpuv4aeccsycytlnnycpkudt2is4a" />
       </head>
-      <body className="min-h-screen pb-16 sm:pb-0">
+      <body className="min-h-screen bg-gradient-page pb-16 sm:pb-0">
         <WalletConnector>
           <PrimaryNameProvider>
             <Navigation />

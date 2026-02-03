@@ -2,8 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useAccount, usePublicClient, useEnsName } from 'wagmi';
-import { base, mainnet } from 'wagmi/chains';
-import { toCoinType } from 'viem';
+import { mainnet } from 'wagmi/chains';
 import { L2_CHAIN_ID, PARENT_NAME } from '@/constants';
 
 interface PrimaryNameContextType {
@@ -28,12 +27,10 @@ export function PrimaryNameProvider({ children }: PrimaryNameProviderProps) {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [lastFetchedAddress, setLastFetchedAddress] = useState<string | null>(null);
 
-  // Use wagmi's useEnsName hook with coinType for Base L2 primary name
-  // Resolution starts from L1 mainnet with Base coinType
+  // Resolve the standard L1 ENS primary name (default reverse record)
   const { data: ensName, isLoading, refetch } = useEnsName({
     address: address,
     chainId: mainnet.id,
-    coinType: toCoinType(base.id),
     query: {
       enabled: !!address && isConnected,
     },
