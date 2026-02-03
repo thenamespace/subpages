@@ -173,7 +173,7 @@ export function UpdateRecordsModal({
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={handleCancel} title="Edit Profile" className="max-w-lg">
+      <Modal isOpen={isOpen} onClose={handleCancel} className="max-w-lg">
         <div className="max-h-[60vh] overflow-y-auto">
           <SelectRecordsForm records={ensRecords} onRecordsUpdated={onRecordsUpdated} />
         </div>

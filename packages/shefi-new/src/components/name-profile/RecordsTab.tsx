@@ -55,22 +55,22 @@ export function RecordsTab({ nameData }: RecordsTabProps) {
         return (
           <div
             key={key}
-            className="flex flex-col gap-1 rounded-lg border border-brand-orange/20 bg-brand-light/50 p-4"
+            className="flex flex-col gap-1 overflow-hidden rounded-lg border border-brand-orange/20 bg-brand-light/50 p-3 sm:p-4"
           >
             <Text size="xs" weight="medium" color="gray" className="uppercase">
               {label}
             </Text>
             {key === 'avatar' && value.startsWith('http') ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 <img
                   src={value}
                   alt="Avatar"
-                  className="h-12 w-12 rounded-full object-cover"
+                  className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
                 />
-                <Text size="sm" className="break-all">
+                <Text size="sm" className="truncate min-w-0">
                   {value}
                 </Text>
               </div>
@@ -82,12 +82,12 @@ export function RecordsTab({ nameData }: RecordsTabProps) {
                 href={formatRecordUrl(key, value)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="break-all text-brand-orange hover:underline"
+                className="break-words text-brand-orange hover:underline block truncate"
               >
                 {value}
               </a>
             ) : (
-              <Text size="sm" className="break-all">
+              <Text size="sm" className="break-words">
                 {value}
               </Text>
             )}

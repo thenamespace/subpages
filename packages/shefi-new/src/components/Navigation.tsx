@@ -19,7 +19,7 @@ export function Navigation() {
 
   return (
     <nav className="sticky top-0 z-50 bg-transparent">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4 sm:px-6 overflow-hidden">
         {/* Logo */}
         <Link href="/" className="flex-shrink-0">
           <img src="/logo.webp" alt="SheFi" className="h-10 w-auto sm:h-12" />
@@ -46,7 +46,7 @@ export function Navigation() {
         </div>
 
         {/* Right Section - Wallet */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-shrink-0 items-center gap-3">
           {/* Connect/Connected Button */}
           {!isConnected ? (
             <Button onClick={() => openConnectModal?.()}>Connect</Button>

@@ -4,6 +4,7 @@ import { IndexerSubname } from '@/types/indexer';
 import { Text } from '@/components/Text';
 import { truncateAddress } from '@/lib/utils';
 import { ChainIcon, getSupportedAddressByCoin } from '@thenamespace/ens-components';
+import toast from 'react-hot-toast';
 
 interface AddressesTabProps {
   nameData: IndexerSubname;
@@ -39,7 +40,7 @@ export function AddressesTab({ nameData }: AddressesTabProps) {
         return (
           <div
             key={coinType}
-            className="flex items-center gap-4 rounded-lg border border-brand-orange/20 bg-brand-light/50 p-4"
+            className="flex items-center gap-3 sm:gap-4 rounded-lg border border-brand-orange/20 bg-brand-light/50 p-3 sm:p-4"
           >
             {/* Chain Icon */}
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-white">
@@ -86,4 +87,5 @@ export function AddressesTab({ nameData }: AddressesTabProps) {
 
 function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text);
+  toast.success('Address copied!');
 }

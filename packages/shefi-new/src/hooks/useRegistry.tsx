@@ -3,10 +3,11 @@
 import { useCallback } from "react";
 import {
   useAccount,
+  useConfig,
   usePublicClient,
   useSwitchChain,
-  useWalletClient,
 } from "wagmi";
+import { getWalletClient } from "wagmi/actions";
 import { base } from "wagmi/chains";
 import {
   Address,
@@ -101,8 +102,8 @@ export interface AddressRecord {
 
 export function useRegistry() {
   const { address, chain } = useAccount();
+  const config = useConfig();
   const { switchChainAsync } = useSwitchChain();
-  const { data: walletClient } = useWalletClient({ chainId: L2_CHAIN_ID });
   const publicClient = usePublicClient({ chainId: L2_CHAIN_ID });
 
   const isOnTargetChain = chain?.id === L2_CHAIN_ID;
@@ -113,6 +114,19 @@ export function useRegistry() {
     }
   }, [isOnTargetChain, switchChainAsync]);
 
+  /** Ensure we're on Base and return a fresh wallet client */
+  const ensureBaseWalletClient = async () => {
+    if (!address || !publicClient) {
+      throw new Error("Wallet not connected");
+    }
+
+    if (chain?.id !== L2_CHAIN_ID) {
+      await switchChainAsync({ chainId: L2_CHAIN_ID });
+    }
+
+    return await getWalletClient(config, { chainId: L2_CHAIN_ID });
+  };
+
   /**
    * Update records using EnsRecords diff (matching naming-services/webapp pattern)
    */
@@ -122,13 +136,7 @@ export function useRegistry() {
       oldRecords: EnsRecords,
       newRecords: EnsRecords,
     ): Promise<Hash> => {
-      if (!walletClient || !address || !publicClient) {
-        throw new Error("Wallet not connected");
-      }
-
-      if (!isOnTargetChain) {
-        await switchToTargetChain();
-      }
+      const walletClient = await ensureBaseWalletClient();
 
       const diff = getEnsRecordsDiff(oldRecords, newRecords);
       const resolverData = convertRecordsDiffToResolverData(fullName, diff);
@@ -138,17 +146,17 @@ export function useRegistry() {
       }
 
       // Simulate first to catch errors early
-      const { request } = await publicClient.simulateContract({
+      const { request } = await publicClient!.simulateContract({
         address: L2_PUBLIC_RESOLVER,
         abi: RESOLVER_ABI,
         functionName: "multicall",
         args: [resolverData],
-        account: address,
+        account: address!,
       });
 
       return await walletClient.writeContract(request);
     },
-    [walletClient, address, publicClient, isOnTargetChain, switchToTargetChain],
+    [address, publicClient, chain?.id, switchChainAsync, config],
   );
 
   /**
@@ -156,25 +164,19 @@ export function useRegistry() {
    */
   const updateTextRecords = useCallback(
     async (fullName: string, records: TextRecord[]): Promise<Hash> => {
-      if (!walletClient || !address || !publicClient) {
-        throw new Error("Wallet not connected");
-      }
-
-      if (!isOnTargetChain) {
-        await switchToTargetChain();
-      }
+      const walletClient = await ensureBaseWalletClient();
 
       const node = namehash(fullName);
 
       // If single record, use direct call
       if (records.length === 1) {
-        const { request } = await publicClient.simulateContract({
+        const { request } = await publicClient!.simulateContract({
           address: L2_PUBLIC_RESOLVER,
           abi: RESOLVER_ABI,
           functionName: "setText",
           args: [node, records[0].key, records[0].value],
           chain: base,
-          account: address,
+          account: address!,
         });
         return await walletClient.writeContract(request);
       }
@@ -188,17 +190,17 @@ export function useRegistry() {
         }),
       );
 
-      const { request } = await publicClient.simulateContract({
+      const { request } = await publicClient!.simulateContract({
         address: L2_PUBLIC_RESOLVER,
         abi: RESOLVER_ABI,
         functionName: "multicall",
         args: [calls],
         chain: base,
-        account: address,
+        account: address!,
       });
       return await walletClient.writeContract(request);
     },
-    [walletClient, address, publicClient, isOnTargetChain, switchToTargetChain],
+    [address, publicClient, chain?.id, switchChainAsync, config],
   );
 
   const getRegistryAddress = async (
@@ -220,18 +222,12 @@ export function useRegistry() {
     fullName: string,
     newOwner: Address,
   ): Promise<Hash> => {
-    if (!walletClient || !address || !publicClient) {
-      throw new Error("Wallet not connected");
-    }
-
-    if (!isOnTargetChain) {
-      await switchChainAsync({ chainId: L2_CHAIN_ID });
-    }
+    const walletClient = await ensureBaseWalletClient();
 
     const node = namehash(fullName);
     const tokenId = BigInt(node);
 
-    const registryAddress = await getRegistryAddress(publicClient, fullName)
+    const registryAddress = await getRegistryAddress(publicClient!, fullName);
 
     const { request } = await publicClient!.simulateContract({
       address: registryAddress,
@@ -239,7 +235,7 @@ export function useRegistry() {
       functionName: "safeTransferFrom",
       args: [address, newOwner, tokenId],
       chain: base,
-      account: address,
+      account: address!,
     });
 
     return await walletClient.writeContract(request);
