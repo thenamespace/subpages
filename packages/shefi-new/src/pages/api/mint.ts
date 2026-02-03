@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import {
   Address,
   ContractFunctionExecutionError,
+  createPublicClient,
   createWalletClient,
   Hash,
   Hex,
@@ -50,6 +51,11 @@ const namespaceClient = createMintClient({
   cursomRpcUrls: {
     [base.id]: base_rpc,
   },
+});
+
+const publicClient = createPublicClient({
+  transport: http(base_rpc),
+  chain: base,
 });
 
 const walletClient = createWalletClient({
@@ -283,13 +289,16 @@ export default async function handler(
       records: records,
     });
 
-    const tx = await walletClient.writeContract({
+    const { request } = await publicClient.simulateContract({
       abi: parameters.abi,
       address: parameters.contractAddress,
       functionName: parameters.functionName,
       args: parameters.args,
       value: parameters.value,
+      account: wallet,
     });
+
+    const tx = await walletClient.writeContract(request);
 
     res.status(200).json({ tx: tx });
   } catch (err: any) {

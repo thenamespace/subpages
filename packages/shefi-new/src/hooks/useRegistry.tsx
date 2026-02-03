@@ -156,7 +156,7 @@ export function useRegistry() {
    */
   const updateTextRecords = useCallback(
     async (fullName: string, records: TextRecord[]): Promise<Hash> => {
-      if (!walletClient || !address) {
+      if (!walletClient || !address || !publicClient) {
         throw new Error("Wallet not connected");
       }
 
@@ -168,13 +168,15 @@ export function useRegistry() {
 
       // If single record, use direct call
       if (records.length === 1) {
-        return await walletClient.writeContract({
+        const { request } = await publicClient.simulateContract({
           address: L2_PUBLIC_RESOLVER,
           abi: RESOLVER_ABI,
           functionName: "setText",
           args: [node, records[0].key, records[0].value],
           chain: base,
+          account: address,
         });
+        return await walletClient.writeContract(request);
       }
 
       // For multiple records, use multicall
@@ -186,15 +188,17 @@ export function useRegistry() {
         }),
       );
 
-      return await walletClient.writeContract({
+      const { request } = await publicClient.simulateContract({
         address: L2_PUBLIC_RESOLVER,
         abi: RESOLVER_ABI,
         functionName: "multicall",
         args: [calls],
         chain: base,
+        account: address,
       });
+      return await walletClient.writeContract(request);
     },
-    [walletClient, address, isOnTargetChain, switchToTargetChain],
+    [walletClient, address, publicClient, isOnTargetChain, switchToTargetChain],
   );
 
   const getRegistryAddress = async (

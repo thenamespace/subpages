@@ -22,7 +22,7 @@ export function useMainnetPrimaryName() {
 
   const setName = useCallback(
     async (name: string): Promise<Hash> => {
-      if (!walletClient || !address) {
+      if (!walletClient || !address || !publicClient) {
         throw new Error('Wallet not connected');
       }
 
@@ -30,17 +30,20 @@ export function useMainnetPrimaryName() {
         await switchToTargetChain();
       }
 
-      const hash = await walletClient.writeContract({
+      const { request } = await publicClient.simulateContract({
         address: L1_REVERSE_REGISTRAR,
         abi: REVERSE_REGISTRAR_ABI,
         functionName: 'setName',
         args: [name],
         chain: mainnet,
+        account: address,
       });
+
+      const hash = await walletClient.writeContract(request);
 
       return hash;
     },
-    [walletClient, address, isOnTargetChain, switchToTargetChain]
+    [walletClient, address, publicClient, isOnTargetChain, switchToTargetChain]
   );
 
   return {
