@@ -121,9 +121,28 @@ export default function NameProfilePage() {
     await refreshPrimaryName(true);
   };
 
-  const handleRecordsUpdated = () => {
-    // Refresh name data after successful update
-    fetchName();
+  const handleRecordsUpdated = (newRecords: EnsRecords) => {
+    // Optimistically update local state so the UI reflects changes immediately
+    setInitialRecords(deepCopy(newRecords));
+    setEnsRecords(deepCopy(newRecords));
+
+    // Also update nameData so the profile tabs reflect the new records
+    if (nameData) {
+      setNameData({
+        ...nameData,
+        texts: Object.fromEntries(
+          (newRecords.texts || []).map((t) => [t.key, t.value]),
+        ),
+        addresses: Object.fromEntries(
+          (newRecords.addresses || []).map((a) => [a.coinType.toString(), a.value]),
+        ),
+      });
+    }
+
+    // Background refetch from the indexer after a delay so eventual state is consistent
+    setTimeout(() => {
+      fetchName();
+    }, 5000);
   };
 
   const handleTransferComplete = () => {
