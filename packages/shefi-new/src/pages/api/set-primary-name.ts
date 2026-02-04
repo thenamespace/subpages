@@ -236,12 +236,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 6. Submit setNameForAddrWithSignature on Ethereum Mainnet via relayer
     const args = [addr as Address, signatureExpiry, name, signature as Hex] as const;
 
-    const txHash = await walletClient.writeContract({
+    const { request } = await publicClient.simulateContract({
       address: L1_REVERSE_REGISTRAR,
       abi: reverseRegistrarAbi,
       functionName: 'setNameForAddrWithSignature',
       args,
+      account: account,
     });
+
+    const txHash = await walletClient.writeContract(request);
 
     console.log('Sponsored setPrimaryName tx (mainnet):', { txHash, addr, name });
 

@@ -64,7 +64,7 @@ export function Modal({
     >
       <div
         className={cn(
-          'relative max-h-[90vh] w-full max-w-md overflow-auto rounded-2xl bg-white p-6 shadow-xl animate-in zoom-in-95 duration-200',
+          'relative max-h-[90vh] w-full max-w-md overflow-auto rounded-2xl bg-white p-4 sm:p-6 shadow-xl animate-in zoom-in-95 duration-200',
           className
         )}
       >
@@ -94,7 +94,7 @@ export function Modal({
 
         {/* Title */}
         {title && (
-          <h2 className="mb-4 pr-8 text-xl font-bold text-brand-dark">{title}</h2>
+          <h2 className="mb-4 pr-8 text-lg sm:text-xl font-bold text-brand-dark">{title}</h2>
         )}
 
         {/* Content */}

@@ -26,7 +26,7 @@ interface UpdateRecordsModalProps {
   initialRecords: EnsRecords;
   ensRecords: EnsRecords;
   onRecordsUpdated: (records: EnsRecords) => void;
-  onUpdate: () => void;
+  onUpdate: (newRecords: EnsRecords) => void;
 }
 
 export function UpdateRecordsModal({
@@ -157,14 +157,14 @@ export function UpdateRecordsModal({
 
       updateTransactionStatus('success');
       toast.success('Records updated successfully!');
-      onUpdate();
+      onUpdate(ensRecords);
       onClose();
     } catch (err: unknown) {
       console.error('Tx confirmation error:', err);
       // Transaction is already on-chain, so still show success
       updateTransactionStatus('success');
       toast.success('Records updated successfully!');
-      onUpdate();
+      onUpdate(ensRecords);
       onClose();
     } finally {
       setIsUpdating(false);
@@ -173,7 +173,7 @@ export function UpdateRecordsModal({
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={handleCancel} title="Edit Profile" className="max-w-lg">
+      <Modal isOpen={isOpen} onClose={handleCancel} className="max-w-lg">
         <div className="max-h-[60vh] overflow-y-auto">
           <SelectRecordsForm records={ensRecords} onRecordsUpdated={onRecordsUpdated} />
         </div>

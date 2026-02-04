@@ -121,9 +121,28 @@ export default function NameProfilePage() {
     await refreshPrimaryName(true);
   };
 
-  const handleRecordsUpdated = () => {
-    // Refresh name data after successful update
-    fetchName();
+  const handleRecordsUpdated = (newRecords: EnsRecords) => {
+    // Optimistically update local state so the UI reflects changes immediately
+    setInitialRecords(deepCopy(newRecords));
+    setEnsRecords(deepCopy(newRecords));
+
+    // Also update nameData so the profile tabs reflect the new records
+    if (nameData) {
+      setNameData({
+        ...nameData,
+        texts: Object.fromEntries(
+          (newRecords.texts || []).map((t) => [t.key, t.value]),
+        ),
+        addresses: Object.fromEntries(
+          (newRecords.addresses || []).map((a) => [a.coinType.toString(), a.value]),
+        ),
+      });
+    }
+
+    // Background refetch from the indexer after a delay so eventual state is consistent
+    setTimeout(() => {
+      fetchName();
+    }, 5000);
   };
 
   const handleTransferComplete = () => {
@@ -199,18 +218,18 @@ export default function NameProfilePage() {
           </div>
 
           {/* Name Info */}
-          <div className="px-6 pb-6 pt-16">
+          <div className="px-4 pb-4 pt-14 sm:px-6 sm:pb-6 sm:pt-16">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h1 className="max-w-[calc(100vw-4rem)] truncate text-xl font-bold text-brand-dark sm:max-w-none sm:text-3xl">
+                <h1 className="max-w-[calc(100vw-4rem)] truncate text-xl font-bold text-brand-dark sm:max-w-none sm:text-2xl md:text-3xl">
                   {nameData!.name}
                 </h1>
-                <p className="mt-1 text-sm text-brand-dark/60">
+                <p className="mt-1 text-xs sm:text-sm text-brand-dark/60">
                   Owner: {truncateAddress(nameData!.owner)}
                 </p>
                 {nameData!.expiry > 0 && (
                   <p
-                    className={`mt-1 text-sm ${isExpired(nameData!.expiry)
+                    className={`mt-1 text-xs sm:text-sm ${isExpired(nameData!.expiry)
                         ? 'text-red-500'
                         : 'text-brand-dark/60'
                       }`}
@@ -229,13 +248,14 @@ export default function NameProfilePage() {
 
               {/* Action Buttons (only for owner) */}
               {isNameOwner && (
-                <div className="flex flex-row gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button size="sm" onClick={() => setShowRecordsModal(true)}>
                     Edit Profile
                   </Button>
                   {!isAlreadyPrimary && (
                     <Button size="sm" variant="outline" onClick={() => setShowPrimaryNameModal(true)}>
-                      Set as Primary
+                      <span className="sm:hidden">Primary</span>
+                      <span className="hidden sm:inline">Set as Primary</span>
                     </Button>
                   )}
                 </div>
@@ -252,7 +272,7 @@ export default function NameProfilePage() {
         />
 
         {/* Tab Content */}
-        <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
           {activeTab === 'records' && <RecordsTab nameData={nameData!} />}
           {activeTab === 'addresses' && <AddressesTab nameData={nameData!} />}
           {activeTab === 'ownership' && (

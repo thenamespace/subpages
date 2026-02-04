@@ -137,45 +137,33 @@ export function SetPrimaryNameModal({
   return (
     <>
       <Modal isOpen={isOpen} onClose={handleSkip} title="Set Primary Name">
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
           <Text size="sm" color="gray">
-            Set this name as your default ENS primary name. This is what others will
-            see when they look up your address.
+            This will set your primary name to:
           </Text>
 
-          <div className="rounded-lg border border-brand-accent/30 bg-gradient-to-r from-brand-pinkBtn/30 to-brand-lavender/30 p-4 text-center">
-            <Text size="lg" weight="bold">
-              {mintedName}
-            </Text>
-          </div>
+          <Text size="base" weight="bold" className="mt-1">
+            {mintedName}
+          </Text>
 
-          <div className="flex items-center gap-2 rounded-lg bg-brand-light p-3">
-            <img src="/chains/ethereum.svg" alt="Ethereum" className="h-5 w-5" />
-            <Text size="sm" color="gray">
-              {useManualFlow
-                ? `Transaction will be submitted on ${targetChainName}`
-                : 'This is a gasless transaction — you only need to sign a message'}
-            </Text>
-          </div>
+          <Text size="sm" className="mt-1 italic text-brand-accent">
+            {useManualFlow
+              ? 'Requires gas on Ethereum'
+              : 'This is a gasless transaction'}
+          </Text>
 
-          {useManualFlow && !isOnTargetChain && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-              <Text size="sm" color="gray">
-                You will be asked to switch to {targetChainName} to submit this transaction.
-              </Text>
-            </div>
-          )}
-
-          <div className="flex gap-3 pt-2">
+          <div className="mt-4 flex gap-3 border-t border-brand-accent/20 pt-4">
             <Button
               variant="outline"
+              size="sm"
               onClick={handleSkip}
               disabled={isLoading}
               className="flex-1"
             >
-              Skip
+              Cancel
             </Button>
             <Button
+              size="sm"
               onClick={handleSetPrimaryName}
               loading={isLoading}
               disabled={isLoading}
@@ -183,9 +171,7 @@ export function SetPrimaryNameModal({
             >
               {isLoading
                 ? 'Setting...'
-                : useManualFlow && !isOnTargetChain
-                  ? `Switch & Set Primary Name`
-                  : 'Set Primary Name'}
+                : 'Set Primary Name'}
             </Button>
           </div>
         </div>

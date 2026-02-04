@@ -24,7 +24,7 @@ export function OwnershipTab({ nameData, isOwner, onTransferClick }: OwnershipTa
       {/* Owner and Expiry cards - side by side */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {/* Address Card */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <div className="rounded-xl border border-brand-orange/20 bg-brand-light/50 p-3 sm:p-4">
           <div className="flex items-start gap-3">
             <div className="mt-1 text-gray-400">
               <svg
@@ -79,7 +79,7 @@ export function OwnershipTab({ nameData, isOwner, onTransferClick }: OwnershipTa
         </div>
 
         {/* Expires Card */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <div className="rounded-xl border border-brand-orange/20 bg-brand-light/50 p-3 sm:p-4">
           <div className="flex items-start gap-3">
             <div className="mt-1 text-gray-400">
               <svg
@@ -114,8 +114,9 @@ export function OwnershipTab({ nameData, isOwner, onTransferClick }: OwnershipTa
       {/* Transfer Button (only for owner) */}
       {isOwner && (
         <Button
+          variant="outline"
           onClick={onTransferClick}
-          className="w-full"
+          className="w-full border-rose-400 text-rose-500 hover:bg-rose-50"
         >
           Transfer Ownership
         </Button>
