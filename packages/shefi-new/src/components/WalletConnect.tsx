@@ -16,7 +16,7 @@ import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { http } from "viem";
 
 // Get Alchemy key for mainnet transport
-const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_KEY;
+const alchemyKey = "yeCZajILCLvofy6lRC6mJ";
 const mainnetTransport = alchemyKey
   ? http(`https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`)
   : http();
