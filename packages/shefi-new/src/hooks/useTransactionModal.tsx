@@ -149,7 +149,7 @@ export function useTransactionModal(options: UseTransactionModalOptions = {}) {
               <Text size="lg" weight="bold">
                 Transaction Failed
               </Text>
-              <Text size="sm" color="gray">
+              <Text size="sm" color="gray" className="max-w-xs break-words">
                 {errorMessage || 'Something went wrong. Please try again.'}
               </Text>
             </>

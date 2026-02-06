@@ -10,6 +10,17 @@ import { useBasePrimaryName } from '@/hooks/useBasePrimaryName';
 import { useTransactionModal } from '@/hooks/useTransactionModal';
 import { L2_CHAIN_ID } from '@/constants';
 
+function getReadableError(error: Error): string {
+  const msg = error?.message || '';
+  if (msg.includes('User rejected') || msg.includes('denied')) return '';
+  if (msg.includes('insufficient funds')) return 'Insufficient ETH for gas fees';
+  if (msg.includes('returned no data')) return 'Transaction failed. Please try again';
+  if (msg.includes('execution reverted')) return 'Transaction reverted. Please try again';
+  if (msg.includes('Wallet not connected')) return 'Wallet not connected';
+  const firstLine = msg.split('\n')[0];
+  return firstLine.length > 100 ? firstLine.slice(0, 100) + '...' : firstLine;
+}
+
 interface SetBasePrimaryNameModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -40,13 +51,30 @@ export function SetBasePrimaryNameModal({
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isSwitching, setIsSwitching] = useState(false);
 
   // Reset state when modal opens/closes
   useEffect(() => {
     if (!isOpen) {
       setIsLoading(false);
+      setIsSwitching(false);
     }
   }, [isOpen]);
+
+  const handleSwitchChain = async () => {
+    setIsSwitching(true);
+    try {
+      await switchToTargetChain();
+    } catch (err: unknown) {
+      console.error('Error switching chain:', err);
+      const error = err as Error;
+      if (!error?.message?.includes('User rejected') && !error?.message?.includes('denied')) {
+        toast.error('Failed to switch network. Please switch manually in your wallet.');
+      }
+    } finally {
+      setIsSwitching(false);
+    }
+  };
 
   const handleSetPrimaryName = async () => {
     if (!isConnected || !address) {
@@ -59,26 +87,19 @@ export function SetBasePrimaryNameModal({
     let txHash: `0x${string}` | undefined;
 
     try {
-      // Switch to Base if needed
-      if (!isOnTargetChain) {
-        await switchToTargetChain();
-      }
-
-      // Execute the transaction
       txHash = await setName(mintedName);
       showTransactionModal(txHash);
     } catch (err: unknown) {
       console.error('Error submitting primary name transaction:', err);
       const error = err as Error;
+      const readableMsg = getReadableError(error);
 
-      // Don't show toast for user rejection
-      if (error?.message?.includes('User rejected') || error?.message?.includes('denied')) {
+      if (!readableMsg) {
         setIsLoading(false);
         return;
       }
 
-      updateTransactionStatus('failed', error?.message || 'Failed to set primary name');
-      toast.error(error?.message || 'Failed to set primary name');
+      toast.error(readableMsg);
       setIsLoading(false);
       return;
     }
@@ -140,19 +161,30 @@ export function SetBasePrimaryNameModal({
             <Button
               variant="outline"
               onClick={handleSkip}
-              disabled={isLoading}
+              disabled={isLoading || isSwitching}
               className="flex-1"
             >
               Skip
             </Button>
-            <Button
-              onClick={handleSetPrimaryName}
-              loading={isLoading}
-              disabled={isLoading}
-              className="flex-1"
-            >
-              {isLoading ? 'Setting...' : 'Set Primary Name'}
-            </Button>
+            {!isOnTargetChain ? (
+              <Button
+                onClick={handleSwitchChain}
+                loading={isSwitching}
+                disabled={isSwitching}
+                className="flex-1"
+              >
+                {isSwitching ? 'Switching...' : `Switch to ${targetChainName}`}
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSetPrimaryName}
+                loading={isLoading}
+                disabled={isLoading}
+                className="flex-1"
+              >
+                {isLoading ? 'Setting...' : 'Set Primary Name'}
+              </Button>
+            )}
           </div>
         </div>
       </Modal>

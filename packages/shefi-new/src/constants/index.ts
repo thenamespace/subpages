@@ -27,7 +27,7 @@ export const REVERSE_REGISTRAR_ABI = [
   {
     inputs: [{ name: 'name', type: 'string' }],
     name: 'setName',
-    outputs: [{ name: '', type: 'bytes32' }],
+    outputs: [],
     stateMutability: 'nonpayable',
     type: 'function',
   },
