@@ -19,6 +19,7 @@ import { SuccessModal } from "./SuccessModal";
 import { SetPrimaryNameModal } from "./SetPrimaryNameModal";
 import { L2_CHAIN_ID, PARENT_NAME } from "@/constants";
 import { usePrimaryName } from "@/contexts/PrimaryNameContext";
+import { resolveAvatarUrl } from "@/lib/utils";
 import {
   SelectRecordsForm,
   type EnsRecords,
@@ -156,10 +157,10 @@ export const MintForm = () => {
     return count;
   }, [records]);
 
-  // Get avatar from records
+  // Get avatar from records (resolve IPFS URLs)
   const avatarUrl = useMemo(() => {
     const avatarRecord = records.texts.find((text) => text.key === "avatar");
-    return avatarRecord?.value || undefined;
+    return resolveAvatarUrl(avatarRecord?.value) || undefined;
   }, [records]);
 
   const handleLabelChanged = (value: string) => {
@@ -556,7 +557,14 @@ export const MintForm = () => {
       {/* Primary Name Modal */}
       <SetPrimaryNameModal
         isOpen={showPrimaryNameModal}
-        onClose={() => setShowPrimaryNameModal(false)}
+        onClose={() => {
+          setShowPrimaryNameModal(false);
+          // Reset form so UI doesn't stay in empty SUCCESS state
+          setLabel("");
+          setRecords({ addresses: [], texts: [] });
+          setProfileSet(false);
+          setRegistrationStep(RegistrationStep.AVAILABILITY);
+        }}
         onSuccess={handlePrimaryNameSuccess}
         mintedName={fullName}
       />

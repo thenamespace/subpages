@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import { useAccount, usePublicClient, useEnsName } from 'wagmi';
 import { mainnet } from 'wagmi/chains';
 import { L2_CHAIN_ID, PARENT_NAME } from '@/constants';
+import { resolveAvatarUrl } from '@/lib/utils';
 
 interface PrimaryNameContextType {
   primaryName: string | null;
@@ -68,9 +69,10 @@ export function PrimaryNameProvider({ children }: PrimaryNameProviderProps) {
           key: 'avatar',
           universalResolverAddress: '0xce01f8eee7E479C928F8919abD53E553a36CeF67',
         });
-        if (avatarUrl) {
-          localStorage.setItem(`${AVATAR_STORAGE_KEY}_${addressKey}`, avatarUrl);
-          setAvatar(avatarUrl);
+        const resolved = resolveAvatarUrl(avatarUrl);
+        if (resolved) {
+          localStorage.setItem(`${AVATAR_STORAGE_KEY}_${addressKey}`, resolved);
+          setAvatar(resolved);
         } else {
           setAvatar(null);
         }

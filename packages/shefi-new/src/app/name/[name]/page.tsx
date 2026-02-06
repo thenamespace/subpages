@@ -9,7 +9,8 @@ import { Spinner } from '@/components/Spinner';
 import { Tabs } from '@/components/Tabs';
 import { useIndexer } from '@/hooks/useIndexer';
 import { usePrimaryName } from '@/contexts/PrimaryNameContext';
-import { IndexerSubname, getAvatarFromSubname, formatExpiry, isExpired } from '@/types/indexer';
+import { IndexerSubname, formatExpiry, isExpired } from '@/types/indexer';
+import { resolveAvatarUrl } from '@/lib/utils';
 import { truncateAddress, equalsIgnoreCase } from '@/lib/utils';
 import { deepCopy } from '@/lib/resolver-utils';
 import { RecordsTab } from '@/components/name-profile/RecordsTab';
@@ -179,7 +180,7 @@ export default function NameProfilePage() {
     );
   }
 
-  const avatar = getAvatarFromSubname(nameData!);
+  const avatar = resolveAvatarUrl(nameData!.texts?.avatar);
 
   return (
     <main className="min-h-screen bg-gradient-radial">
