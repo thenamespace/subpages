@@ -2,6 +2,7 @@
 
 import { IndexerSubname } from '@/types/indexer';
 import { Text } from '@/components/Text';
+import { resolveAvatarUrl } from '@/lib/utils';
 
 interface RecordsTabProps {
   nameData: IndexerSubname;
@@ -60,10 +61,10 @@ export function RecordsTab({ nameData }: RecordsTabProps) {
             <Text size="xs" weight="medium" color="gray" className="uppercase">
               {label}
             </Text>
-            {key === 'avatar' && value.startsWith('http') ? (
+            {key === 'avatar' && resolveAvatarUrl(value) ? (
               <div className="flex items-center gap-3 min-w-0">
                 <img
-                  src={value}
+                  src={resolveAvatarUrl(value)!}
                   alt="Avatar"
                   className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
                   onError={(e) => {

@@ -1,3 +1,5 @@
+import { resolveAvatarUrl } from '@/lib/utils';
+
 // Types for Namespace Indexer API responses
 
 export interface IndexerSubname {
@@ -73,9 +75,9 @@ export function indexerToEnsRecords(subname: IndexerSubname): EnsRecords {
   };
 }
 
-// Helper to get avatar from subname
+// Helper to get avatar from subname (resolves IPFS URLs)
 export function getAvatarFromSubname(subname: IndexerSubname): string | null {
-  return subname.texts?.avatar || null;
+  return resolveAvatarUrl(subname.texts?.avatar);
 }
 
 // Helper to format expiry date

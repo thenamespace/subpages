@@ -1,26 +1,14 @@
 'use client'
 
-import Image from 'next/image'
-import { useEffect, useState } from 'react'
-
-
 import { TelegramIcon, XIcon } from './Icons'
-
-const transparentImage =
-  'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg"%3E%3C/svg%3E'
+import { resolveAvatarUrl } from '@/lib/utils'
 
 export function ProfileCard({ profile }: { profile: any }) {
-  const [avatarUrl, setAvatarUrl] = useState<string>()
+  const avatarRecord = profile.texts?.avatar
+  const avatarUrl = resolveAvatarUrl(avatarRecord) || '/default-avatar.jpg'
   const twitter = profile.texts?.['com.twitter']
   const telegram = profile.texts?.['org.telegram']
   const hasSocials = twitter || telegram
-  const avatarRecord = profile.texts?.avatar
-
-  useEffect(() => {
-    setAvatarUrl(
-      "https://ipfs.io/ipfs/bafkreiac2vzw6ky2mk4e27rkvb7n26xfsvhljgo3mxcbutkcamn2s3qene"
-    )
-  }, [avatarRecord])
 
   const formatName = (name: string) => {
     if (name.length > 20) {
@@ -34,14 +22,12 @@ export function ProfileCard({ profile }: { profile: any }) {
       key={profile.name}
       className="flex flex-col items-center gap-3 rounded-lg bg-gradient-card p-4"
     >
-      <Image
-        src={avatarUrl ?? transparentImage}
+      <img
+        src={avatarUrl}
         alt={profile.name}
-        width={48}
-        height={48}
         className="h-12 w-12 rounded-full bg-brand-light object-cover"
-        onError={() => {
-          setAvatarUrl(transparentImage)
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = '/default-avatar.jpg'
         }}
       />
       <span>

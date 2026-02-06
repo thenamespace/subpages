@@ -16,10 +16,8 @@ export function useMainnetPrimaryName() {
   const isOnTargetChain = chain?.id === L1_CHAIN_ID;
 
   const switchToTargetChain = useCallback(async () => {
-    if (!isOnTargetChain) {
-      await switchChainAsync({ chainId: L1_CHAIN_ID });
-    }
-  }, [isOnTargetChain, switchChainAsync]);
+    await switchChainAsync({ chainId: L1_CHAIN_ID });
+  }, [switchChainAsync]);
 
   const setName = useCallback(
     async (name: string): Promise<Hash> => {
@@ -27,13 +25,7 @@ export function useMainnetPrimaryName() {
         throw new Error('Wallet not connected');
       }
 
-      if (chain?.id !== L1_CHAIN_ID) {
-        await switchChainAsync({ chainId: L1_CHAIN_ID });
-      }
-
-      // Get a fresh wallet client after potential chain switch
-      const walletClient = await getWalletClient(config, { chainId: L1_CHAIN_ID });
-
+      // Simulate on mainnet public client (RPC call, no connector dependency)
       const { request } = await publicClient.simulateContract({
         address: L1_REVERSE_REGISTRAR,
         abi: REVERSE_REGISTRAR_ABI,
@@ -43,11 +35,14 @@ export function useMainnetPrimaryName() {
         account: address,
       });
 
-      const hash = await walletClient.writeContract(request);
+      // Get wallet client without specifying chainId to avoid race condition
+      // where wagmi's internal state hasn't synced after chain switch
+      const walletClient = await getWalletClient(config);
 
+      const hash = await walletClient.writeContract(request);
       return hash;
     },
-    [address, publicClient, chain?.id, switchChainAsync, config]
+    [address, publicClient, config]
   );
 
   return {
