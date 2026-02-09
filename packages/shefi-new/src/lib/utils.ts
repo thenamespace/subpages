@@ -63,7 +63,7 @@ export function resolveAvatarUrl(url: string | undefined | null): string | null 
  * Resolves header/banner URLs for display.
  */
 export function resolveHeaderUrl(url: string | undefined | null): string | null {
-  return resolveIpfsUrl(url);
+  return resolveIpfsUrl(url, DEFAULT_HEADER_CID, '/default-header.png');
 }
 
 export function isUserRejection(err: unknown): boolean {
