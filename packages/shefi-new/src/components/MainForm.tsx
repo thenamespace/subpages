@@ -30,6 +30,12 @@ import "./MainFormOverride.css";
 
 const MIN_NAME_LENGTH = 3;
 const eth_address = getSupportedAddressByName("eth") as SupportedEnsAddress;
+const base_address = getSupportedAddressByName("base") as SupportedEnsAddress;
+
+const DEFAULT_AVATAR_URL =
+  "https://ipfs.io/ipfs/bafkreiac2vzw6ky2mk4e27rkvb7n26xfsvhljgo3mxcbutkcamn2s3qene";
+const DEFAULT_HEADER_URL =
+  "https://ipfs.io/ipfs/bafybeihmqdto646pne6g4eusn45q2q7u4nt3cq4h6f4z5g26ua3k5l3pry";
 
 enum RegistrationStep {
   AVAILABILITY = "availability",
@@ -98,12 +104,19 @@ export const MintForm = () => {
     isChecking: true,
   });
 
-  // Initialize records with user's address when connected
+  // Initialize records with user's address and default avatar/header when connected
   useEffect(() => {
     if (address && records.addresses.length === 0) {
       setRecords({
         ...records,
-        addresses: [{ coinType: eth_address.coinType, value: address }],
+        addresses: [
+          { coinType: eth_address.coinType, value: address },
+          { coinType: base_address.coinType, value: address },
+        ],
+        texts: [
+          { key: "avatar", value: DEFAULT_AVATAR_URL },
+          { key: "header", value: DEFAULT_HEADER_URL },
+        ],
       });
     }
   }, [address]);

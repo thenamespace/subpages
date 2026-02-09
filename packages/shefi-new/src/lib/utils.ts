@@ -18,6 +18,7 @@ export function isValidAddress(address: string): boolean {
 }
 
 const DEFAULT_AVATAR_CID = 'bafkreiac2vzw6ky2mk4e27rkvb7n26xfsvhljgo3mxcbutkcamn2s3qene';
+const DEFAULT_HEADER_CID = 'bafybeihmqdto646pne6g4eusn45q2q7u4nt3cq4h6f4z5g26ua3k5l3pry';
 
 /**
  * Extracts an IPFS CID from various URL formats.
@@ -32,23 +33,37 @@ function extractIpfsCid(url: string): string | null {
 }
 
 /**
- * Resolves avatar URLs for display.
+ * Resolves IPFS or HTTP URLs for display.
  * - IPFS content is routed through /api/ipfs/[cid] proxy for production reliability.
  * - The known default shefi avatar uses the local static asset.
  * - HTTP/HTTPS non-IPFS URLs pass through as-is.
  */
-export function resolveAvatarUrl(url: string | undefined | null): string | null {
+function resolveIpfsUrl(url: string | undefined | null, defaultCid?: string, defaultLocal?: string): string | null {
   if (!url) return null;
 
   const cid = extractIpfsCid(url);
   if (cid) {
-    if (cid === DEFAULT_AVATAR_CID) return '/default-avatar.jpg';
+    if (defaultCid && defaultLocal && cid === defaultCid) return defaultLocal;
     return `/api/ipfs/${cid}`;
   }
 
   // Non-IPFS http(s) URL — pass through
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
   return null;
+}
+
+/**
+ * Resolves avatar URLs for display.
+ */
+export function resolveAvatarUrl(url: string | undefined | null): string | null {
+  return resolveIpfsUrl(url, DEFAULT_AVATAR_CID, '/default-avatar.jpg');
+}
+
+/**
+ * Resolves header/banner URLs for display.
+ */
+export function resolveHeaderUrl(url: string | undefined | null): string | null {
+  return resolveIpfsUrl(url, DEFAULT_HEADER_CID, '/default-header.png');
 }
 
 export function isUserRejection(err: unknown): boolean {

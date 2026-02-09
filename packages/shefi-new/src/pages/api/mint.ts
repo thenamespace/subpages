@@ -24,6 +24,9 @@ const ENS_NAME = "shefi.eth";
 
 const SHEFI_AVATAR =
   "https://ipfs.io/ipfs/bafkreiac2vzw6ky2mk4e27rkvb7n26xfsvhljgo3mxcbutkcamn2s3qene";
+const SHEFI_HEADER =
+  "https://ipfs.io/ipfs/bafybeihmqdto646pne6g4eusn45q2q7u4nt3cq4h6f4z5g26ua3k5l3pry";
+
 const wallet_key = process.env.WALLET_KEY as Hash;
 const alchemy_key = process.env.ALCHEMY_KEY;
 const base_rpc = `https://base-mainnet.g.alchemy.com/v2/${alchemy_key}`;
@@ -244,40 +247,32 @@ export default async function handler(
       return;
     }
 
-    // Build records - use provided records or default
-    const records: EnsRecords = {
-      addresses: [
-        {
-          value: body.owner,
-          chain: ChainName.Ethereum,
-        },
-        {
-          value: body.owner,
-          chain: ChainName.Base,
-        },
-      ],
-      texts: [
-        {
-          key: "avatar",
-          value: SHEFI_AVATAR,
-        },
-      ],
-    };
+    // Default addresses (fallback when frontend sends none)
+    const defaultAddresses: EnsRecords["addresses"] = [
+      { value: body.owner, chain: ChainName.Ethereum },
+      { value: body.owner, chain: ChainName.Base },
+    ];
 
-    // Merge in user-provided text records
-    if (body.records?.texts && body.records.texts.length > 0) {
-      body.records.texts.forEach((text) => {
-        if (text.value && text.value.length > 0) {
-          // Check if this key already exists (like avatar)
-          const existingIndex = records.texts?.findIndex((t) => t.key === text.key) ?? -1;
-          if (existingIndex >= 0 && records.texts) {
-            records.texts[existingIndex].value = text.value;
-          } else if (records.texts) {
-            records.texts.push(text);
-          }
-        }
-      });
-    }
+    // Default texts (fallback when frontend sends none)
+    const defaultTexts: EnsRecords["texts"] = [
+      { key: "avatar", value: SHEFI_AVATAR },
+      { key: "header", value: SHEFI_HEADER },
+    ];
+
+    // Use frontend-provided records directly; fall back to defaults if empty
+    const userAddresses = (body.records?.addresses || []).filter(
+      (a) => a.value && a.value.length > 0
+    );
+    const userTexts = (body.records?.texts || []).filter(
+      (t) => t.value && t.value.length > 0
+    );
+
+    const records: EnsRecords = {
+      addresses: userAddresses.length > 0
+        ? userAddresses.map((a) => ({ value: a.value, chain: a.coinType }))
+        : defaultAddresses,
+      texts: userTexts.length > 0 ? userTexts : defaultTexts,
+    };
 
     console.log("Minting:", { owner: body.owner, label, recordCount: (records.texts?.length || 0) + (records.addresses?.length || 0) });
 
