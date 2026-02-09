@@ -10,7 +10,7 @@ import { Tabs } from '@/components/Tabs';
 import { useIndexer } from '@/hooks/useIndexer';
 import { usePrimaryName } from '@/contexts/PrimaryNameContext';
 import { IndexerSubname, formatExpiry, isExpired } from '@/types/indexer';
-import { resolveAvatarUrl } from '@/lib/utils';
+import { resolveAvatarUrl, resolveHeaderUrl } from '@/lib/utils';
 import { truncateAddress, equalsIgnoreCase } from '@/lib/utils';
 import { deepCopy } from '@/lib/resolver-utils';
 import { RecordsTab } from '@/components/name-profile/RecordsTab';
@@ -181,6 +181,7 @@ export default function NameProfilePage() {
   }
 
   const avatar = resolveAvatarUrl(nameData!.texts?.avatar);
+  const header = resolveHeaderUrl(nameData!.texts?.header);
 
   return (
     <main className="min-h-screen bg-gradient-radial">
@@ -189,10 +190,10 @@ export default function NameProfilePage() {
         <div className="mb-8 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
           {/* Cover/Avatar Section */}
           <div className="relative h-40 bg-gray-100 sm:h-48">
-            {avatar && (
+            {header && (
               <img
-                src={avatar}
-                alt={nameData!.name}
+                src={header}
+                alt={`${nameData!.name} header`}
                 className="h-full w-full object-cover"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';

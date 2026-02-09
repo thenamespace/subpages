@@ -30,6 +30,7 @@ import "./MainFormOverride.css";
 
 const MIN_NAME_LENGTH = 3;
 const eth_address = getSupportedAddressByName("eth") as SupportedEnsAddress;
+const base_address = getSupportedAddressByName("base") as SupportedEnsAddress;
 
 enum RegistrationStep {
   AVAILABILITY = "availability",
@@ -98,12 +99,15 @@ export const MintForm = () => {
     isChecking: true,
   });
 
-  // Initialize records with user's address when connected
+  // Initialize records with user's address when connected (Ethereum + Base)
   useEffect(() => {
     if (address && records.addresses.length === 0) {
       setRecords({
         ...records,
-        addresses: [{ coinType: eth_address.coinType, value: address }],
+        addresses: [
+          { coinType: eth_address.coinType, value: address },
+          { coinType: base_address.coinType, value: address },
+        ],
       });
     }
   }, [address]);

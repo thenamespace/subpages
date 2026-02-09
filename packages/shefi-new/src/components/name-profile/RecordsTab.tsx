@@ -2,7 +2,7 @@
 
 import { IndexerSubname } from '@/types/indexer';
 import { Text } from '@/components/Text';
-import { resolveAvatarUrl } from '@/lib/utils';
+import { resolveAvatarUrl, resolveHeaderUrl } from '@/lib/utils';
 
 interface RecordsTabProps {
   nameData: IndexerSubname;
@@ -11,6 +11,7 @@ interface RecordsTabProps {
 // Common text record keys to display
 const DISPLAY_RECORDS = [
   { key: 'avatar', label: 'Avatar' },
+  { key: 'header', label: 'Header' },
   { key: 'description', label: 'Description' },
   { key: 'display', label: 'Display Name' },
   { key: 'email', label: 'Email' },
@@ -67,6 +68,20 @@ export function RecordsTab({ nameData }: RecordsTabProps) {
                   src={resolveAvatarUrl(value)!}
                   alt="Avatar"
                   className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+                <Text size="sm" className="truncate min-w-0">
+                  {value}
+                </Text>
+              </div>
+            ) : key === 'header' && resolveHeaderUrl(value) ? (
+              <div className="flex items-center gap-3 min-w-0">
+                <img
+                  src={resolveHeaderUrl(value)!}
+                  alt="Header"
+                  className="h-12 w-20 flex-shrink-0 rounded object-cover"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}

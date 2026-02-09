@@ -24,6 +24,9 @@ const ENS_NAME = "shefi.eth";
 
 const SHEFI_AVATAR =
   "https://ipfs.io/ipfs/bafkreiac2vzw6ky2mk4e27rkvb7n26xfsvhljgo3mxcbutkcamn2s3qene";
+const SHEFI_HEADER =
+  "https://ipfs.io/ipfs/bafybeihmqdto646pne6g4eusn45q2q7u4nt3cq4h6f4z5g26ua3k5l3pry";
+
 const wallet_key = process.env.WALLET_KEY as Hash;
 const alchemy_key = process.env.ALCHEMY_KEY;
 const base_rpc = `https://base-mainnet.g.alchemy.com/v2/${alchemy_key}`;
@@ -260,6 +263,10 @@ export default async function handler(
         {
           key: "avatar",
           value: SHEFI_AVATAR,
+        },
+        {
+          key: "header",
+          value: SHEFI_HEADER,
         },
       ],
     };
