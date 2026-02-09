@@ -247,44 +247,32 @@ export default async function handler(
       return;
     }
 
-    // Build records - use provided records or default
-    const records: EnsRecords = {
-      addresses: [
-        {
-          value: body.owner,
-          chain: ChainName.Ethereum,
-        },
-        {
-          value: body.owner,
-          chain: ChainName.Base,
-        },
-      ],
-      texts: [
-        {
-          key: "avatar",
-          value: SHEFI_AVATAR,
-        },
-        {
-          key: "header",
-          value: SHEFI_HEADER,
-        },
-      ],
-    };
+    // Default addresses (fallback when frontend sends none)
+    const defaultAddresses: EnsRecords["addresses"] = [
+      { value: body.owner, chain: ChainName.Ethereum },
+      { value: body.owner, chain: ChainName.Base },
+    ];
 
-    // Merge in user-provided text records
-    if (body.records?.texts && body.records.texts.length > 0) {
-      body.records.texts.forEach((text) => {
-        if (text.value && text.value.length > 0) {
-          // Check if this key already exists (like avatar)
-          const existingIndex = records.texts?.findIndex((t) => t.key === text.key) ?? -1;
-          if (existingIndex >= 0 && records.texts) {
-            records.texts[existingIndex].value = text.value;
-          } else if (records.texts) {
-            records.texts.push(text);
-          }
-        }
-      });
-    }
+    // Default texts (fallback when frontend sends none)
+    const defaultTexts: EnsRecords["texts"] = [
+      { key: "avatar", value: SHEFI_AVATAR },
+      { key: "header", value: SHEFI_HEADER },
+    ];
+
+    // Use frontend-provided records directly; fall back to defaults if empty
+    const userAddresses = (body.records?.addresses || []).filter(
+      (a) => a.value && a.value.length > 0
+    );
+    const userTexts = (body.records?.texts || []).filter(
+      (t) => t.value && t.value.length > 0
+    );
+
+    const records: EnsRecords = {
+      addresses: userAddresses.length > 0
+        ? userAddresses.map((a) => ({ value: a.value, chain: a.coinType }))
+        : defaultAddresses,
+      texts: userTexts.length > 0 ? userTexts : defaultTexts,
+    };
 
     console.log("Minting:", { owner: body.owner, label, recordCount: (records.texts?.length || 0) + (records.addresses?.length || 0) });
 
