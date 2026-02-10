@@ -10,15 +10,14 @@ import { useAccount, useSwitchChain, useSignMessage } from "wagmi";
 import { ENS_NAME, useNamepsaceClient } from "./useNamespaceClient";
 import { debounce } from "lodash";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useRouter } from "next/navigation";
 import { Hash, Hex, keccak256, encodePacked } from "viem";
 import { base } from "wagmi/chains";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { getWhitelist } from "@/api/api";
 import { SuccessModal } from "./SuccessModal";
-import { SetPrimaryNameModal } from "./SetPrimaryNameModal";
 import { L2_CHAIN_ID, PARENT_NAME } from "@/constants";
-import { usePrimaryName } from "@/contexts/PrimaryNameContext";
 import { resolveAvatarUrl } from "@/lib/utils";
 import {
   SelectRecordsForm,
@@ -45,13 +44,13 @@ enum RegistrationStep {
 }
 
 export const MintForm = () => {
+  const router = useRouter();
   const [label, setLabel] = useState("");
   const { address, chainId, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
   const { switchChainAsync } = useSwitchChain();
   const { signMessageAsync } = useSignMessage();
   const { checkAvailable, waitForTx } = useNamepsaceClient();
-  const { refreshPrimaryName } = usePrimaryName();
 
   const constructMintMessageHash = (owner: `0x${string}`, label: string, expiry: bigint): Hex => {
     return keccak256(
@@ -91,7 +90,7 @@ export const MintForm = () => {
 
   // Success/Primary name modals
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showPrimaryNameModal, setShowPrimaryNameModal] = useState(false);
+  const [registeredLabel, setRegisteredLabel] = useState("");
 
   // Whitelist state
   const [whitelistConfig, setWhitelistConfig] = useState<{
@@ -265,6 +264,7 @@ export const MintForm = () => {
 
       submittedTxHash = data.tx;
       setTxHash(data.tx);
+      setRegisteredLabel(label);
       setRegistrationStep(RegistrationStep.TX_PENDING);
     } catch (err: any) {
       console.error("Mint API error:", err);
@@ -322,24 +322,19 @@ export const MintForm = () => {
     setShowSuccessModal(false);
     // Reset form
     setLabel("");
+    setRegisteredLabel("");
     setRecords({ addresses: [], texts: [] });
     setProfileSet(false);
     setRegistrationStep(RegistrationStep.AVAILABILITY);
   };
 
   const handleOpenPrimaryNameModal = () => {
+    const mintedLabel = registeredLabel || label;
     setShowSuccessModal(false);
-    setShowPrimaryNameModal(true);
-  };
 
-  const handlePrimaryNameSuccess = async () => {
-    setShowPrimaryNameModal(false);
-    await refreshPrimaryName(true);
-    // Reset form
-    setLabel("");
-    setRecords({ addresses: [], texts: [] });
-    setProfileSet(false);
-    setRegistrationStep(RegistrationStep.AVAILABILITY);
+    if (mintedLabel) {
+      router.push(`/name/${mintedLabel}?openPrimaryModal=1`);
+    }
   };
 
   const getNextButtonLabel = () => {
@@ -363,6 +358,9 @@ export const MintForm = () => {
     !whitelistConfig.isWhitelisted;
 
   const fullName = `${label}.${PARENT_NAME}`;
+  const mintedNameForModals = registeredLabel
+    ? `${registeredLabel}.${PARENT_NAME}`
+    : fullName;
 
   return (
     <>
@@ -563,23 +561,8 @@ export const MintForm = () => {
       <SuccessModal
         isOpen={showSuccessModal}
         onClose={handleSuccessModalClose}
-        mintedName={fullName}
+        mintedName={mintedNameForModals}
         onSetPrimaryName={handleOpenPrimaryNameModal}
-      />
-
-      {/* Primary Name Modal */}
-      <SetPrimaryNameModal
-        isOpen={showPrimaryNameModal}
-        onClose={() => {
-          setShowPrimaryNameModal(false);
-          // Reset form so UI doesn't stay in empty SUCCESS state
-          setLabel("");
-          setRecords({ addresses: [], texts: [] });
-          setProfileSet(false);
-          setRegistrationStep(RegistrationStep.AVAILABILITY);
-        }}
-        onSuccess={handlePrimaryNameSuccess}
-        mintedName={fullName}
       />
     </>
   );
