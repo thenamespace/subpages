@@ -45,6 +45,9 @@ export function useTransactionModal(options: UseTransactionModalOptions = {}) {
   );
 
   const closeTransactionModal = useCallback(() => {
+    if (status === 'pending') {
+      return;
+    }
     setIsOpen(false);
     // Reset after animation
     setTimeout(() => {
@@ -52,7 +55,7 @@ export function useTransactionModal(options: UseTransactionModalOptions = {}) {
       setStatus('pending');
       setErrorMessage(null);
     }, 200);
-  }, []);
+  }, [status]);
 
   /**
    * Wait for a transaction with retry logic

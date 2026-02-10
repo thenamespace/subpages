@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAccount } from 'wagmi';
 import Link from 'next/link';
 import { Button } from '@/components/Button';
@@ -66,8 +66,11 @@ const toEnsRecords = (nameData: IndexerSubname | null): EnsRecords => {
 
 export default function NameProfilePage() {
   const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const nameLabel = (params?.name as string) || '';
   const fullName = `${nameLabel}.${PARENT_NAME}`;
+  const shouldOpenPrimaryModal = searchParams?.get('openPrimaryModal') === '1';
 
   const { address } = useAccount();
   const { getNameByLabel, loading, error } = useIndexer();
@@ -78,6 +81,7 @@ export default function NameProfilePage() {
   const [showPrimaryNameModal, setShowPrimaryNameModal] = useState(false);
   const [showRecordsModal, setShowRecordsModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
+  const [hasHandledAutoOpen, setHasHandledAutoOpen] = useState(false);
 
   // EnsRecords state for the edit modal
   const [initialRecords, setInitialRecords] = useState<EnsRecords>({
@@ -95,6 +99,10 @@ export default function NameProfilePage() {
     if (nameLabel) {
       fetchName();
     }
+  }, [nameLabel]);
+
+  useEffect(() => {
+    setHasHandledAutoOpen(false);
   }, [nameLabel]);
 
   const fetchName = async () => {
@@ -116,6 +124,25 @@ export default function NameProfilePage() {
     if (!nameData?.name || !primaryName) return false;
     return equalsIgnoreCase(nameData.name, primaryName);
   }, [nameData?.name, primaryName]);
+
+  useEffect(() => {
+    if (!shouldOpenPrimaryModal || hasHandledAutoOpen || !nameData) return;
+    setHasHandledAutoOpen(true);
+
+    if (isNameOwner && !isAlreadyPrimary) {
+      setShowPrimaryNameModal(true);
+    }
+
+    router.replace(`/name/${nameLabel}`);
+  }, [
+    shouldOpenPrimaryModal,
+    hasHandledAutoOpen,
+    nameData,
+    isNameOwner,
+    isAlreadyPrimary,
+    router,
+    nameLabel,
+  ]);
 
   const handlePrimaryNameSet = async () => {
     setShowPrimaryNameModal(false);

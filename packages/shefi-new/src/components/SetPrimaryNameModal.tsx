@@ -153,6 +153,9 @@ export function SetPrimaryNameModal({
   };
 
   const handleSkip = () => {
+    if (isLoading || isSwitching) {
+      return;
+    }
     setIsLoading(false);
     onClose();
   };
