@@ -16,7 +16,6 @@
     "@chakra-ui/theme": "^3.4.6",
     "@emotion/react": "^11.14.0",
     "@ensdomains/address-encoder": "^1.1.2",
-    "@ensdomains/buffer": "^0.1.1",
     "@ensdomains/ensjs": "^4.0.2",
     "@namespacesdk/addresses": "^1.0.15",
     "@namespacesdk/indexer-manager": "^1.0.1",
