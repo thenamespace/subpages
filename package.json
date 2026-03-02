@@ -2,11 +2,6 @@
   "name": "root",
   "private": true,
   "dependencies": {},
-  "devDependencies": {
-    "lerna": "^8.1.9",
-    "sass": "^1.82.0"
-  },
-  "scripts": {
-    "start:nektar": "workspaces"
-  }
+  "devDependencies": {},
+  "scripts": {}
 }
