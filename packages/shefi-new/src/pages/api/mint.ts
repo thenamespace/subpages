@@ -17,7 +17,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
 import { AxiosError } from "axios";
 import { getWhitelist } from "@/api/api";
-import { ChainName, createMintClient, type EnsRecords } from "@thenamespace/mint-manager";
+import { ChainName, ContenthashType, createMintClient, type EnsRecords } from "@thenamespace/mint-manager";
 import { normalize } from "viem/ens";
 
 const ENS_NAME = "shefi.eth";
@@ -75,8 +75,19 @@ interface MintRequestBody {
   records?: {
     texts?: Array<{ key: string; value: string }>;
     addresses?: Array<{ coinType: number; value: string }>;
+    contenthash?: { protocol: string; value: string };
   };
 }
+
+// ens-components ContenthashProtocol → mint-manager ContenthashType.
+// Note: mint-manager spells skynet as "syknet"; we hand it the enum value, not a string.
+const PROTOCOL_TO_CONTENTHASH_TYPE: Record<string, ContenthashType> = {
+  ipfs: ContenthashType.Ipfs,
+  onion3: ContenthashType.Onion,
+  arweave: ContenthashType.Arweave,
+  swarm: ContenthashType.Swarm,
+  skynet: ContenthashType.Skynet,
+};
 
 function checkRateLimit(key: string, limitMap: Map<string, { count: number; resetAt: number }>, maxRequests: number): boolean {
   const now = Date.now();
@@ -267,11 +278,20 @@ export default async function handler(
       (t) => t.value && t.value.length > 0
     );
 
+    const userContenthash = body.records?.contenthash;
+    const contenthashType =
+      userContenthash && userContenthash.value
+        ? PROTOCOL_TO_CONTENTHASH_TYPE[userContenthash.protocol]
+        : undefined;
+
     const records: EnsRecords = {
       addresses: userAddresses.length > 0
         ? userAddresses.map((a) => ({ value: a.value, chain: a.coinType }))
         : defaultAddresses,
       texts: userTexts.length > 0 ? userTexts : defaultTexts,
+      ...(contenthashType && userContenthash
+        ? { contenthash: { type: contenthashType, value: userContenthash.value } }
+        : {}),
     };
 
     console.log("Minting:", { owner: body.owner, label, recordCount: (records.texts?.length || 0) + (records.addresses?.length || 0) });

@@ -252,6 +252,10 @@ export const MintForm = () => {
         addresses: records.addresses.filter(
           (a) => a.value && a.value.length > 0,
         ),
+        contenthash:
+          records.contenthash && records.contenthash.value
+            ? records.contenthash
+            : undefined,
       };
 
       const { data } = await axios.post<{ tx: Hash }>("/api/mint", {
