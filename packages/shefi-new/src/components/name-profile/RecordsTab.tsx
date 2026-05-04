@@ -3,6 +3,11 @@
 import { IndexerSubname } from '@/types/indexer';
 import { Text } from '@/components/Text';
 import { resolveAvatarUrl, resolveHeaderUrl } from '@/lib/utils';
+import {
+  ContenthashIcon,
+  ContenthashProtocol,
+} from '@thenamespace/ens-components';
+import { decode as decodeContenthash, getCodec } from '@ensdomains/content-hash';
 
 interface RecordsTabProps {
   nameData: IndexerSubname;
@@ -26,8 +31,9 @@ const DISPLAY_RECORDS = [
 export function RecordsTab({ nameData }: RecordsTabProps) {
   const textRecords = nameData.texts || {};
   const recordKeys = Object.keys(textRecords);
+  const contenthash = nameData.contenthash;
 
-  if (recordKeys.length === 0) {
+  if (recordKeys.length === 0 && !contenthash) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <Text size="lg" color="gray">
@@ -50,6 +56,7 @@ export function RecordsTab({ nameData }: RecordsTabProps) {
 
   return (
     <div className="space-y-4">
+      {contenthash && <ContenthashRow value={contenthash} />}
       {sortedRecords.map(({ key, label }) => {
         const value = textRecords[key];
         if (!value) return null;
@@ -110,6 +117,121 @@ export function RecordsTab({ nameData }: RecordsTabProps) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// Decode raw on-chain contenthash bytes (hex) using @ensdomains/content-hash —
+// same library the ens-components SelectRecordsForm uses to encode on the way in.
+// Indexer may also return an already-decoded `ipfs://...` string; handle both.
+function parseContenthash(raw: string): { codec: string | null; hash: string } | null {
+  if (!raw) return null;
+
+  const trimmed = raw.trim();
+
+  // Already-decoded URI form. Map well-known scheme aliases back to codec names.
+  const uriMatch = trimmed.match(/^([a-z0-9]+):\/\/(.+)$/i);
+  if (uriMatch) {
+    const scheme = uriMatch[1].toLowerCase();
+    const SCHEME_TO_CODEC: Record<string, string> = {
+      ar: 'arweave',
+      bzz: 'swarm',
+      sia: 'skynet',
+    };
+    return { codec: SCHEME_TO_CODEC[scheme] ?? scheme, hash: uriMatch[2] };
+  }
+
+  // On-chain hex form
+  if (/^0x[0-9a-fA-F]+$/.test(trimmed) && trimmed.length > 2) {
+    try {
+      const codec = getCodec(trimmed) ?? null;
+      const hash = decodeContenthash(trimmed);
+      if (hash) return { codec, hash };
+    } catch (err) {
+      console.warn('Failed to decode contenthash', err);
+    }
+  }
+
+  return { codec: null, hash: trimmed };
+}
+
+const CODEC_LABELS: Record<string, string> = {
+  ipfs: 'IPFS',
+  ipns: 'IPNS',
+  arweave: 'Arweave',
+  swarm: 'Swarm',
+  onion: 'Onion',
+  onion3: 'Onion',
+  skynet: 'Skynet',
+};
+
+const CODEC_TO_ICON: Record<string, ContenthashProtocol> = {
+  ipfs: ContenthashProtocol.Ipfs,
+  arweave: ContenthashProtocol.Arweave,
+  swarm: ContenthashProtocol.Swarm,
+  onion3: ContenthashProtocol.Onion,
+  skynet: ContenthashProtocol.Skynet,
+};
+
+// Display prefix for each codec (matches @thenamespace/ens-components)
+const CODEC_TO_PREFIX: Record<string, string> = {
+  ipfs: 'ipfs://',
+  ipns: 'ipns://',
+  arweave: 'ar://',
+  swarm: 'bzz://',
+  onion: 'onion3://',
+  onion3: 'onion3://',
+  skynet: 'sia://',
+};
+
+function getGatewayUrl(codec: string | null, hash: string): string | null {
+  switch (codec) {
+    case 'ipfs':
+      return `https://${hash}.ipfs.dweb.link`;
+    case 'ipns':
+      return `https://${hash}.ipns.dweb.link`;
+    case 'arweave':
+      return `https://arweave.net/${hash}`;
+    case 'swarm':
+      return `https://api.gateway.ethswarm.org/bzz/${hash}`;
+    default:
+      return null;
+  }
+}
+
+function ContenthashRow({ value }: { value: string }) {
+  const parsed = parseContenthash(value);
+  if (!parsed) return null;
+
+  const { codec, hash } = parsed;
+  const label = (codec && CODEC_LABELS[codec]) || 'Content Hash';
+  const iconProtocol = codec ? CODEC_TO_ICON[codec] : undefined;
+  const gatewayUrl = getGatewayUrl(codec, hash);
+  const display = codec ? `${CODEC_TO_PREFIX[codec] ?? `${codec}://`}${hash}` : hash;
+
+  return (
+    <div className="flex flex-col gap-2 overflow-hidden rounded-lg border border-brand-orange/20 bg-brand-light/50 p-3 sm:p-4">
+      <div className="flex items-center gap-2">
+        {iconProtocol && <ContenthashIcon protocol={iconProtocol} width={16} height={16} />}
+        <Text size="xs" weight="medium" color="gray" className="uppercase">
+          {label}
+        </Text>
+      </div>
+      {gatewayUrl ? (
+        <a
+          href={gatewayUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block truncate break-words text-brand-orange hover:underline"
+          title={display}
+        >
+          {display}
+        </a>
+      ) : (
+        <Text size="sm" className="break-words">
+          {display}
+        </Text>
+      )}
     </div>
   );
 }
