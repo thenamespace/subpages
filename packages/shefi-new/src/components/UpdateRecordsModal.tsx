@@ -87,7 +87,8 @@ export function UpdateRecordsModal({
       diff.addressesModified.length > 0 ||
       diff.addressesRemoved.length > 0 ||
       diff.contenthashRemoved ||
-      diff.contenthashModified;
+      diff.contenthashModified ||
+      diff.contenthashAdded;
 
     if (!hasAnyChanges) return false;
 
