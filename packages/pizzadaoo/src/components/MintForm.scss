@@ -55,11 +55,11 @@
     cursor: pointer;
 
     &:hover {
-      text-shadow:0px 0px 2px $yellow, 0px 0px 2px $yellow;
+      text-shadow: 0 0 1px rgba(255, 184, 25, 0.55);
     }
 
     &.generating {
-      text-shadow:0px 0px 2px $yellow, 0px 0px 2px $yellow;
+      text-shadow: 0 0 1px rgba(255, 184, 25, 0.55);
     }
 
     &.disabled {
@@ -71,6 +71,13 @@
   .select-name-cont {
 
     .select-name-badge {
+      // Button reset — was a <div>, now a <button> for keyboard a11y;
+      // without this the native button background renders white.
+      appearance: none;
+      -webkit-appearance: none;
+      font: inherit;
+      background: transparent;
+      border: none;
       color: white;
       padding: 10px;
       font-size: 13px;
@@ -78,7 +85,7 @@
       border-radius: 10px;
       outline: 3px solid $yellow;
       cursor: pointer;
-      transition: all 0.3s linear;
+      transition: background-color 0.3s linear;
 
       &:hover {
         background-color: $red;

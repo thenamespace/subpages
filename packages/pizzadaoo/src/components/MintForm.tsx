@@ -244,15 +244,28 @@ export const MintForm = () => {
     }
   };
 
-  const isWrongChain = chain && chain.id !== LISTING_CHAIN_ID;
+  const handleSwitchChain = async () => {
+    try {
+      await switchChainAsync({ chainId: LISTING_CHAIN_ID });
+    } catch (err: unknown) {
+      if (!isUserRejection(err)) {
+        toast("Could not switch network. Try switching in your wallet.", {
+          className: "tech-toasty",
+          type: "error",
+        });
+      }
+    }
+  };
+
+  const isWrongChain = Boolean(chain) && chain?.id !== LISTING_CHAIN_ID;
+  const needsChainSwitch = Boolean(address) && isWrongChain;
   const mintBtnDisabled =
     searchLabel.length === 0 ||
     indicator.isChecking ||
     !indicator.isAvailable ||
     mintState.waitingTx ||
     mintState.waitingWallet ||
-    indicator.isError ||
-    isWrongChain;
+    indicator.isError;
   const isTaken =
     searchLabel.length > 0 && !indicator.isChecking && !indicator.isAvailable;
 
@@ -316,24 +329,28 @@ export const MintForm = () => {
                 </div>
               </div>
               <div>
-                <PlainBtn
-                  disabled={mintBtnDisabled}
-                  text={"register"}
-                  className="mt-2 w-100"
-                  onClick={() => handleMint()}
-                >
-                  Register
-                </PlainBtn>
+                {needsChainSwitch ? (
+                  <PlainBtn
+                    className="mt-2 w-100"
+                    onClick={() => handleSwitchChain()}
+                  >
+                    Switch to Base Network
+                  </PlainBtn>
+                ) : (
+                  <PlainBtn
+                    disabled={mintBtnDisabled}
+                    text={"register"}
+                    className="mt-2 w-100"
+                    onClick={() => handleMint()}
+                  >
+                    Register
+                  </PlainBtn>
+                )}
               </div>
               <div className="err-container mt-2">
                 {isTaken && (
                   <p className="err-message m-0">
                     You don&apos;t have minting permissions
-                  </p>
-                )}
-                {isWrongChain && address && (
-                  <p className="err-message m-0" style={{ color: "#ff6b6b" }}>
-                    Please switch to Base network to register
                   </p>
                 )}
               </div>

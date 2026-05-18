@@ -16,6 +16,7 @@ export const UserProfile = () => {
   const { disconnectAsync } = useDisconnect();
   const { address } = useAccount();
   const [profile, setProfile] = useState<ProfileState>({ fetching: true });
+  const [avatarFailed, setAvatarFailed] = useState(false);
 
   useEffect(() => {
     if (!address || !publicClient) {
@@ -59,54 +60,49 @@ export const UserProfile = () => {
     return null;
   }
 
+  const showAvatar = profile.avatar && !avatarFailed;
+
   return (
-    <div className="user-profile-cont d-flex align-items-center">
-      <div className="nav-container me-3 d-flex">
-        <Link href="/">
-          <div className="nav-item me-3">Register</div>
+    <div className="user-profile-cont">
+      <nav className="nav-container">
+        <Link href="/" className="nav-item">
+          Register
         </Link>
-        <Link href="/subnames">
-          <div className="nav-item ">My Names</div>
+        <Link href="/subnames" className="nav-item">
+          My Names
         </Link>
-      </div>
+      </nav>
       <div className="user-profile">
-        <div>
-          <div className="row g-0">
-            <div className="col col-xs-3 mt-1">
-              {profile.avatar ? (
-                <img className="avatar" width={30} src={profile.avatar} alt="" />
-              ) : (
-                <div className="avatar-template"></div>
-              )}
-            </div>
-            <div className="col ps-1 col-lg-9 d-flex flex-column justify-content-center">
-              <p
-                className="m-0 mb-1"
-                style={{ color: "white", lineHeight: "15px", fontSize: 14 }}
-                title={profile.name}
-              >
-                {profile.name
-                  ? formatEnsName(profile.name)
-                  : shortenAddress(address)}
-              </p>
-              {!profile.name && (
-                <p
-                  className="m-0"
-                  style={{ fontSize: 12, lineHeight: "12px" }}
-                >
-                  Anonymous
-                </p>
-              )}
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => disconnectAsync()}
-            className="dc"
-          >
-            Disconnect
-          </button>
+        {showAvatar ? (
+          <img
+            className="avatar"
+            src={profile.avatar}
+            alt=""
+            width={34}
+            height={34}
+            onError={() => setAvatarFailed(true)}
+          />
+        ) : (
+          <div className="avatar-template" aria-hidden="true" />
+        )}
+        <div className="identity">
+          <span className="identity-name" title={profile.name}>
+            {profile.name
+              ? formatEnsName(profile.name)
+              : shortenAddress(address)}
+          </span>
+          <span className="identity-sub">
+            {profile.name ? shortenAddress(address) : "Anonymous"}
+          </span>
         </div>
+        <button
+          type="button"
+          onClick={() => disconnectAsync()}
+          className="dc"
+          aria-label="Disconnect wallet"
+        >
+          Disconnect
+        </button>
       </div>
     </div>
   );

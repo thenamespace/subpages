@@ -33,6 +33,16 @@
     }
 
     .subname-item {
+        // Button reset — was a <div>, now a <button> for keyboard a11y;
+        // without this the native button background renders white.
+        appearance: none;
+        -webkit-appearance: none;
+        font: inherit;
+        background: transparent;
+        border: none;
+        width: 100%;
+        text-align: left;
+        color: $yellow;
         padding: 10px;
         border-bottom: 1px solid $yellow;
         cursor: pointer;
