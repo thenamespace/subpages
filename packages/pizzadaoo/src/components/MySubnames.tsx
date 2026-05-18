@@ -1,7 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 import { useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
-import { Spinner } from "./Spinner";
 import { PlainBtn } from "./TechBtn";
 import Link from "next/link";
 import { SideModal } from "./SideModal";
@@ -11,6 +10,7 @@ import { useRouter } from "next/router";
 import { LISTED_NAMES } from "./Listing";
 
 const indexer = "https://indexer.namespace.ninja/api/v1/nodes";
+const FALLBACK_AVATAR = "https://avatars.namespace.ninja/pizzadaoo.png";
 
 interface IndexerResponse {
   items: Subname[];
@@ -42,6 +42,23 @@ interface SubnamesState {
   items: Subname[];
   totalItems: number;
 }
+
+const SubnameAvatar = ({ subname }: { subname: Subname }) => {
+  const [src, setSrc] = useState(subname.texts?.["avatar"] || FALLBACK_AVATAR);
+  return (
+    <img
+      src={src}
+      className="avatar"
+      alt={subname.name}
+      width={48}
+      height={48}
+      loading="lazy"
+      onError={() => {
+        if (src !== FALLBACK_AVATAR) setSrc(FALLBACK_AVATAR);
+      }}
+    />
+  );
+};
 
 export const MySubnames = () => {
   const { address } = useAccount();
@@ -112,7 +129,7 @@ export const MySubnames = () => {
   }, [subnames, searchFilter]);
 
   return (
-    <div className="my-subnames-container d-flex flex-column justify-content-center align-items-center">
+    <div className="my-subnames-container">
       {selectedSubname !== undefined && (
         <SideModal open={true} onClose={() => setSelectedSubname(undefined)}>
           <SingleSubname
@@ -122,81 +139,73 @@ export const MySubnames = () => {
         </SideModal>
       )}
 
-      <div className="subname-nav row w-100 mb-3">
-        <div className="col-lg-12 title text-center mb-3 title-text">
-          Subnames
-        </div>
-        <div className="col-lg-6 p-0 d-flex align-items-center">
-          <p style={{ fontSize: 25 }}>Total: {subnames.totalItems}</p>
-        </div>
-        <div className="col-lg-6 p-0 justify-content-end d-flex">
+      <header className="subnames-header">
+        <h1 className="subnames-title">Subnames</h1>
+        <div className="subnames-meta">
+          <span className="subnames-count">
+            {subnames.totalItems}{" "}
+            {subnames.totalItems === 1 ? "name" : "names"}
+          </span>
           <input
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
             placeholder="Find your subnames"
-            className="tech-input"
+            className="tech-input subnames-search"
+            aria-label="Search your subnames"
           />
         </div>
-      </div>
+      </header>
+
       <div className="subnames-form">
         {subnames.fetching && (
-          <div
-            style={{ height: "100%" }}
-            className="d-flex flex-column align-items-center justify-content-center"
-          >
-            <div style={{ width: 25 }}>
-              <Spinner size="big" />
-            </div>
+          <div className="subnames-skeleton" aria-busy="true" aria-live="polite">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div className="skeleton-item" key={i}>
+                <div className="skeleton-avatar" />
+                <div className="skeleton-bar" />
+              </div>
+            ))}
           </div>
         )}
 
-        {!subnames.fetching && (
-          <>
-            {visibleSubnames.length === 0 && (
+        {!subnames.fetching && visibleSubnames.length === 0 && (
+          <div className="subnames-empty">
+            {filterApplied ? (
               <>
-                {!filterApplied && (
-                  <div
-                    style={{ height: "100%" }}
-                    className="d-flex flex-column align-items-center justify-content-center"
-                  >
-                    <h5 className="mb-4">You don&apos;t own any subname</h5>
-                    <Link href="/">
-                      <PlainBtn>Register</PlainBtn>
-                    </Link>
-                  </div>
-                )}
-                {filterApplied && (
-                  <div
-                    style={{ height: "100%" }}
-                    className="d-flex flex-column align-items-center justify-content-center"
-                  >
-                    <h5 style={{ color: "white" }} className="mb-4">
-                      No subnames with search criteria
-                    </h5>
-                    <PlainBtn onClick={() => setSearchFilter("")}>
-                      Clear
-                    </PlainBtn>
-                  </div>
-                )}
+                <h5>No subnames match “{searchFilter}”</h5>
+                <PlainBtn onClick={() => setSearchFilter("")}>
+                  Clear search
+                </PlainBtn>
+              </>
+            ) : (
+              <>
+                <h5>You don&apos;t own any subname yet</h5>
+                <Link href="/">
+                  <PlainBtn>Register one</PlainBtn>
+                </Link>
               </>
             )}
-            {visibleSubnames.length > 0 &&
-              visibleSubnames.map((subname) => (
+          </div>
+        )}
+
+        {!subnames.fetching && visibleSubnames.length > 0 && (
+          <ul className="subnames-list">
+            {visibleSubnames.map((subname) => (
+              <li key={subname.name}>
                 <button
                   type="button"
                   onClick={() => setSelectedSubname(subname)}
-                  key={subname.name}
-                  className="subname-item d-flex align-items-center"
+                  className="subname-item"
                 >
-                  <img
-                    src={subname.texts["avatar"]}
-                    className="avatar"
-                    alt={subname.name}
-                  />
-                  <p className="txt">{subname.name}</p>
+                  <SubnameAvatar subname={subname} />
+                  <span className="txt">{subname.name}</span>
+                  <span className="subname-item__chevron" aria-hidden="true">
+                    ›
+                  </span>
                 </button>
-              ))}
-          </>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
     </div>

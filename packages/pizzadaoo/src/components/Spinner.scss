@@ -1,21 +1,22 @@
 @keyframes gear-rotate {
-    100% {
-        transform: rotate(90deg);
-    }
-
-    50% {
-        transform: rotate(180deg);
-    }
-
-    100% {
+    to {
         transform: rotate(360deg);
     }
 }
 
 .spin-gear {
     display: block;
-    animation: gear-rotate 2s infinite ease-in-out;
+    animation: gear-rotate 1.5s linear infinite;
+    transform-origin: 50% 50%;
+
     svg {
         color: $yellow;
+        display: block;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .spin-gear {
+        animation-duration: 3s;
     }
 }
