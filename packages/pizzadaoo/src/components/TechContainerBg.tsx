@@ -31,6 +31,14 @@ export const TechContainerBg = (props: PropsWithChildren) => {
             priority
           />
         </Link>
+        <nav className="top-nav__links" aria-label="Primary">
+          <Link href="/" className="top-nav__link">
+            Register
+          </Link>
+          <Link href="/subnames" className="top-nav__link">
+            My Names
+          </Link>
+        </nav>
         <div className="top-nav__actions">
           {!isConnected ? (
             <PlainBtn onClick={() => openConnectModal?.()}>Connect</PlainBtn>

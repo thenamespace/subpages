@@ -25,14 +25,15 @@ body {
         margin: auto;
         width: 100%;
         max-width: 1280px;
-        min-height: 100px;
-        padding: 14px 24px;
+        min-height: 92px;
+        padding: 12px 24px;
         z-index: 99;
 
+        // Single row at every width — three clusters, no wrap.
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 16px;
+        flex-wrap: nowrap;
+        gap: 14px;
 
         &__logo {
             display: inline-flex;
@@ -41,15 +42,39 @@ body {
         }
 
         .pizza-logo {
-            width: clamp(120px, 24vw, 220px);
+            display: block;
+            width: clamp(96px, 18vw, 200px);
             height: auto;
+        }
+
+        &__links {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            flex-shrink: 0;
+            // Sits between logo and account, pushed off the logo.
+            margin-left: auto;
+        }
+
+        &__link {
+            color: $yellow;
+            text-decoration: none;
+            font-size: 16px;
+            white-space: nowrap;
+            transition: text-shadow 0.2s ease;
+
+            &:hover {
+                text-shadow: 0 0 1px rgba(255, 184, 25, 0.55);
+            }
         }
 
         &__actions {
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            min-width: 0;
+            flex-shrink: 0;
+            // Separates the account/connect from the nav links.
+            margin-left: 4px;
         }
     }
     .bot-nav {
@@ -157,9 +182,52 @@ body {
         background-size: cover;
         background-position: center;
 
+        // Two-row header on small screens: logo + account on row 1
+        // (space-between, no auto-margins), primary nav centered on row 2.
+        // Avoids the horizontal overflow a single row causes with the
+        // wide display font.
         .top-nav {
-            padding: 12px 16px;
-            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            padding: 10px 14px;
+            gap: 8px 10px;
+            min-height: 0;
+
+            &__logo {
+                order: 1;
+                flex: 0 1 auto;
+                min-width: 0;
+            }
+
+            &__actions {
+                order: 2;
+                flex: 0 0 auto;
+                margin-left: 0;
+            }
+
+            &__links {
+                order: 3;
+                flex: 1 0 100%;
+                margin-left: 0;
+                justify-content: center;
+                gap: 26px;
+                padding-top: 8px;
+                border-top: 1px solid rgba(255, 184, 25, 0.18);
+            }
+
+            &__link {
+                font-size: 15px;
+            }
+
+            .pizza-logo {
+                width: clamp(82px, 26vw, 130px);
+            }
+
+            .btn-plain {
+                min-width: 88px;
+                height: 42px;
+                font-size: 13px;
+            }
         }
 
         .bot-nav {
@@ -183,10 +251,24 @@ body {
 @media (max-width: 380px) {
     .tech-container  {
         .top-nav {
-            padding: 12px 12px;
+            padding: 10px 10px;
+            gap: 8px;
+
+            &__links {
+                gap: 10px;
+            }
+
+            &__link {
+                font-size: 13px;
+            }
 
             .pizza-logo {
-                width: clamp(96px, 34vw, 130px);
+                width: clamp(76px, 26vw, 110px);
+            }
+
+            .btn-plain {
+                min-width: 80px;
+                font-size: 12px;
             }
         }
     }

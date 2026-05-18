@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAccount, useDisconnect, usePublicClient } from "wagmi";
 import { mainnet } from "wagmi/chains";
 import { formatEnsName, shortenAddress } from "../utils/format";
@@ -17,6 +16,8 @@ export const UserProfile = () => {
   const { address } = useAccount();
   const [profile, setProfile] = useState<ProfileState>({ fetching: true });
   const [avatarFailed, setAvatarFailed] = useState(false);
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!address || !publicClient) {
@@ -56,54 +57,84 @@ export const UserProfile = () => {
     };
   }, [address, publicClient]);
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const onPointer = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointer);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   if (!address || profile.fetching) {
     return null;
   }
 
   const showAvatar = profile.avatar && !avatarFailed;
+  const primary = profile.name
+    ? formatEnsName(profile.name)
+    : shortenAddress(address);
 
   return (
-    <div className="user-profile-cont">
-      <nav className="nav-container">
-        <Link href="/" className="nav-item">
-          Register
-        </Link>
-        <Link href="/subnames" className="nav-item">
-          My Names
-        </Link>
-      </nav>
-      <div className="user-profile">
+    <div className="account" ref={rootRef}>
+      <button
+        type="button"
+        className="account__chip"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="Account menu"
+      >
         {showAvatar ? (
           <img
-            className="avatar"
+            className="account__avatar"
             src={profile.avatar}
             alt=""
-            width={34}
-            height={34}
+            width={32}
+            height={32}
             onError={() => setAvatarFailed(true)}
           />
         ) : (
-          <div className="avatar-template" aria-hidden="true" />
+          <span className="account__avatar account__avatar--ph" aria-hidden="true" />
         )}
-        <div className="identity">
-          <span className="identity-name" title={profile.name}>
-            {profile.name
-              ? formatEnsName(profile.name)
-              : shortenAddress(address)}
-          </span>
-          <span className="identity-sub">
-            {profile.name ? shortenAddress(address) : "Anonymous"}
-          </span>
+        <span className="account__name" title={profile.name}>
+          {primary}
+        </span>
+        <span className={`account__caret ${open ? "is-open" : ""}`} aria-hidden="true">
+          ▾
+        </span>
+      </button>
+
+      {open && (
+        <div className="account__menu" role="menu">
+          <div className="account__id">
+            <span className="account__id-name">{primary}</span>
+            <span className="account__id-addr">{shortenAddress(address)}</span>
+          </div>
+          <button
+            type="button"
+            role="menuitem"
+            className="account__disconnect"
+            onClick={() => {
+              setOpen(false);
+              disconnectAsync();
+            }}
+          >
+            Disconnect
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => disconnectAsync()}
-          className="dc"
-          aria-label="Disconnect wallet"
-        >
-          Disconnect
-        </button>
-      </div>
+      )}
     </div>
   );
 };
