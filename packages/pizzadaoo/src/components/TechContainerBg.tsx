@@ -2,7 +2,7 @@ import { PlainBtn } from "./TechBtn";
 import { UserProfile } from "./UserProfile";
 import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { PropsWithChildren, useEffect, useState } from "react";
+import { PropsWithChildren } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import pizzaLogo from "../assets/pizzadao-logo.png";
@@ -12,29 +12,6 @@ import Head from "next/head";
 export const TechContainerBg = (props: PropsWithChildren) => {
   const { isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const [imageWidth, setImageWidth] = useState(200);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth > 2000) {
-        setImageWidth(900);
-      } else if (window.innerWidth > 1500) {
-        setImageWidth(400);
-      } else {
-        setImageWidth(200);
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    handleResize();
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
-
-
-  
 
   return (
     <>
@@ -43,7 +20,6 @@ export const TechContainerBg = (props: PropsWithChildren) => {
       </Head>
     <div
       className="tech-container">
-        {/* <Image className="big-char" src={pizzaChar.src} height={imageWidth} width={imageWidth} alt="adsf"></Image> */}
       <div className="top-nav">
         <div className="row">
           <div className="col-lg-6 col-sm-12 logo-col">

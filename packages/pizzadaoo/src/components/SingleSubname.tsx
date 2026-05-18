@@ -5,6 +5,7 @@ import { getCoderByCoinType } from "@ensdomains/address-encoder";
 import {
   encodeFunctionData,
   Hash,
+  Hex,
   isAddress,
   namehash,
   parseAbi,
@@ -22,11 +23,11 @@ import {
   useSwitchChain,
   useWalletClient,
 } from "wagmi";
-import { base } from "viem/chains";
 import { validate as isValidBtcAddress } from "bitcoin-address-validation";
 import { toast } from "react-toastify";
 import { LISTING_CHAIN_ID } from "./Listing";
-import { getL2NamespaceContracts } from "@namespacesdk/addresses"
+import { getL2NamespaceContracts } from "@namespacesdk/addresses";
+import { getTxErrorMessage } from "../utils/txError";
 
 const resolverAbi = parseAbi([
   "function setText(bytes32 node, string key, string value) external",
@@ -43,7 +44,7 @@ export const SingleSubname = ({
 }) => {
   const publicClient = usePublicClient({ chainId: LISTING_CHAIN_ID });
   const { data: walletClient } = useWalletClient({ chainId: LISTING_CHAIN_ID });
-  const { switchChain } = useSwitchChain();
+  const { switchChainAsync } = useSwitchChain();
   const { chain, address } = useAccount();
 
   const [selectedCoin, setSelectedCoin] = useState(60);
@@ -65,11 +66,6 @@ export const SingleSubname = ({
   const addressInputRef = useRef<HTMLInputElement | null>(null);
   const textInputRef = useRef<HTMLInputElement | null>(null);
 
-  const hasAddress = (coin: number) => {
-    const addrs = subname.addresses || {};
-    return addrs[`${coin}`] !== undefined;
-  };
-
   const isSelected = (coin: number) => {
     return selectedCoin === coin;
   };
@@ -83,7 +79,7 @@ export const SingleSubname = ({
       const coder = getCoderByCoinType(_coin);
       if (coder) {
         _addresses[parseInt(coinType)] = coder.encode(
-          hexToBytes(subname.addresses[coinType] as any)
+          hexToBytes(subname.addresses[coinType] as Hex)
         );
       }
     });
@@ -162,11 +158,12 @@ export const SingleSubname = ({
   const getRecordsToUpdate = () => {
     const textsToChange: { key: string; value: string }[] = [];
     const addrsToChange: { coin: number; value: string }[] = [];
+    const existingTexts = subname.texts ?? {};
+    const existingAddresses = subname.addresses ?? {};
 
     Object.keys(textValues).forEach((txt) => {
       let shouldUpdate = false;
       const textValue = textValues[txt];
-      const existingTexts: Record<string, string> = subname.texts;
       if (existingTexts[txt] && existingTexts[txt].length > 0) {
         if (textValue !== existingTexts[txt]) {
           shouldUpdate = true;
@@ -184,7 +181,6 @@ export const SingleSubname = ({
       const coin = parseInt(coinType);
       let shouldUpdate = false;
       const currentAddrValue = addresseValues[coin];
-      const existingAddresses = subname.addresses;
       const addrCoder = getCoderByCoinType(coin);
 
       if (_isValidAddress(coin, currentAddrValue)) {
@@ -194,7 +190,7 @@ export const SingleSubname = ({
         ) {
           if (addrCoder) {
             const enodedValue = addrCoder.encode(
-              hexToBytes(subname.addresses[coinType] as any)
+              hexToBytes(subname.addresses[coinType] as Hex)
             );
 
             if (
@@ -241,7 +237,7 @@ export const SingleSubname = ({
     addrs.forEach((addr) => {
       const coder = getCoderByCoinType(addr.coin);
       if (coder) {
-        let value = "0x";
+        let value: Hex = "0x";
         if (addr.value.length > 0) {
           const decodedAddr = coder.decode(addr.value);
           value = toHex(decodedAddr);
@@ -250,7 +246,7 @@ export const SingleSubname = ({
         const encodedFunc = encodeFunctionData({
           functionName: "setAddr",
           abi: resolverAbi,
-          args: [nameNode, BigInt(addr.coin), value as any],
+          args: [nameNode, BigInt(addr.coin), value],
         });
         data.push(encodedFunc);
       }
@@ -259,59 +255,75 @@ export const SingleSubname = ({
   };
 
   const handleUpdate = async () => {
+    if (!publicClient || !walletClient || !address) {
+      sendToast("Connect your wallet to update records");
+      return;
+    }
+
     if (chain?.id !== LISTING_CHAIN_ID) {
-      switchChain({ chainId: LISTING_CHAIN_ID });
+      try {
+        await switchChainAsync({ chainId: LISTING_CHAIN_ID });
+      } catch (err: unknown) {
+        const message = getTxErrorMessage(
+          err,
+          "Please switch to Base network to update records",
+        );
+        if (message) {
+          sendToast(message);
+        }
+        return;
+      }
     }
 
     const resolverData = toResolverData();
 
     try {
-      const resp = await publicClient!!.simulateContract({
+      const resp = await publicClient.simulateContract({
         abi: parseAbi(["function multicall(bytes[] data) external"]),
         address: opResolver,
         functionName: "multicall",
         args: [resolverData],
-        account: address!!,
+        account: address,
       });
-  
+
       try {
-        setBtnState({waitingWallet: true, waitingTx: false})
-        const tx =  await walletClient!!.writeContract(resp.request);
-        setBtnState({waitingTx: true, waitingWallet: false})
+        setBtnState({ waitingWallet: true, waitingTx: false });
+        const tx = await walletClient.writeContract(resp.request);
+        setBtnState({ waitingTx: true, waitingWallet: false });
 
+        await publicClient.waitForTransactionReceipt({
+          hash: tx,
+          confirmations: 2,
+        });
+        setBtnState({ waitingTx: false, waitingWallet: false });
 
-        await publicClient?.waitForTransactionReceipt({hash: tx, confirmations:2})
-        setBtnState({waitingTx: false, waitingWallet: false})
-
-        toast("Records updated successfully!", {position: "top-center", className: "tech-toasty"})
+        toast("Records updated successfully!", {
+          position: "top-center",
+          className: "tech-toasty",
+        });
 
         setTimeout(() => {
-          onUpdate()
-        },3000)
-
-      } catch(err: any) {
-        if (err.details) {
-          sendToast(err.details)
+          onUpdate();
+        }, 3000);
+      } catch (err: unknown) {
+        const message = getTxErrorMessage(err);
+        if (message) {
+          sendToast(message);
         }
       } finally {
-        setBtnState({waitingTx: false, waitingWallet: false})
+        setBtnState({ waitingTx: false, waitingWallet: false });
       }
-  
-    } catch(err:any) {
-      if (err.details) {
-        sendToast(err.details)
-      } else if (err.response) {
-        sendToast(err.response?.data?.message)
-      } else {
-        sendToast("Unknown error ocurred :(")
+    } catch (err: unknown) {
+      const message = getTxErrorMessage(err, "Unknown error occurred :(");
+      if (message) {
+        sendToast(message);
       }
-
     }
   };
 
-  const sendToast = (obj: any) => {
-    toast(obj,  {type: "error", className: "tech-toasty"});
-  }
+  const sendToast = (message: string) => {
+    toast(message, { type: "error", className: "tech-toasty" });
+  };
  
   const mintBtnLabel = btnState.waitingTx ? "Waiting for tx..." : btnState.waitingWallet ? "Waiting for wallet..." : "Update"
   const mintBtnLoading = btnState.waitingTx || btnState.waitingWallet;
@@ -319,7 +331,11 @@ export const SingleSubname = ({
   return (
     <div className="single-subname">
       <div className="d-flex align-items-center flex-column">
-        <img className="avatar" src={subname.texts["avatar"]}></img>
+        <img
+          className="avatar"
+          src={subname.texts?.["avatar"]}
+          alt={subname.name}
+        />
         <p className="subtext mt-3 mb-0">{subname.name}</p>
       </div>
       <div className="d-flex justify-content-center">
@@ -346,7 +362,8 @@ export const SingleSubname = ({
           <p className="text-center text-green mt-1 mb-1">Select record to edit</p>
             <div className="d-flex flex-wrap justify-content-center">
               {Object.values(KnownAddresses).map((knownAddr) => (
-                <div
+                <button
+                  type="button"
                   onClick={() => {
                     setSelectedCoin(knownAddr.coinType);
                     addressInputRef.current?.focus();
@@ -356,9 +373,13 @@ export const SingleSubname = ({
                   } ${isAddressSet(knownAddr.coinType) ? "" : "unset"}`}
                   key={knownAddr.coinType}
                 >
-                  <img className="address me-2" src={knownAddr.icon}></img>
+                  <img
+                    className="address me-2"
+                    src={knownAddr.icon}
+                    alt={knownAddr.name}
+                  />
                   <div>{knownAddr.name}</div>
-                </div>
+                </button>
               ))}
             </div>
             <div className="w-100 mt-2">
@@ -392,7 +413,8 @@ export const SingleSubname = ({
           <p className="text-center text-green mt-1 mb-1">Select record to edit</p>
             <div className="d-flex flex-wrap justify-content-center">
               {Object.values(KnownTexts).map((txt) => (
-                <div
+                <button
+                  type="button"
                   className={`record-badge ${
                     isTextSet(txt.key) ? "" : "unset"
                   } ${selectedText === txt.key ? "selected" : ""}`}
@@ -408,13 +430,14 @@ export const SingleSubname = ({
                     <IoShareSocialSharp color="#1FE5B5" className="me-2" />
                   )}
                   <div>{txt.label}</div>
-                </div>
+                </button>
               ))}
               {/* We are showing a custom/already existing records  */}
               {Object.keys(textValues)
                 .filter((txt) => !KnownTexts[txt] && txt !== "avatar")
                 .map((txt) => (
-                  <div
+                  <button
+                    type="button"
                     className={`record-badge ${isTextSet(txt) ? "" : "unset"}`}
                     key={txt + "-custom"}
                     onClick={() => {
@@ -424,7 +447,7 @@ export const SingleSubname = ({
                   >
                     <CgProfile color="#2c124f" className="me-2" />
                     <div>{txt}</div>
-                  </div>
+                  </button>
                 ))}
             </div>
             {selectedText && (

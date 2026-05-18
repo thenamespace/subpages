@@ -1,7 +1,6 @@
 import { PlainBtn } from "./TechBtn";
-import { useCallback, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Spinner } from "./Spinner";
-import { debounce } from "lodash";
 import {
   useAccount,
   usePublicClient,
@@ -16,17 +15,21 @@ import { normalise } from "@ensdomains/ensjs/utils";
 import pizzaChar from "../assets/PizzaCharacter.png";
 import { LISTED_NAMES, Listing, LISTING_CHAIN_ID } from "./Listing";
 import Image from "next/image";
-import { ChainName, createMintClient, MintTransactionResponse } from "@namespacesdk/mint-manager"
+import {
+  ChainName,
+  createMintClient,
+  MintTransactionResponse,
+} from "@namespacesdk/mint-manager";
+import { debounce } from "../utils/debounce";
+import { getTxErrorMessage, isUserRejection } from "../utils/txError";
 
-
-const mintClient = createMintClient({
-  mintSource: "pizzadao"
-})
+// Lazily created so the SDK is not initialised (and does not log) at module
+// import time during SSR/build.
+let mintClientSingleton: ReturnType<typeof createMintClient> | undefined;
+const getMintClient = () =>
+  (mintClientSingleton ??= createMintClient({ mintSource: "pizzadao" }));
 
 const defaultAvatar = "https://avatars.namespace.ninja/pizzadaoo.png";
-
-const ETH_COIN = 60;
-const OP_COIN = 2147492101;
 
 enum MintSteps {
   Start = 0,
@@ -34,41 +37,87 @@ enum MintSteps {
   Success = 2,
 }
 
+interface Indicator {
+  isChecking: boolean;
+  isAvailable: boolean;
+  isError?: boolean;
+}
+
+interface MintState {
+  waitingWallet: boolean;
+  waitingTx: boolean;
+  txHash: string;
+}
+
 export const MintForm = () => {
   const { openConnectModal } = useConnectModal();
   const [mintStep, setMintStep] = useState<MintSteps>(MintSteps.Start);
   const [searchLabel, setSearchLabel] = useState("");
-  const [showCostModal, setShowCostModal] = useState(false);
   const { data: walletClient } = useWalletClient({ chainId: LISTING_CHAIN_ID });
   const publicClient = usePublicClient({ chainId: LISTING_CHAIN_ID });
   const [selectedPizzaName, setSelectedPizza] = useState<Listing>(
-    LISTED_NAMES[0]
+    LISTED_NAMES[0],
   );
   const { switchChainAsync } = useSwitchChain();
   const { address, chain } = useAccount();
-  const { signTypedDataAsync } = useSignTypedData();
-  const [indicator, setIndicator] = useState<{
-    isChecking: boolean;
-    isAvailable: boolean;
-    isError?: boolean
-  }>({
+  useSignTypedData();
+  const [indicator, setIndicator] = useState<Indicator>({
     isChecking: false,
     isAvailable: false,
-    isError: false
+    isError: false,
   });
-  const [mintState, setMintState] = useState<{
-    waitingWallet: boolean;
-    waitingTx: boolean;
-    txHash: string;
-  }>({
+  const [mintState, setMintState] = useState<MintState>({
     txHash: "",
     waitingTx: false,
     waitingWallet: false,
   });
   const [mintedName, setMintedName] = useState<string | null>(null);
-  const [txHash, setTxHash] = useState();
 
-  const handleSearch = async (value: string) => {
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  const checkAvailable = async (value: string) => {
+    try {
+      const fullName = `${value}.${selectedPizzaName.fullName}`;
+      const isAvailable = await getMintClient().isL2SubnameAvailable(
+        fullName,
+        LISTING_CHAIN_ID,
+      );
+      setIndicator({ isChecking: false, isAvailable });
+    } catch (err: unknown) {
+      setIndicator({ isChecking: false, isAvailable: true, isError: true });
+      toast(
+        getTxErrorMessage(
+          err,
+          "Error while checking subname, is the name listed?",
+        ) ?? "Error while checking subname, is the name listed?",
+        { className: "tech-toasty", type: "error" },
+      );
+    }
+  };
+
+  const debouncedCheckAvailable = useMemo(
+    () =>
+      debounce((label: string) => {
+        void checkAvailable(label);
+      }, 300),
+    // Recreated when the parent name changes so availability is checked
+    // against the currently selected listing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedPizzaName],
+  );
+
+  useEffect(
+    () => () => debouncedCheckAvailable.cancel(),
+    [debouncedCheckAvailable],
+  );
+
+  const handleSearch = (value: string) => {
     const _value = value.toLocaleLowerCase();
 
     if (_value.includes(".")) {
@@ -77,7 +126,7 @@ export const MintForm = () => {
 
     try {
       normalise(_value);
-    } catch (err) {
+    } catch {
       return;
     }
     setSearchLabel(_value);
@@ -88,27 +137,8 @@ export const MintForm = () => {
     }
   };
 
-  const checkAvailable = async (value: string) => {
-
-    try {
-      const fullName = `${value}.${selectedPizzaName.fullName}`
-      const isAvailable = await mintClient.isL2SubnameAvailable(fullName, LISTING_CHAIN_ID);
-      setIndicator({
-        isChecking: false,
-        isAvailable: isAvailable,
-      });
-    } catch(err : any) {
-      setIndicator({
-        isChecking: false,
-        isAvailable: true,
-        isError: true
-      });
-      toast(err.details || "Error while checking subname, is the name listed?", { className: "tech-toasty", type: "error" });
-    }
-  };
-
   const handleMint = async () => {
-    if (!walletClient || !address) {
+    if (!walletClient || !address || !publicClient) {
       openConnectModal?.();
       return;
     }
@@ -117,9 +147,8 @@ export const MintForm = () => {
     if (!chain || chain.id !== LISTING_CHAIN_ID) {
       try {
         await switchChainAsync({ chainId: LISTING_CHAIN_ID });
-      } catch (error: any) {
-        if (error.details && error.details.includes("User rejected")) {
-          // User rejected the switch, don't show error
+      } catch (error: unknown) {
+        if (isUserRejection(error)) {
           return;
         }
         toast("Please switch to Base network to register", {
@@ -130,139 +159,72 @@ export const MintForm = () => {
       }
     }
 
-    setMintState({ ...mintState, waitingWallet: true });
+    setMintState((prev) => ({ ...prev, waitingWallet: true }));
     // Freeze the name being minted so that changing the selected domain
     // while the transaction is pending doesn't change the success screen label.
     const currentMintedName = `${searchLabel}.${selectedPizzaName.fullName}`;
     setMintedName(currentMintedName);
-    let params: MintTransactionResponse;
-    let mintRequest: any;
-    try {
 
-      params = await mintClient.getMintTransactionParameters(
-          {
-            parentName: selectedPizzaName.fullName,
+    let request: Parameters<typeof walletClient.writeContract>[0];
+    try {
+      const params: MintTransactionResponse =
+        await getMintClient().getMintTransactionParameters({
+          parentName: selectedPizzaName.fullName,
           minterAddress: address,
           label: searchLabel,
           expiryInYears: 1,
           records: {
-            texts: [
-              {
-                key: "avatar",
-                value: defaultAvatar,
-              },
-            ],
+            texts: [{ key: "avatar", value: defaultAvatar }],
             addresses: [
-              {
-                value: address,
-                chain: ChainName.Ethereum,
-              },
-              {
-                value: address,
-                chain: ChainName.Base,
-              },
+              { value: address, chain: ChainName.Ethereum },
+              { value: address, chain: ChainName.Base },
             ],
           },
           owner: address,
-        }
-      );
+        });
 
-      const { request } = await publicClient!.simulateContract({
+      const simulation = await publicClient.simulateContract({
         abi: params.abi,
         address: params.contractAddress,
         functionName: params.functionName,
         args: params.args,
         account: address,
-        value: params.value
-      })
-
-      mintRequest = request;
-
-    } catch (err: any) {
-      setMintState({ ...mintState, waitingWallet: false });
-      if (err.details && err.details.includes) {
-        const deniedErr =
-          err.details.includes("User rejected the request") ||
-          err.details.includes("User denied transaction signature");
-        const noFundsErr = err.details.includes("insufficient funds for gas");
-        if (!deniedErr && !noFundsErr) {
-          toast(err.details, { className: "tech-toasty", type: "error" });
-        }
-
-        if (noFundsErr) {
-          toast("Insufficient balance", {
-            className: "tech-toasty",
-            type: "error",
-          });
-        }
-      } else if (err.response && err.response?.data?.message) {
-        toast(err.response?.data?.message, {
-          className: "tech-toasty",
-          type: "error",
-        });
-      } else {
-        let errorMsg = "Unexpected error happened :(";
-
-        if (err.toString().includes("MINTER_NOT_TOKEN_OWNER")) {
-          errorMsg = "You don't own required token";
-        } else if (err.toString().includes("SUBNAME_TAKEN")) {
-          errorMsg = "Subname is already taken";
-        } else if (err.toString().includes("MINTER_NOT_WHITELISTED")) {
-          errorMsg = "You are not whitelisted";
-        } else if (err.toString().includes("LISTING_EXPIRED")) {
-          errorMsg = "Listing has expired";
-        } else if (err.toString().includes("SUBNAME_RESERVED")) {
-          errorMsg = "Subname is reserved";
-        } else if (
-          err.toString().includes("VERIFIED_MINTER_ADDRESS_REQUIRED")
-        ) {
-          errorMsg = "Verification required";
-        }
-
-        toast(errorMsg, {
-          className: "tech-toasty",
-          type: "error",
-        });
+        value: params.value,
+      });
+      request = simulation.request as typeof request;
+    } catch (err: unknown) {
+      setMintState((prev) => ({ ...prev, waitingWallet: false }));
+      const message = getTxErrorMessage(err);
+      if (message) {
+        toast(message, { className: "tech-toasty", type: "error" });
       }
       return;
     }
 
     try {
-      //@ts-ignore
-      const tx = await walletClient.writeContract(mintRequest);
+      const tx = await walletClient.writeContract(request);
       setMintStep(MintSteps.PendingTx);
-      setTxHash(tx as any);
       setMintState({ waitingWallet: false, waitingTx: true, txHash: tx });
-      setTimeout(() => {
-        publicClient?.waitForTransactionReceipt({ hash: tx }).then((res) => {
-          setMintStep(MintSteps.Success);
-        });
-      }, 8000);
-    } catch (err: any) {
-      setMintStep(MintSteps.Start);
+
+      await publicClient.waitForTransactionReceipt({ hash: tx });
+      if (mountedRef.current) {
+        setMintStep(MintSteps.Success);
+      }
+    } catch (err: unknown) {
       console.error(err);
-      if (err.details && err.details.includes) {
-        const deniedErr =
-          err.details.includes("User rejected the request") ||
-          err.details.includes("User denied transaction signature");
-        if (!deniedErr) {
-          toast(err.details, { className: "tech-toasty", type: "error" });
-        }
-      } else {
-        toast("Unexpected error happened :(", {
-          className: "tech-toasty",
-          type: "error",
-        });
+      setMintStep(MintSteps.Start);
+      const message = getTxErrorMessage(err);
+      if (message) {
+        toast(message, { className: "tech-toasty", type: "error" });
       }
     } finally {
-      setMintState({ ...mintState, waitingTx: false, waitingWallet: false });
+      setMintState((prev) => ({
+        ...prev,
+        waitingTx: false,
+        waitingWallet: false,
+      }));
     }
   };
-
-  const debouncedCheckAvailable = useCallback(
-    debounce((label: string) => checkAvailable(label), 300),
-    [selectedPizzaName]
-  );
 
   const handleSelectName = (listing: Listing) => {
     setSearchLabel("");
@@ -270,15 +232,15 @@ export const MintForm = () => {
   };
 
   const getInstructionText = (domainName: string) => {
-  switch (domainName) {
-    case 'pizzadao.eth':
-      return 'Ask a Capo or DPR to mint your crew number for you.';
-    case 'pizzamafia.eth':
-      return 'Anyone with a Rare Pizza Box NFT can mint a pizza mafia name.';
-    case 'rarepizzas.eth':
-      return 'Ask a Capo or DPR to mint your topping for you.';
-    default:
-      return '';
+    switch (domainName) {
+      case "pizzadao.eth":
+        return "Ask a Capo or DPR to mint your crew number for you.";
+      case "pizzamafia.eth":
+        return "Anyone with a Rare Pizza Box NFT can mint a pizza mafia name.";
+      case "rarepizzas.eth":
+        return "Ask a Capo or DPR to mint your topping for you.";
+      default:
+        return "";
     }
   };
 
@@ -288,7 +250,7 @@ export const MintForm = () => {
     indicator.isChecking ||
     !indicator.isAvailable ||
     mintState.waitingTx ||
-    mintState.waitingWallet || 
+    mintState.waitingWallet ||
     indicator.isError ||
     isWrongChain;
   const isTaken =
@@ -297,11 +259,7 @@ export const MintForm = () => {
   return (
     <>
       <div className="mint-form d-flex flex-column justify-content-end p-4">
-        <Image
-          src={pizzaChar}
-          className="pizza-mascot"
-          alt="PizzaDao"
-        ></Image>
+        <Image src={pizzaChar} className="pizza-mascot" alt="PizzaDao" />
         <div className="form-tech-container">
           {mintStep === MintSteps.Start && (
             <>
@@ -312,25 +270,31 @@ export const MintForm = () => {
                 </p>
                 <div className="select-name-cont d-flex flex-wrap justify-content-center">
                   {LISTED_NAMES.map((name) => (
-                    <div
+                    <button
+                      type="button"
                       onClick={() => handleSelectName(name)}
-                      className={`select-name-badge ${name.node === selectedPizzaName.node ? "active" : ""}`}
+                      className={`select-name-badge ${
+                        name.node === selectedPizzaName.node ? "active" : ""
+                      }`}
                       key={name.node}
                     >
                       {name.fullName}
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
               <div className="d-flex flex-column align-items-center"></div>
               <div className="instruction-text-container mb-3">
-                <p className="instruction-text text-center" style={{ 
-                  color: 'rgba(255, 255, 255, 0.8)', 
-                  fontSize: '14px',
-                  margin: '0 auto',
-                  maxWidth: '300px',
-                  lineHeight: '1.4'
-                }}>
+                <p
+                  className="instruction-text text-center"
+                  style={{
+                    color: "rgba(255, 255, 255, 0.8)",
+                    fontSize: "14px",
+                    margin: "0 auto",
+                    maxWidth: "300px",
+                    lineHeight: "1.4",
+                  }}
+                >
                   {getInstructionText(selectedPizzaName.fullName)}
                 </p>
               </div>
@@ -346,7 +310,7 @@ export const MintForm = () => {
                   placeholder="Your name here...."
                   className="tech-input"
                   value={searchLabel}
-                ></input>
+                />
                 <div className="loader-cont">
                   {indicator.isChecking && <Spinner />}
                 </div>
@@ -363,7 +327,9 @@ export const MintForm = () => {
               </div>
               <div className="err-container mt-2">
                 {isTaken && (
-                  <p className="err-message m-0">You don't have minting permissions</p>
+                  <p className="err-message m-0">
+                    You don&apos;t have minting permissions
+                  </p>
                 )}
                 {isWrongChain && address && (
                   <p className="err-message m-0" style={{ color: "#ff6b6b" }}>
@@ -374,12 +340,14 @@ export const MintForm = () => {
             </>
           )}
           {mintStep === MintSteps.PendingTx && (
-            <TransactionPending hash={mintState.txHash || (txHash as any)} />
+            <TransactionPending hash={mintState.txHash} />
           )}
           {mintStep === MintSteps.Success && (
             <SuccessScreen
               avatar={pizzaChar.src}
-              name={mintedName || `${searchLabel}.${selectedPizzaName.fullName}`}
+              name={
+                mintedName || `${searchLabel}.${selectedPizzaName.fullName}`
+              }
             />
           )}
         </div>
@@ -397,10 +365,10 @@ export const SuccessScreen = ({
 }) => {
   return (
     <div className="d-flex flex-column align-items-center success-screen">
-      <p className="mb-1">Registration succesfull</p>
+      <p className="mb-1">Registration successful</p>
       <p style={{ fontSize: 18, color: "white" }}>{name}</p>
       <div className="load-border">
-        <img className="avatar" src={avatar} width={150}></img>
+        <img className="avatar" src={avatar} width={150} alt={name} />
       </div>
       <Link
         className="mt-3"
@@ -426,6 +394,7 @@ export const TransactionPending = ({ hash }: { hash: string }) => {
         <a
           href={`https://basescan.org/tx/${hash}`}
           target="_blank"
+          rel="noreferrer"
           style={{ color: "white", cursor: "pointer" }}
         >
           Transaction
