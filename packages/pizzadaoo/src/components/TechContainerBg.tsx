@@ -8,6 +8,7 @@ import Image from "next/image";
 import pizzaLogo from "../assets/pizzadao-logo.png";
 import pizzaChar from "../assets/PizzaCharacter.png";
 import Head from "next/head";
+import { NamespaceLogo } from "./NamespaceLogo";
 
 export const TechContainerBg = (props: PropsWithChildren) => {
   const { isConnected } = useAccount();
@@ -40,26 +41,22 @@ export const TechContainerBg = (props: PropsWithChildren) => {
           </div>
         </div>
       </div>
-      <div
-        className="bot-nav">
-        <div className="d-flex text-center justify-content-center">
-          <p
-            style={{
-              margin: "30px 0",
-              opacity: "1",
-              fontSize: 13,
-              letterSpacing: "0px",
-              zIndex: 99,
-              position: "absolute",
-              bottom: 0,
-              width: "100%",
-              textAlign: "center"
-            }}
-          >
-            Created by <a style={{color:"#ffb819"}} href="https://app.namespace.ninja" target="_blank">Namespace</a>. Base Network
-          </p>
-        </div>
-      </div>
+      <footer className="bot-nav">
+        <a
+          className="footer-credit"
+          href="https://namespace.ninja"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Powered by Namespace"
+        >
+          <span className="footer-credit__label">Powered by</span>
+          <NamespaceLogo className="footer-credit__logo" />
+        </a>
+        <span className="footer-credit__sep" aria-hidden="true">
+          ·
+        </span>
+        <span className="footer-credit__chain">Built on Base</span>
+      </footer>
       <div className="landing-container">{props.children}</div>
     </div>
     </>
