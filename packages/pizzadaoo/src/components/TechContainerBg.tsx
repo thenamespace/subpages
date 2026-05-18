@@ -21,26 +21,24 @@ export const TechContainerBg = (props: PropsWithChildren) => {
       </Head>
     <div
       className="tech-container">
-      <div className="top-nav">
-        <div className="row">
-          <div className="col-lg-6 col-sm-12 logo-col">
-            <Link href="/" className="d-flex align-items-center">
-              <Image className="me-2" alt="PizzaDao" width={220} src={pizzaLogo}></Image>
-            </Link>
-          </div>
-          <div className="col-lg-6 col-sm-12 nav-col">
-            {!isConnected ? (
-              <PlainBtn
-                onClick={() => openConnectModal?.()}
-              >
-                Connect
-              </PlainBtn>
-            ) : (
-              <UserProfile />
-            )}
-          </div>
+      <header className="top-nav">
+        <Link href="/" className="top-nav__logo" aria-label="PizzaDAO home">
+          <Image
+            className="pizza-logo"
+            alt="PizzaDAO"
+            src={pizzaLogo}
+            width={220}
+            priority
+          />
+        </Link>
+        <div className="top-nav__actions">
+          {!isConnected ? (
+            <PlainBtn onClick={() => openConnectModal?.()}>Connect</PlainBtn>
+          ) : (
+            <UserProfile />
+          )}
         </div>
-      </div>
+      </header>
       <footer className="bot-nav">
         <a
           className="footer-credit"

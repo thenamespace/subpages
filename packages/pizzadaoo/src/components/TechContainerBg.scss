@@ -17,23 +17,40 @@ body {
     min-height: 100vh;
     position: relative;
 
-    .big-char {
-        position: fixed;
-        left: 40px;
-        top: 18%;
-    }
-
     .top-nav {
         position: fixed;
         top: 0px;
         left: 50%;
-        transform: translateX(-50%); 
+        transform: translateX(-50%);
         margin: auto;
         width: 100%;
         max-width: 1280px;
-        height: 100px;
-        padding: 15px;
+        min-height: 100px;
+        padding: 14px 24px;
         z-index: 99;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+
+        &__logo {
+            display: inline-flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .pizza-logo {
+            width: clamp(120px, 24vw, 220px);
+            height: auto;
+        }
+
+        &__actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            min-width: 0;
+        }
     }
     .bot-nav {
         position: absolute;
@@ -121,10 +138,6 @@ body {
         position: relative;
     }
 
-    .nav-col {
-        display: flex;
-        justify-content: flex-end;
-    }
 }
 
 .tech-container::before {
@@ -144,24 +157,10 @@ body {
         background-size: cover;
         background-position: center;
 
-        .nav-col {
-            display: flex;
-            justify-content: center;
+        .top-nav {
+            padding: 12px 16px;
+            gap: 10px;
         }
-
-        .logo-col {
-            display: none;
-        }
-
-        .big-char {
-            position: absolute;
-            top: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 40%;
-            height: auto;
-        }
-
 
         .bot-nav {
             gap: 8px;
@@ -181,27 +180,14 @@ body {
 }
 
 
-@media (max-width: 400px) {
+@media (max-width: 380px) {
     .tech-container  {
+        .top-nav {
+            padding: 12px 12px;
 
-        background-size: cover;
-        background-position: center;
-
-        .nav-col {
-            display: flex;
-            justify-content: center;
-        }
-
-        .logo-col {
-            display: none;
-        }
-
-        .big-char {
-            position: absolute;
-            top: 100px;
-            transform: translateX(-50%);
-            width: 40%;
-            height: auto;
+            .pizza-logo {
+                width: clamp(96px, 34vw, 130px);
+            }
         }
     }
 }

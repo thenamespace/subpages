@@ -99,10 +99,12 @@
 @media (max-width: 600px) {
     .user-profile-cont {
         gap: 10px;
-        justify-content: center;
+        justify-content: flex-end;
 
+        // Keep the header on a single row next to the logo on mobile —
+        // secondary links are reachable via the logo / page nav.
         .nav-container {
-            gap: 16px;
+            display: none;
         }
     }
 
