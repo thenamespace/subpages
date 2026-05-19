@@ -213,8 +213,9 @@
 @media (max-width: 600px) {
     .my-subnames-container {
         gap: 18px;
-        // Clears the taller two-row mobile header.
-        padding: 150px 14px 104px;
+        // Header clearance is handled by .landing-container on mobile;
+        // only a small breathing gap here (avoids double padding).
+        padding: 10px 14px 24px;
 
         .subnames-header {
             .subnames-title {
