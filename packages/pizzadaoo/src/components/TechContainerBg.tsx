@@ -4,6 +4,7 @@ import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { PropsWithChildren } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import Image from "next/image";
 import pizzaLogo from "../assets/pizzadao-logo.png";
 import pizzaChar from "../assets/PizzaCharacter.png";
@@ -13,6 +14,10 @@ import { NamespaceLogo } from "./NamespaceLogo";
 export const TechContainerBg = (props: PropsWithChildren) => {
   const { isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
+  const { pathname } = useRouter();
+
+  const navLinkClass = (href: string) =>
+    `top-nav__link ${pathname === href ? "is-active" : ""}`;
 
   return (
     <>
@@ -32,10 +37,18 @@ export const TechContainerBg = (props: PropsWithChildren) => {
           />
         </Link>
         <nav className="top-nav__links" aria-label="Primary">
-          <Link href="/" className="top-nav__link">
+          <Link
+            href="/"
+            className={navLinkClass("/")}
+            aria-current={pathname === "/" ? "page" : undefined}
+          >
             Register
           </Link>
-          <Link href="/subnames" className="top-nav__link">
+          <Link
+            href="/subnames"
+            className={navLinkClass("/subnames")}
+            aria-current={pathname === "/subnames" ? "page" : undefined}
+          >
             My Names
           </Link>
         </nav>

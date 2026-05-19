@@ -57,14 +57,40 @@ body {
         }
 
         &__link {
-            color: $yellow;
+            position: relative;
+            color: rgba(255, 184, 25, 0.6);
             text-decoration: none;
             font-size: 16px;
             white-space: nowrap;
-            transition: text-shadow 0.2s ease;
+            padding-bottom: 4px;
+            transition: color 0.2s ease;
+
+            // Animated underline indicator.
+            &::after {
+                content: "";
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                height: 2px;
+                background: $yellow;
+                border-radius: 2px;
+                transform: scaleX(0);
+                transform-origin: center;
+                transition: transform 0.2s ease;
+            }
 
             &:hover {
-                text-shadow: 0 0 1px rgba(255, 184, 25, 0.55);
+                color: $yellow;
+            }
+
+            &.is-active {
+                color: $yellow;
+                font-weight: 700;
+
+                &::after {
+                    transform: scaleX(1);
+                }
             }
         }
 
@@ -192,6 +218,12 @@ body {
             padding: 10px 14px;
             gap: 8px 10px;
             min-height: 0;
+
+            // Defined bar so the two-row nav never floats over the
+            // mascot/hero artwork on the register page.
+            background: rgba(0, 0, 0, 0.82);
+            backdrop-filter: blur(6px);
+            border-bottom: 1px solid rgba(255, 184, 25, 0.35);
 
             &__logo {
                 order: 1;
