@@ -209,9 +209,23 @@ export const MintForm = () => {
       setMintStep(MintSteps.PendingTx);
       setMintState({ waitingWallet: false, waitingTx: true, txHash: tx });
 
-      await publicClient.waitForTransactionReceipt({ hash: tx });
-      if (mountedRef.current) {
+      // waitForTransactionReceipt resolves for reverted txs too, so the
+      // status MUST be checked — otherwise a failed mint still shows
+      // "Registration successful".
+      const receipt = await publicClient.waitForTransactionReceipt({
+        hash: tx,
+        confirmations: 2,
+      });
+      if (!mountedRef.current) {
+        return;
+      }
+      if (receipt.status === "success") {
         setMintStep(MintSteps.Success);
+      } else {
+        setMintStep(MintSteps.Start);
+        setMintError(
+          "The transaction was reverted on-chain — your name was not registered.",
+        );
       }
     } catch (err: unknown) {
       console.error(err);
