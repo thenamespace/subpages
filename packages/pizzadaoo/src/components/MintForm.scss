@@ -206,6 +206,9 @@
 
 @media (max-width: 600px) {
     .mint-form {
+        // Header clearance is handled by .landing-container on mobile.
+        padding-top: 8px;
+
         .form-tech-container {
             width: 90%;
             padding: 20px;

@@ -208,6 +208,17 @@ body {
         background-size: cover;
         background-position: center;
 
+        // Don't vertically-center on mobile — the register card is
+        // taller than the viewport, so centering pushed the mascot up
+        // under the header. Flow it below the fixed header instead.
+        .landing-container {
+            height: auto;
+            min-height: 100vh;
+            justify-content: flex-start;
+            padding-top: 116px;
+            padding-bottom: 110px;
+        }
+
         // Two-row header on small screens: logo + account on row 1
         // (space-between, no auto-margins), primary nav centered on row 2.
         // Avoids the horizontal overflow a single row causes with the
@@ -219,11 +230,16 @@ body {
             gap: 8px 10px;
             min-height: 0;
 
-            // Defined bar so the two-row nav never floats over the
-            // mascot/hero artwork on the register page.
-            background: rgba(0, 0, 0, 0.82);
-            backdrop-filter: blur(6px);
-            border-bottom: 1px solid rgba(255, 184, 25, 0.35);
+            // Soft top-down scrim that keeps the nav text legible but
+            // fades fully to transparent before the mascot — no hard
+            // edge slicing the artwork.
+            background: linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0.78) 0%,
+                rgba(0, 0, 0, 0.55) 55%,
+                rgba(0, 0, 0, 0) 100%
+            );
+            border-bottom: none;
 
             &__logo {
                 order: 1;
