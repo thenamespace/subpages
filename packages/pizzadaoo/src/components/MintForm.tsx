@@ -37,11 +37,12 @@ enum MintSteps {
   Success = 2,
 }
 
-interface Indicator {
-  isChecking: boolean;
-  isAvailable: boolean;
-  isError?: boolean;
-}
+type AvailabilityStatus =
+  | "idle"
+  | "checking"
+  | "available"
+  | "unavailable"
+  | "error";
 
 interface MintState {
   waitingWallet: boolean;
@@ -61,17 +62,14 @@ export const MintForm = () => {
   const { switchChainAsync } = useSwitchChain();
   const { address, chain } = useAccount();
   useSignTypedData();
-  const [indicator, setIndicator] = useState<Indicator>({
-    isChecking: false,
-    isAvailable: false,
-    isError: false,
-  });
+  const [availability, setAvailability] = useState<AvailabilityStatus>("idle");
   const [mintState, setMintState] = useState<MintState>({
     txHash: "",
     waitingTx: false,
     waitingWallet: false,
   });
   const [mintedName, setMintedName] = useState<string | null>(null);
+  const [mintError, setMintError] = useState<string | null>(null);
 
   const mountedRef = useRef(true);
   useEffect(() => {
@@ -88,14 +86,14 @@ export const MintForm = () => {
         fullName,
         LISTING_CHAIN_ID,
       );
-      setIndicator({ isChecking: false, isAvailable });
+      setAvailability(isAvailable ? "available" : "unavailable");
     } catch (err: unknown) {
-      setIndicator({ isChecking: false, isAvailable: true, isError: true });
+      setAvailability("error");
       toast(
         getTxErrorMessage(
           err,
-          "Error while checking subname, is the name listed?",
-        ) ?? "Error while checking subname, is the name listed?",
+          "Couldn't check that name — try again.",
+        ) ?? "Couldn't check that name — try again.",
         { className: "tech-toasty", type: "error" },
       );
     }
@@ -130,10 +128,13 @@ export const MintForm = () => {
       return;
     }
     setSearchLabel(_value);
+    setMintError(null);
 
     if (_value.length > 0) {
-      setIndicator({ isAvailable: false, isChecking: true, isError: false });
+      setAvailability("checking");
       debouncedCheckAvailable(_value);
+    } else {
+      setAvailability("idle");
     }
   };
 
@@ -142,6 +143,8 @@ export const MintForm = () => {
       openConnectModal?.();
       return;
     }
+
+    setMintError(null);
 
     // Check chain first before proceeding
     if (!chain || chain.id !== LISTING_CHAIN_ID) {
@@ -196,7 +199,7 @@ export const MintForm = () => {
       setMintState((prev) => ({ ...prev, waitingWallet: false }));
       const message = getTxErrorMessage(err);
       if (message) {
-        toast(message, { className: "tech-toasty", type: "error" });
+        setMintError(message);
       }
       return;
     }
@@ -215,7 +218,7 @@ export const MintForm = () => {
       setMintStep(MintSteps.Start);
       const message = getTxErrorMessage(err);
       if (message) {
-        toast(message, { className: "tech-toasty", type: "error" });
+        setMintError(message);
       }
     } finally {
       setMintState((prev) => ({
@@ -228,7 +231,18 @@ export const MintForm = () => {
 
   const handleSelectName = (listing: Listing) => {
     setSearchLabel("");
+    setAvailability("idle");
+    setMintError(null);
     setSelectedPizza(listing);
+  };
+
+  const resetFlow = () => {
+    setMintStep(MintSteps.Start);
+    setSearchLabel("");
+    setAvailability("idle");
+    setMintError(null);
+    setMintedName(null);
+    setMintState({ txHash: "", waitingTx: false, waitingWallet: false });
   };
 
   const getInstructionText = (domainName: string) => {
@@ -259,15 +273,16 @@ export const MintForm = () => {
 
   const isWrongChain = Boolean(chain) && chain?.id !== LISTING_CHAIN_ID;
   const needsChainSwitch = Boolean(address) && isWrongChain;
+  const isBusy = mintState.waitingWallet || mintState.waitingTx;
+  const fullName = `${searchLabel}.${selectedPizzaName.fullName}`;
   const mintBtnDisabled =
     searchLabel.length === 0 ||
-    indicator.isChecking ||
-    !indicator.isAvailable ||
-    mintState.waitingTx ||
-    mintState.waitingWallet ||
-    indicator.isError;
-  const isTaken =
-    searchLabel.length > 0 && !indicator.isChecking && !indicator.isAvailable;
+    availability !== "available" ||
+    isBusy;
+
+  const registerLabel = mintState.waitingWallet
+    ? "Confirm in wallet…"
+    : "Register";
 
   return (
     <>
@@ -286,6 +301,7 @@ export const MintForm = () => {
                     <button
                       type="button"
                       onClick={() => handleSelectName(name)}
+                      disabled={isBusy}
                       className={`select-name-badge ${
                         name.node === selectedPizzaName.node ? "active" : ""
                       }`}
@@ -296,23 +312,13 @@ export const MintForm = () => {
                   ))}
                 </div>
               </div>
-              <div className="d-flex flex-column align-items-center"></div>
               <div className="instruction-text-container mb-3">
-                <p
-                  className="instruction-text text-center"
-                  style={{
-                    color: "rgba(255, 255, 255, 0.8)",
-                    fontSize: "14px",
-                    margin: "0 auto",
-                    maxWidth: "300px",
-                    lineHeight: "1.4",
-                  }}
-                >
+                <p className="instruction-text text-center">
                   {getInstructionText(selectedPizzaName.fullName)}
                 </p>
               </div>
-              <p className="text-center" style={{ fontSize: 18 }}>
-                <span style={{ fontSize: 18 }} className="input-name">
+              <p className="text-center name-preview">
+                <span className="input-name">
                   {searchLabel.length ? searchLabel : "{name}"}.
                 </span>
                 {selectedPizzaName.fullName}
@@ -323,15 +329,27 @@ export const MintForm = () => {
                   placeholder="Your name here...."
                   className="tech-input"
                   value={searchLabel}
+                  disabled={isBusy}
+                  aria-label="Subname to register"
+                  autoComplete="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
                 />
                 <div className="loader-cont">
-                  {indicator.isChecking && <Spinner />}
+                  {availability === "checking" && <Spinner />}
                 </div>
               </div>
-              <div>
+
+              <AvailabilityHint
+                status={availability}
+                hasInput={searchLabel.length > 0}
+                fullName={fullName}
+              />
+
+              <div className="mt-2">
                 {needsChainSwitch ? (
                   <PlainBtn
-                    className="mt-2 w-100"
+                    className="w-100"
                     onClick={() => handleSwitchChain()}
                   >
                     Switch to Base Network
@@ -339,21 +357,30 @@ export const MintForm = () => {
                 ) : (
                   <PlainBtn
                     disabled={mintBtnDisabled}
-                    text={"register"}
-                    className="mt-2 w-100"
+                    loading={isBusy}
+                    className="w-100"
                     onClick={() => handleMint()}
                   >
-                    Register
+                    {registerLabel}
                   </PlainBtn>
                 )}
               </div>
-              <div className="err-container mt-2">
-                {isTaken && (
-                  <p className="err-message m-0">
-                    You don&apos;t have minting permissions
-                  </p>
-                )}
-              </div>
+
+              {mintError && (
+                <div className="mint-error" role="alert">
+                  <p className="mint-error__msg">{mintError}</p>
+                  <button
+                    type="button"
+                    className="mint-error__retry"
+                    onClick={() => {
+                      setMintError(null);
+                      void handleMint();
+                    }}
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
             </>
           )}
           {mintStep === MintSteps.PendingTx && (
@@ -365,6 +392,7 @@ export const MintForm = () => {
               name={
                 mintedName || `${searchLabel}.${selectedPizzaName.fullName}`
               }
+              onRegisterAnother={resetFlow}
             />
           )}
         </div>
@@ -373,48 +401,125 @@ export const MintForm = () => {
   );
 };
 
+const AvailabilityHint = ({
+  status,
+  hasInput,
+  fullName,
+}: {
+  status: AvailabilityStatus;
+  hasInput: boolean;
+  fullName: string;
+}) => {
+  // Reserve the row height so the layout never shifts as state changes.
+  let content: React.ReactNode = " ";
+  let tone = "";
+
+  if (!hasInput) {
+    content = "Type a name to check availability";
+    tone = "is-idle";
+  } else if (status === "checking") {
+    content = "Checking availability…";
+    tone = "is-checking";
+  } else if (status === "available") {
+    content = (
+      <>
+        <span className="avail-dot" aria-hidden="true" />
+        {fullName} is available
+      </>
+    );
+    tone = "is-available";
+  } else if (status === "unavailable") {
+    content = (
+      <>
+        <span className="avail-dot" aria-hidden="true" />
+        That name isn&apos;t available
+      </>
+    );
+    tone = "is-unavailable";
+  } else if (status === "error") {
+    content = "Couldn't check — try a different name";
+    tone = "is-error";
+  }
+
+  return (
+    <p className={`availability ${tone}`} aria-live="polite">
+      {content}
+    </p>
+  );
+};
+
 export const SuccessScreen = ({
   avatar,
   name,
+  onRegisterAnother,
 }: {
   avatar: string;
   name: string;
+  onRegisterAnother?: () => void;
 }) => {
   return (
     <div className="d-flex flex-column align-items-center success-screen">
-      <p className="mb-1">Registration successful</p>
-      <p style={{ fontSize: 18, color: "white" }}>{name}</p>
+      <div className="success-badge" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="26" height="26">
+          <path
+            d="M5 13l4 4L19 7"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+      <p className="success-title mb-1">Registration successful</p>
+      <p className="success-name">{name}</p>
       <div className="load-border">
         <img className="avatar" src={avatar} width={150} alt={name} />
       </div>
-      <Link
-        className="mt-3"
-        href={{ pathname: "/subnames", query: { selected: name } }}
-      >
-        <PlainBtn>Confirm</PlainBtn>
-      </Link>
+      <div className="success-actions mt-3">
+        <Link href={{ pathname: "/subnames", query: { selected: name } }}>
+          <PlainBtn>View name</PlainBtn>
+        </Link>
+        {onRegisterAnother && (
+          <button
+            type="button"
+            className="success-secondary"
+            onClick={onRegisterAnother}
+          >
+            Register another
+          </button>
+        )}
+      </div>
     </div>
   );
 };
 
 export const TransactionPending = ({ hash }: { hash: string }) => {
   return (
-    <div
-      className="d-flex flex-column align-items-center"
-      style={{ height: 200 }}
-    >
+    <div className="tx-pending d-flex flex-column align-items-center">
       <Spinner size="big" />
-      <p className="mt-3 mb-0" style={{ fontSize: "22px" }}>
-        Baking your name
+      <p className="tx-pending__title">Baking your name</p>
+      <p className="tx-pending__sub">
+        This usually takes a few seconds. Keep this tab open.
       </p>
+      <ol className="tx-steps" aria-label="Transaction progress">
+        <li className="is-done">
+          <span className="tx-steps__dot" aria-hidden="true" />
+          Transaction submitted
+        </li>
+        <li className="is-active">
+          <span className="tx-steps__dot" aria-hidden="true" />
+          Confirming on Base
+        </li>
+      </ol>
       {hash && (
         <a
+          className="tx-pending__link"
           href={`https://basescan.org/tx/${hash}`}
           target="_blank"
           rel="noreferrer"
-          style={{ color: "white", cursor: "pointer" }}
         >
-          Transaction
+          View on BaseScan ↗
         </a>
       )}
     </div>
