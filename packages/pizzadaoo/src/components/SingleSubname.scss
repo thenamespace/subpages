@@ -70,6 +70,13 @@
         }
 
         .record-badge {
+            // Button reset — was a <div>, now a <button> for keyboard a11y;
+            // without this the native button background renders white.
+            appearance: none;
+            -webkit-appearance: none;
+            font: inherit;
+            background: transparent;
+            border: none;
             outline: 1px solid $yellow;
             display: flex;
             align-items: center;
@@ -77,7 +84,8 @@
             padding: 5px 10px;
             margin: 5px;
             cursor: pointer;
-            transition: all 0.3s linear;
+            transition: transform 0.3s linear, outline-color 0.3s linear,
+                opacity 0.3s linear;
 
             &.unset {
                 opacity: 0.5;

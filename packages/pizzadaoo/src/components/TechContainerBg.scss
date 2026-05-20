@@ -17,34 +17,143 @@ body {
     min-height: 100vh;
     position: relative;
 
-    .big-char {
-        position: fixed;
-        left: 40px;
-        top: 18%;
-    }
-
     .top-nav {
         position: fixed;
         top: 0px;
         left: 50%;
-        transform: translateX(-50%); 
+        transform: translateX(-50%);
+        margin: auto;
+        width: 100%;
+        max-width: 1280px;
+        min-height: 92px;
+        padding: 12px 24px;
+        z-index: 99;
+
+        // Single row at every width — three clusters, no wrap.
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 14px;
+
+        &__logo {
+            display: inline-flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .pizza-logo {
+            display: block;
+            width: clamp(96px, 18vw, 200px);
+            height: auto;
+        }
+
+        &__links {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            flex-shrink: 0;
+            // Sits between logo and account, pushed off the logo.
+            margin-left: auto;
+        }
+
+        &__link {
+            position: relative;
+            color: rgba(255, 184, 25, 0.6);
+            text-decoration: none;
+            font-size: 16px;
+            white-space: nowrap;
+            padding-bottom: 4px;
+            transition: color 0.2s ease;
+
+            // Animated underline indicator.
+            &::after {
+                content: "";
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                height: 2px;
+                background: $yellow;
+                border-radius: 2px;
+                transform: scaleX(0);
+                transform-origin: center;
+                transition: transform 0.2s ease;
+            }
+
+            &:hover {
+                color: $yellow;
+            }
+
+            &.is-active {
+                color: $yellow;
+                font-weight: 700;
+
+                &::after {
+                    transform: scaleX(1);
+                }
+            }
+        }
+
+        &__actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            flex-shrink: 0;
+            // Separates the account/connect from the nav links.
+            margin-left: 4px;
+        }
+    }
+    .bot-nav {
+        position: absolute;
+        bottom: 0px;
+        left: 50%;
+        transform: translateX(-50%);
         margin: auto;
         width: 100%;
         max-width: 1280px;
         height: 100px;
         padding: 15px;
         z-index: 99;
-    }
-    .bot-nav {
-        position: absolute;
-        bottom: 0px;
-        left: 50%;
-        transform: translateX(-50%); 
-        margin: auto;
-        width: 100%;
-        max-width: 1280px;
-        height: 100px;
-        padding: 15px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+
+        .footer-credit {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.62);
+            text-decoration: none;
+            transition: color 0.2s ease;
+
+            &__label {
+                font-size: 12px;
+                letter-spacing: 0.3px;
+            }
+
+            &__logo {
+                height: 16px;
+                width: auto;
+                display: block;
+            }
+
+            &:hover {
+                color: #ffffff;
+            }
+        }
+
+        .footer-credit__sep {
+            color: rgba(255, 255, 255, 0.35);
+            font-size: 12px;
+        }
+
+        .footer-credit__chain {
+            color: rgba(255, 255, 255, 0.62);
+            font-size: 12px;
+            letter-spacing: 0.3px;
+        }
     }
 
     p {
@@ -80,10 +189,6 @@ body {
         position: relative;
     }
 
-    .nav-col {
-        display: flex;
-        justify-content: flex-end;
-    }
 }
 
 .tech-container::before {
@@ -103,53 +208,116 @@ body {
         background-size: cover;
         background-position: center;
 
-        .nav-col {
-            display: flex;
-            justify-content: center;
-        }
-
-        .logo-col {
-            display: none;
-        }
-
-        .big-char {
-            position: absolute;
-            top: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 40%;
+        // Don't vertically-center on mobile — the register card is
+        // taller than the viewport, so centering pushed the mascot up
+        // under the header. Flow it below the fixed header instead.
+        .landing-container {
             height: auto;
+            min-height: 100vh;
+            justify-content: flex-start;
+            padding-top: 116px;
+            padding-bottom: 110px;
         }
 
+        // Two-row header on small screens: logo + account on row 1
+        // (space-between, no auto-margins), primary nav centered on row 2.
+        // Avoids the horizontal overflow a single row causes with the
+        // wide display font.
+        .top-nav {
+            flex-wrap: wrap;
+            justify-content: space-between;
+            padding: 10px 14px;
+            gap: 8px 10px;
+            min-height: 0;
 
-        .bot-nav p {
-            margin: 15px !important;
+            // Soft top-down scrim that keeps the nav text legible but
+            // fades fully to transparent before the mascot — no hard
+            // edge slicing the artwork.
+            background: linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0.78) 0%,
+                rgba(0, 0, 0, 0.55) 55%,
+                rgba(0, 0, 0, 0) 100%
+            );
+            border-bottom: none;
+
+            &__logo {
+                order: 1;
+                flex: 0 1 auto;
+                min-width: 0;
+            }
+
+            &__actions {
+                order: 2;
+                flex: 0 0 auto;
+                margin-left: 0;
+            }
+
+            &__links {
+                order: 3;
+                flex: 1 0 100%;
+                margin-left: 0;
+                justify-content: center;
+                gap: 26px;
+                padding-top: 8px;
+                border-top: 1px solid rgba(255, 184, 25, 0.18);
+            }
+
+            &__link {
+                font-size: 15px;
+            }
+
+            .pizza-logo {
+                width: clamp(82px, 26vw, 130px);
+            }
+
+            .btn-plain {
+                min-width: 88px;
+                height: 42px;
+                font-size: 13px;
+            }
+        }
+
+        .bot-nav {
+            gap: 8px;
+            height: auto;
+            padding: 18px 15px;
+
+            .footer-credit__logo {
+                height: 14px;
+            }
+            .footer-credit__label,
+            .footer-credit__sep,
+            .footer-credit__chain {
+                font-size: 11px;
+            }
         }
     }
 }
 
 
-@media (max-width: 400px) {
+@media (max-width: 380px) {
     .tech-container  {
+        .top-nav {
+            padding: 10px 10px;
+            gap: 8px;
 
-        background-size: cover;
-        background-position: center;
+            &__links {
+                gap: 10px;
+            }
 
-        .nav-col {
-            display: flex;
-            justify-content: center;
-        }
+            &__link {
+                font-size: 13px;
+            }
 
-        .logo-col {
-            display: none;
-        }
+            .pizza-logo {
+                width: clamp(76px, 26vw, 110px);
+            }
 
-        .big-char {
-            position: absolute;
-            top: 100px;
-            transform: translateX(-50%);
-            width: 40%;
-            height: auto;
+            .btn-plain {
+                min-width: 80px;
+                font-size: 12px;
+            }
         }
     }
 }

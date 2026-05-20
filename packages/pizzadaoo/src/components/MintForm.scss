@@ -30,14 +30,58 @@
   }
 
   .success-screen {
-    .avatar-cont {
-      padding: 1px;
-      width: 152px;
-      height: 152px;
-      background-color: $yellow;
+    padding: 8px 4px;
+
+    .success-badge {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(41, 211, 152, 0.15);
+      color: #29d398;
       display: flex;
+      align-items: center;
       justify-content: center;
-      align-items: center; 
+      margin-bottom: 12px;
+      animation: success-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .success-title {
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .success-name {
+      font-size: 20px;
+      color: $yellow;
+      margin: 0 0 14px;
+      text-align: center;
+      word-break: break-word;
+    }
+
+    .success-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .success-secondary {
+      appearance: none;
+      -webkit-appearance: none;
+      font: inherit;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 13px;
+      padding: 6px 10px;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: #fff;
+      }
     }
   }
 
@@ -55,11 +99,11 @@
     cursor: pointer;
 
     &:hover {
-      text-shadow:0px 0px 2px $yellow, 0px 0px 2px $yellow;
+      text-shadow: 0 0 1px rgba(255, 184, 25, 0.55);
     }
 
     &.generating {
-      text-shadow:0px 0px 2px $yellow, 0px 0px 2px $yellow;
+      text-shadow: 0 0 1px rgba(255, 184, 25, 0.55);
     }
 
     &.disabled {
@@ -71,6 +115,13 @@
   .select-name-cont {
 
     .select-name-badge {
+      // Button reset — was a <div>, now a <button> for keyboard a11y;
+      // without this the native button background renders white.
+      appearance: none;
+      -webkit-appearance: none;
+      font: inherit;
+      background: transparent;
+      border: none;
       color: white;
       padding: 10px;
       font-size: 13px;
@@ -78,7 +129,7 @@
       border-radius: 10px;
       outline: 3px solid $yellow;
       cursor: pointer;
-      transition: all 0.3s linear;
+      transition: background-color 0.3s linear;
 
       &:hover {
         background-color: $red;
@@ -87,10 +138,188 @@
       &.active {
         background-color: $red;
       }
+
+      &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
     }
   }
 
-  
+  .instruction-text {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    margin: 0 auto;
+    max-width: 300px;
+    line-height: 1.4;
+  }
+
+  .name-preview {
+    font-size: 18px;
+
+    .input-name {
+      color: $green;
+    }
+  }
+
+  // Availability status row — fixed height so the layout never shifts
+  // as it cycles idle -> checking -> available/unavailable/error.
+  .availability {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 22px;
+    margin: 8px 0 0;
+    font-size: 13px;
+    text-align: center;
+    transition: color 0.2s ease;
+
+    .avail-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    &.is-idle {
+      color: rgba(255, 255, 255, 0.45);
+    }
+    &.is-checking {
+      color: $yellow;
+    }
+    &.is-available {
+      color: #29d398;
+      .avail-dot {
+        background: #29d398;
+        box-shadow: 0 0 6px rgba(41, 211, 152, 0.7);
+      }
+    }
+    &.is-unavailable {
+      color: #ff6b6b;
+      .avail-dot {
+        background: #ff6b6b;
+      }
+    }
+    &.is-error {
+      color: #ff6b6b;
+    }
+  }
+
+  // Inline, persistent error with a recovery action (toasts vanish).
+  .mint-error {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 107, 107, 0.5);
+    border-radius: 12px;
+    background: rgba(255, 107, 107, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+
+    &__msg {
+      margin: 0;
+      font-size: 13px;
+      color: #ff8585;
+      text-align: center;
+      line-height: 1.35;
+    }
+
+    &__retry {
+      appearance: none;
+      -webkit-appearance: none;
+      font: inherit;
+      cursor: pointer;
+      color: $yellow;
+      background: transparent;
+      border: 1px solid rgba(255, 184, 25, 0.55);
+      border-radius: 50px;
+      font-size: 13px;
+      padding: 7px 18px;
+      min-height: 38px;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: rgba(255, 184, 25, 0.12);
+      }
+    }
+  }
+
+  // Transaction pending — progress steps instead of a bare spinner.
+  .tx-pending {
+    padding: 14px 4px 6px;
+
+    &__title {
+      margin: 16px 0 4px;
+      font-size: 22px;
+      color: $yellow;
+    }
+
+    &__sub {
+      margin: 0 0 16px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.6);
+      text-align: center;
+      max-width: 260px;
+    }
+
+    &__link {
+      margin-top: 16px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.75);
+      text-decoration: none;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: #fff;
+      }
+    }
+  }
+
+  .tx-steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    max-width: 240px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    &__dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+    }
+
+    li.is-done {
+      color: #29d398;
+      .tx-steps__dot {
+        background: #29d398;
+        border-color: #29d398;
+      }
+    }
+
+    li.is-active {
+      color: $yellow;
+      .tx-steps__dot {
+        border-color: $yellow;
+        animation: tx-pulse 1.1s ease-in-out infinite;
+      }
+    }
+  }
+
   .form-container-square {
     width: 100%;
     height: 100vh;
@@ -147,8 +376,31 @@
     &::placeholder {
       color: white;
     }
+
+    &:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
   }
 
+  @keyframes tx-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 184, 25, 0.5); }
+    50% { box-shadow: 0 0 0 5px rgba(255, 184, 25, 0); }
+  }
+
+  @keyframes success-pop {
+    0% { transform: scale(0.4); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tx-steps li.is-active .tx-steps__dot {
+      animation: none;
+    }
+    .success-screen .success-badge {
+      animation: none;
+    }
+  }
 
   @keyframes bg-spin {
     to {
@@ -199,6 +451,9 @@
 
 @media (max-width: 600px) {
     .mint-form {
+        // Header clearance is handled by .landing-container on mobile.
+        padding-top: 8px;
+
         .form-tech-container {
             width: 90%;
             padding: 20px;
