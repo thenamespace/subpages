@@ -29,6 +29,8 @@ import { LISTING_CHAIN_ID } from "./Listing";
 import { getL2NamespaceContracts } from "@namespacesdk/addresses";
 import { getTxErrorMessage } from "../utils/txError";
 
+const FALLBACK_AVATAR = "https://avatars.namespace.ninja/pizzadaoo.png";
+
 const resolverAbi = parseAbi([
   "function setText(bytes32 node, string key, string value) external",
   "function setAddr(bytes32 node, uint256 coinType, bytes value) external",
@@ -63,8 +65,24 @@ export const SingleSubname = ({
 
   const [textValues, setTextValues] = useState<Record<string, string>>({});
   const [currentNav, setCurrentNav] = useState<"text" | "addr">("addr");
+  // Avatar src lives in state so onError can fall back to a known-good
+  // URL — the raw value is attacker-controllable (any subname owner can
+  // set their `avatar` text record to an arbitrary URL).
+  const [avatarSrc, setAvatarSrc] = useState<string>(
+    subname.texts?.["avatar"] || FALLBACK_AVATAR,
+  );
   const addressInputRef = useRef<HTMLInputElement | null>(null);
   const textInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Guards state updates that arrive after the SideModal closes —
+  // closing mid-tx must not setBtnState or refresh the parent list.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const isSelected = (coin: number) => {
     return selectedCoin === coin;
@@ -89,6 +107,7 @@ export const SingleSubname = ({
 
     setAddressValues(_addresses);
     setTextValues(_texts);
+    setAvatarSrc(subname.texts?.["avatar"] || FALLBACK_AVATAR);
   }, [subname]);
 
   const addressMetadata: WalletAddress = useMemo(() => {
@@ -289,13 +308,26 @@ export const SingleSubname = ({
       try {
         setBtnState({ waitingWallet: true, waitingTx: false });
         const tx = await walletClient.writeContract(resp.request);
+        if (!mountedRef.current) return;
         setBtnState({ waitingTx: true, waitingWallet: false });
 
-        await publicClient.waitForTransactionReceipt({
+        // waitForTransactionReceipt resolves for reverted txs too, so
+        // the status MUST be checked — otherwise a failed multicall
+        // shows "Records updated successfully!" and refreshes the
+        // panel as if the write succeeded.
+        const receipt = await publicClient.waitForTransactionReceipt({
           hash: tx,
           confirmations: 2,
         });
+        if (!mountedRef.current) return;
         setBtnState({ waitingTx: false, waitingWallet: false });
+
+        if (receipt.status !== "success") {
+          sendToast(
+            "The transaction was reverted on-chain — records were not updated.",
+          );
+          return;
+        }
 
         toast("Records updated successfully!", {
           position: "top-center",
@@ -303,7 +335,7 @@ export const SingleSubname = ({
         });
 
         setTimeout(() => {
-          onUpdate();
+          if (mountedRef.current) onUpdate();
         }, 3000);
       } catch (err: unknown) {
         const message = getTxErrorMessage(err);
@@ -311,7 +343,9 @@ export const SingleSubname = ({
           sendToast(message);
         }
       } finally {
-        setBtnState({ waitingTx: false, waitingWallet: false });
+        if (mountedRef.current) {
+          setBtnState({ waitingTx: false, waitingWallet: false });
+        }
       }
     } catch (err: unknown) {
       const message = getTxErrorMessage(err, "Unknown error occurred :(");
@@ -333,8 +367,11 @@ export const SingleSubname = ({
       <div className="d-flex align-items-center flex-column">
         <img
           className="avatar"
-          src={subname.texts?.["avatar"]}
+          src={avatarSrc}
           alt={subname.name}
+          onError={() => {
+            if (avatarSrc !== FALLBACK_AVATAR) setAvatarSrc(FALLBACK_AVATAR);
+          }}
         />
         <p className="subtext mt-3 mb-0">{subname.name}</p>
       </div>
