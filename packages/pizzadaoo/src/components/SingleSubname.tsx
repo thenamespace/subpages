@@ -25,9 +25,10 @@ import {
 } from "wagmi";
 import { validate as isValidBtcAddress } from "bitcoin-address-validation";
 import { toast } from "react-toastify";
-import { LISTING_CHAIN_ID } from "./Listing";
+import { LISTING_CHAIN_ID, SWAP_PARENT_NAME } from "./Listing";
 import { getL2NamespaceContracts } from "@namespacesdk/addresses";
 import { getTxErrorMessage } from "../utils/txError";
+import { SwapModal } from "./SwapModal";
 
 const FALLBACK_AVATAR = "https://avatars.namespace.ninja/pizzadaoo.png";
 
@@ -65,6 +66,12 @@ export const SingleSubname = ({
 
   const [textValues, setTextValues] = useState<Record<string, string>>({});
   const [currentNav, setCurrentNav] = useState<"text" | "addr">("addr");
+
+  const [swapping, setSwapping] = useState(false);
+  const [swappedTo, setSwappedTo] = useState<string | null>(null);
+
+  const canSwap =
+    subname.name.endsWith(`.${SWAP_PARENT_NAME}`) && !swappedTo;
   // Avatar src lives in state so onError can fall back to a known-good
   // URL — the raw value is attacker-controllable (any subname owner can
   // set their `avatar` text record to an arbitrary URL).
@@ -374,7 +381,40 @@ export const SingleSubname = ({
           }}
         />
         <p className="subtext mt-3 mb-0">{subname.name}</p>
+        {canSwap && !swapping && (
+          <button
+            type="button"
+            className="rename-btn"
+            onClick={() => setSwapping(true)}
+            aria-label="Rename this subname for free"
+          >
+            Rename (free)
+            <span className="rename-btn-hint">one-time, sponsored</span>
+          </button>
+        )}
+        {swappedTo && (
+          <p className="swap-success-banner" role="status">
+            You&apos;re now <strong>{swappedTo}</strong>. The list will refresh.
+          </p>
+        )}
       </div>
+
+      {swapping && (
+        <SwapModal
+          oldSubname={subname}
+          onClose={() => setSwapping(false)}
+          onSuccess={(name) => {
+            setSwapping(false);
+            setSwappedTo(name);
+            toast(`Renamed to ${name}`, {
+              className: "tech-toasty",
+              type: "success",
+            });
+            onUpdate();
+          }}
+        />
+      )}
+
       <div className="d-flex justify-content-center">
         <button
           type="button"
