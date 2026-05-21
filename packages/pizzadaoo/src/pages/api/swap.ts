@@ -14,7 +14,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
-import { normalize } from "viem/ens";
+import { namehash, normalize } from "viem/ens";
 import axios from "axios";
 import {
   ChainName,
@@ -29,7 +29,7 @@ const base_rpc =
   (process.env.NEXT_PUBLIC_ALCHEMY_KEY
     ? `https://base-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_KEY}`
     : "https://mainnet.base.org");
-const PARENT_NAME = process.env.PARENT_NAME || "pizzaday.eth";
+const PARENT_NAME = process.env.PARENT_NAME || "enscomponent.eth.eth";
 const PARENT_REGISTRY_ADDRESS = process.env.PARENT_REGISTRY_ADDRESS as
   | Address
   | undefined;
@@ -223,12 +223,14 @@ export default async function handler(
 
     // ----- eligibility via indexer -----
     const indexerUrl = "https://indexer.namespace.ninja/api/v1/nodes";
-    const sponsorAddress = privateKeyToAccount(wallet_key).address;
 
+    // Indexer returns `namehash` (not `node`) and `mintSource` (not `mintedBy`).
+    // We use mintSource = "pizzadaoo-swap" to detect names produced by THIS flow,
+    // which is how we enforce "one swap per address ever" without storage.
     let items: Array<{
       name: string;
-      node: string;
-      mintedBy?: string;
+      namehash: string;
+      mintSource?: string;
       texts?: Record<string, string>;
       addresses?: Record<string, string>;
     }> = [];
@@ -254,19 +256,16 @@ export default async function handler(
     }
 
     const oldItem = items.find(
-      (i) => i.node.toLowerCase() === body.oldNode.toLowerCase(),
+      (i) => i.namehash.toLowerCase() === body.oldNode.toLowerCase(),
     );
     if (!oldItem) {
       res.status(400).json({ error: "You don't own that subname" });
       return;
     }
 
-    if (
-      items.some(
-        (i) =>
-          i.mintedBy?.toLowerCase() === sponsorAddress.toLowerCase(),
-      )
-    ) {
+    // "One swap per address ever" — block if any owned name was produced by
+    // this flow (mintSource set in the mint params below).
+    if (items.some((i) => i.mintSource === "pizzadaoo-swap")) {
       res
         .status(403)
         .json({ error: "You have already used your sponsored swap" });
@@ -418,9 +417,62 @@ export default async function handler(
       return;
     }
 
+    // ----- transfer the freshly minted NFT to the user -----
+    // The Namespace SDK silently ignores the `owner` param: the mint puts the
+    // NFT on the minter (= sponsor wallet). We must `transferFrom` to make the
+    // user the on-chain owner. See airdrop.mjs for the same fix.
+    const transferAbi = [
+      {
+        type: "function",
+        name: "transferFrom",
+        stateMutability: "nonpayable",
+        inputs: [
+          { name: "from", type: "address" },
+          { name: "to", type: "address" },
+          { name: "tokenId", type: "uint256" },
+        ],
+        outputs: [],
+      },
+    ] as const;
+    const newNode = namehash(`${label}.${PARENT_NAME}`);
+    const newTokenId = BigInt(newNode);
+
+    let transferTx: Hex;
+    try {
+      transferTx = await walletClient.writeContract({
+        abi: transferAbi,
+        address: PARENT_REGISTRY_ADDRESS!,
+        functionName: "transferFrom",
+        args: [sponsorAccount.address, body.owner, newTokenId],
+      });
+    } catch (err) {
+      console.error("TRANSFER FAILED AFTER MINT", { burnTx, mintTx, body, err });
+      res.status(500).json({
+        error: "Mint succeeded but transfer failed — contact support",
+        burnTx,
+        mintTx,
+      });
+      return;
+    }
+    const transferReceipt = await publicClient.waitForTransactionReceipt({
+      hash: transferTx,
+      confirmations: 1,
+    });
+    if (transferReceipt.status !== "success") {
+      console.error("TRANSFER REVERTED AFTER MINT", { burnTx, mintTx, transferTx, body });
+      res.status(500).json({
+        error: "Transfer reverted after mint — contact support",
+        burnTx,
+        mintTx,
+        transferTx,
+      });
+      return;
+    }
+
     res.status(200).json({
       burnTx,
       mintTx,
+      transferTx,
       name: `${label}.${PARENT_NAME}`,
     });
   } catch (err: unknown) {
