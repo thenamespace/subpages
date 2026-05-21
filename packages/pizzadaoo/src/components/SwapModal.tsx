@@ -53,12 +53,12 @@ export const SwapModal = ({ oldSubname, onClose, onSuccess }: Props) => {
   } | null>(null);
 
   const mountedRef = useRef(true);
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
       mountedRef.current = false;
-    },
-    [],
-  );
+    };
+  }, []);
 
   // Autofocus the input on mount — single-purpose modal.
   const inputRef = useRef<HTMLInputElement>(null);
