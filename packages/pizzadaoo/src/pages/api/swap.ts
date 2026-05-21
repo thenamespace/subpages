@@ -413,7 +413,7 @@ export default async function handler(
     });
     const mintReceipt = await publicClient.waitForTransactionReceipt({
       hash: mintTx,
-      confirmations: 1,
+      confirmations: 2,
     });
     if (mintReceipt.status !== "success") {
       // Burn already happened — user is left without a name. Log loudly so
@@ -447,17 +447,29 @@ export default async function handler(
     const newNode = namehash(`${label}.${PARENT_NAME}`);
     const newTokenId = BigInt(newNode);
 
-    let transferTx: Hex;
-    try {
-      transferTx = await walletClient.writeContract({
-        abi: transferAbi,
-        address: PARENT_REGISTRY_ADDRESS!,
-        functionName: "transferFrom",
-        args: [sponsorAccount.address, body.owner, newTokenId],
-        nonce: burnNonce + 2,
-      });
-    } catch (err) {
-      console.error("TRANSFER FAILED AFTER MINT", { burnTx, mintTx, body, err });
+    // Retry the transfer write — Alchemy's read replicas can lag the mint
+    // receipt and reject gas estimation with ERC721NonexistentToken (0x7e273289)
+    // even though the token exists on the canonical state. Five attempts with
+    // 1.5s spacing covers the typical 2-3s propagation window.
+    let transferTx: Hex | undefined;
+    let lastErr: unknown;
+    for (let i = 0; i < 5; i++) {
+      try {
+        transferTx = await walletClient.writeContract({
+          abi: transferAbi,
+          address: PARENT_REGISTRY_ADDRESS!,
+          functionName: "transferFrom",
+          args: [sponsorAccount.address, body.owner, newTokenId],
+          nonce: burnNonce + 2,
+        });
+        break;
+      } catch (err) {
+        lastErr = err;
+        await new Promise((r) => setTimeout(r, 1500));
+      }
+    }
+    if (!transferTx) {
+      console.error("TRANSFER FAILED AFTER MINT", { burnTx, mintTx, body, err: lastErr });
       res.status(500).json({
         error: "Mint succeeded but transfer failed — contact support",
         burnTx,
