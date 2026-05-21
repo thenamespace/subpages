@@ -13,7 +13,7 @@ import Link from "next/link";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { normalise } from "@ensdomains/ensjs/utils";
 import pizzaChar from "../assets/PizzaCharacter.png";
-import { LISTED_NAMES, Listing, LISTING_CHAIN_ID } from "./Listing";
+import { LISTED_NAMES, Listing, LISTING_CHAIN_ID, SWAP_PARENT_NAME } from "./Listing";
 import Image from "next/image";
 import {
   ChainName,
@@ -267,6 +267,8 @@ export const MintForm = () => {
         return "Anyone with a Rare Pizza Box NFT can mint a pizza mafia name.";
       case "rarepizzas.eth":
         return "Ask a Capo or DPR to mint your topping for you.";
+      case SWAP_PARENT_NAME:
+        return "Already have one? Visit My Subnames to rename it for free.";
       default:
         return "";
     }

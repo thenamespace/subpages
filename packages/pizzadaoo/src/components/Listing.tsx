@@ -37,6 +37,25 @@ export const PIZZAMAFIA_ETH: Listing = {
   registryNetwork: "base",
 };
 
-export const LISTED_NAMES: Listing[] = [PIZZADAO_ETH, PIZZAMAFIA_ETH, RAREPIZZA_ETH]
+// The parent used by the sponsored burn-and-reissue flow.
+// Driven by env so we can flip enscomponent.eth (testing) <-> pizzaday.eth (prod).
+export const SWAP_PARENT_NAME =
+  process.env.NEXT_PUBLIC_PARENT_NAME || "pizzaday.eth";
+
+export const PIZZADAY_ETH: Listing = {
+  fullName: SWAP_PARENT_NAME,
+  label: SWAP_PARENT_NAME.split(".")[0],
+  network: "mainnet",
+  node: namehash(SWAP_PARENT_NAME),
+  listingType: "l2",
+  registryNetwork: "base",
+};
+
+export const LISTED_NAMES: Listing[] = [
+  PIZZADAO_ETH,
+  PIZZAMAFIA_ETH,
+  RAREPIZZA_ETH,
+  PIZZADAY_ETH,
+];
 
 export const LISTING_CHAIN_ID = base.id;
