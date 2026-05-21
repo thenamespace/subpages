@@ -15,7 +15,6 @@ import {
 import { createMintClient } from "@namespacesdk/mint-manager";
 import { debounce } from "../utils/debounce";
 import { getTxErrorMessage, isUserRejection } from "../utils/txError";
-import "./SwapModal.scss";
 
 let mintClientSingleton: ReturnType<typeof createMintClient> | undefined;
 const getMintClient = () =>
