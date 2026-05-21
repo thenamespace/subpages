@@ -1,0 +1,339 @@
+@import "../styles/vars.scss";
+
+// SwapModal — rendered inside SideModal on the My Subnames page.
+// Visual language: pizza-tech (yellow accent, black base, mono previews).
+.swap-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 4px 4px 24px;
+  color: #fff;
+
+  &__header {
+    text-align: center;
+  }
+
+  &__eyebrow {
+    margin: 0 0 6px;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: $yellow;
+  }
+
+  &__title {
+    margin: 0 0 8px;
+    font-size: 26px;
+    line-height: 1.15;
+    color: #fff;
+  }
+
+  &__lede {
+    margin: 0 auto;
+    max-width: 320px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  // From -> To comparison block.
+  &__compare {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: stretch;
+    gap: 10px;
+    padding: 14px 12px;
+    border: 1px solid rgba(255, 184, 25, 0.35);
+    border-radius: 16px;
+    background:
+      radial-gradient(
+        120% 100% at 50% 0%,
+        rgba(255, 184, 25, 0.08),
+        transparent 60%
+      ),
+      rgba(255, 255, 255, 0.02);
+  }
+
+  &__name {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  &__name-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  &__name-value {
+    font-family:
+      "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      monospace;
+    font-size: 14px;
+    word-break: break-all;
+    line-height: 1.3;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  &__name--old &__name-value {
+    color: rgba(255, 255, 255, 0.55);
+    text-decoration: line-through;
+    text-decoration-color: rgba(255, 107, 107, 0.55);
+    text-decoration-thickness: 1px;
+  }
+
+  &__name--new &__name-value {
+    color: $yellow;
+  }
+
+  &__name-input {
+    color: #29d398;
+  }
+
+  &__name-parent {
+    color: rgba(255, 184, 25, 0.85);
+  }
+
+  &__name-placeholder {
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  &__arrow {
+    align-self: center;
+    font-size: 18px;
+    color: $yellow;
+    padding: 0 2px;
+  }
+
+  // Input field block.
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__field-label {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0;
+  }
+
+  &__input-wrap {
+    position: relative;
+  }
+
+  // Reserve vertical space so the layout never shifts as state changes.
+  &__availability {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    min-height: 20px;
+    margin: 4px 2px 0;
+    font-size: 12px;
+    line-height: 1.3;
+    transition: color 0.2s ease;
+
+    &.is-idle {
+      color: rgba(255, 255, 255, 0.4);
+    }
+    &.is-checking {
+      color: $yellow;
+    }
+    &.is-available {
+      color: #29d398;
+    }
+    &.is-unavailable {
+      color: #ff6b6b;
+    }
+    &.is-error {
+      color: #ff6b6b;
+    }
+  }
+
+  &__avail-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #29d398;
+    box-shadow: 0 0 6px rgba(41, 211, 152, 0.7);
+    flex-shrink: 0;
+  }
+
+  &__note {
+    margin: 6px 2px 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  // Busy state — replaces error region while a tx is in flight.
+  &__progress {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid rgba(255, 184, 25, 0.5);
+    border-radius: 14px;
+    background: rgba(255, 184, 25, 0.06);
+  }
+
+  &__progress-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__progress-title {
+    margin: 0 0 4px;
+    font-size: 14px;
+    color: $yellow;
+    line-height: 1.3;
+  }
+
+  &__progress-sub {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.65);
+  }
+
+  // Inline error region with retry — persistent (unlike toasts).
+  &__error {
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 107, 107, 0.5);
+    border-radius: 14px;
+    background: rgba(255, 107, 107, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  &__error-msg {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #ff8585;
+    word-break: break-word;
+  }
+
+  &__error-retry {
+    align-self: flex-start;
+    appearance: none;
+    -webkit-appearance: none;
+    font: inherit;
+    cursor: pointer;
+    color: $yellow;
+    background: transparent;
+    border: 1px solid rgba(255, 184, 25, 0.55);
+    border-radius: 50px;
+    font-size: 13px;
+    padding: 7px 18px;
+    min-height: 38px;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: rgba(255, 184, 25, 0.12);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $yellow;
+      outline-offset: 2px;
+    }
+  }
+
+  // Actions row — cancel (secondary) + Sign & swap (primary).
+  &__actions {
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  &__cancel {
+    appearance: none;
+    -webkit-appearance: none;
+    font: inherit;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.75);
+    border-radius: 50px;
+    font-size: 14px;
+    padding: 10px 22px;
+    min-height: 44px;
+    transition:
+      color 0.2s ease,
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+
+    &:hover:not(:disabled) {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.45);
+      background-color: rgba(255, 255, 255, 0.04);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $yellow;
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+
+  &__submit {
+    flex: 1;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 600px) {
+  .swap-modal {
+    gap: 16px;
+
+    &__title {
+      font-size: 22px;
+    }
+
+    &__compare {
+      grid-template-columns: 1fr;
+      gap: 8px;
+      padding: 12px;
+    }
+
+    &__arrow {
+      transform: rotate(90deg);
+      align-self: center;
+      padding: 2px 0;
+    }
+
+    &__actions {
+      flex-direction: column-reverse;
+      align-items: stretch;
+    }
+
+    &__cancel,
+    &__submit {
+      width: 100%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swap-modal {
+    &__availability,
+    &__cancel,
+    &__error-retry {
+      transition: none;
+    }
+  }
+}
