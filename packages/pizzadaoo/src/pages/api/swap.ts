@@ -16,6 +16,11 @@ import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
 import { normalize } from "viem/ens";
 import axios from "axios";
+import {
+  ChainName,
+  createMintClient,
+  type EnsRecords,
+} from "@namespacesdk/mint-manager";
 
 // ---------- env ----------
 const wallet_key = process.env.WALLET_KEY as Hash | undefined;
@@ -28,6 +33,25 @@ const PARENT_NAME = process.env.PARENT_NAME || "pizzaday.eth";
 const PARENT_REGISTRY_ADDRESS = process.env.PARENT_REGISTRY_ADDRESS as
   | Address
   | undefined;
+
+const mintClient = createMintClient({
+  mintSource: "pizzadaoo-swap",
+  cursomRpcUrls: { [base.id]: base_rpc },
+});
+const publicClient = createPublicClient({
+  transport: http(base_rpc),
+  chain: base,
+});
+
+const burnAbi = [
+  {
+    type: "function",
+    name: "burn",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "node", type: "bytes32" }],
+    outputs: [],
+  },
+] as const;
 
 // ---------- constants ----------
 const MIN_LABEL_LENGTH = 3;
@@ -249,16 +273,155 @@ export default async function handler(
       return;
     }
 
-    // Burn + mint are added in the next task. For now respond with a preview
-    // so we can inspect the inherited records during dev.
-    res.status(501).json({
-      error: "Not implemented yet",
-      preview: {
-        sponsor: sponsorAddress,
-        oldName: oldItem.name,
-        oldRecords: { texts: oldItem.texts, addresses: oldItem.addresses },
-        newName: `${label}.${PARENT_NAME}`,
-      },
+    // ----- build the new records (frontend-provided override beats inherited) -----
+    const oldTexts = Object.entries(oldItem.texts || {}).map(([key, value]) => ({
+      key,
+      value,
+    }));
+    const oldAddresses = Object.entries(oldItem.addresses || {}).map(
+      ([coinType, value]) => ({ coinType: Number(coinType), value }),
+    );
+
+    const userTexts = (body.records?.texts || []).filter(
+      (t) => t.value?.length > 0,
+    );
+    const userAddresses = (body.records?.addresses || []).filter(
+      (a) => a.value?.length > 0,
+    );
+
+    const finalTexts: EnsRecords["texts"] =
+      userTexts.length > 0 ? userTexts : oldTexts;
+
+    // mint-manager EnsRecords uses `chain: ChainName`, not coinType — map common ones.
+    // Fall back to the user's address for eth/base if old subname had nothing.
+    const coinToChain: Record<number, ChainName> = {
+      60: ChainName.Ethereum,
+      2147492101: ChainName.Base, // ENSIP-11 base coinType
+    };
+    const mappedAddresses: EnsRecords["addresses"] = (
+      userAddresses.length > 0 ? userAddresses : oldAddresses
+    )
+      .map((a) => {
+        const chain = coinToChain[a.coinType];
+        if (!chain) return null;
+        return { value: a.value, chain };
+      })
+      .filter((x): x is { value: string; chain: ChainName } => x !== null);
+
+    if (mappedAddresses.length === 0) {
+      mappedAddresses.push(
+        { value: body.owner, chain: ChainName.Ethereum },
+        { value: body.owner, chain: ChainName.Base },
+      );
+    }
+
+    const records: EnsRecords = {
+      texts: finalTexts,
+      addresses: mappedAddresses,
+    };
+
+    // ----- mint params (used for simulation + broadcast) -----
+    const sponsorAccount = privateKeyToAccount(wallet_key);
+    const walletClient = createWalletClient({
+      transport: http(base_rpc),
+      chain: base,
+      account: sponsorAccount,
+    });
+
+    let mintParams;
+    try {
+      mintParams = await mintClient.getMintTransactionParameters({
+        minterAddress: sponsorAccount.address,
+        label,
+        parentName: PARENT_NAME,
+        owner: body.owner,
+        records,
+      });
+    } catch (err) {
+      console.error("getMintTransactionParameters failed:", err);
+      res.status(500).json({ error: "Could not build mint params" });
+      return;
+    }
+
+    // ----- simulate BOTH txs against current state before sending either -----
+    try {
+      await publicClient.simulateContract({
+        abi: burnAbi,
+        address: PARENT_REGISTRY_ADDRESS!,
+        functionName: "burn",
+        args: [body.oldNode],
+        account: sponsorAccount,
+      });
+    } catch (err) {
+      console.error("Burn simulation failed:", err);
+      res
+        .status(500)
+        .json({ error: "Burn simulation failed — aborting" });
+      return;
+    }
+
+    try {
+      await publicClient.simulateContract({
+        abi: mintParams.abi,
+        address: mintParams.contractAddress,
+        functionName: mintParams.functionName,
+        args: mintParams.args,
+        value: mintParams.value,
+        account: sponsorAccount,
+      });
+    } catch (err) {
+      console.error("Mint simulation failed:", err);
+      res
+        .status(500)
+        .json({ error: "Mint simulation failed — aborting" });
+      return;
+    }
+
+    // ----- broadcast burn, wait, then mint -----
+    const burnTx = await walletClient.writeContract({
+      abi: burnAbi,
+      address: PARENT_REGISTRY_ADDRESS!,
+      functionName: "burn",
+      args: [body.oldNode],
+    });
+    const burnReceipt = await publicClient.waitForTransactionReceipt({
+      hash: burnTx,
+      confirmations: 1,
+    });
+    if (burnReceipt.status !== "success") {
+      res
+        .status(500)
+        .json({ error: "Burn tx reverted on-chain", burnTx });
+      return;
+    }
+
+    const mintTx = await walletClient.writeContract({
+      abi: mintParams.abi,
+      address: mintParams.contractAddress,
+      functionName: mintParams.functionName,
+      args: mintParams.args,
+      value: mintParams.value,
+    });
+    const mintReceipt = await publicClient.waitForTransactionReceipt({
+      hash: mintTx,
+      confirmations: 1,
+    });
+    if (mintReceipt.status !== "success") {
+      // Burn already happened — user is left without a name. Log loudly so
+      // we can recover manually.
+      console.error("MINT REVERTED AFTER BURN", { burnTx, mintTx, body });
+      res.status(500).json({
+        error: "Mint reverted after burn — contact support",
+        burnTx,
+        mintTx,
+      });
+      return;
+    }
+
+    res.status(200).json({
+      burnTx,
+      mintTx,
+      name: `${label}.${PARENT_NAME}`,
     });
   } catch (err: unknown) {
     console.error("Swap error:", err);
