@@ -15,6 +15,7 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
 import { normalize } from "viem/ens";
+import axios from "axios";
 
 // ---------- env ----------
 const wallet_key = process.env.WALLET_KEY as Hash | undefined;
@@ -196,8 +197,69 @@ export default async function handler(
       return;
     }
 
-    // Eligibility, simulation, and broadcast are added in subsequent tasks.
-    res.status(501).json({ error: "Not implemented yet" });
+    // ----- eligibility via indexer -----
+    const indexerUrl = "https://indexer.namespace.ninja/api/v1/nodes";
+    const sponsorAddress = privateKeyToAccount(wallet_key).address;
+
+    let items: Array<{
+      name: string;
+      node: string;
+      mintedBy?: string;
+      texts?: Record<string, string>;
+      addresses?: Record<string, string>;
+    }> = [];
+    try {
+      const idx = await axios.get(indexerUrl, {
+        params: { owner: body.owner, parentName: PARENT_NAME },
+        timeout: 10_000,
+      });
+      items = idx.data?.items || [];
+    } catch (err) {
+      console.error("Indexer error:", err);
+      res
+        .status(503)
+        .json({ error: "Indexer unavailable, try again later" });
+      return;
+    }
+
+    if (items.length === 0) {
+      res
+        .status(403)
+        .json({ error: `No ${PARENT_NAME} subname to swap` });
+      return;
+    }
+
+    const oldItem = items.find(
+      (i) => i.node.toLowerCase() === body.oldNode.toLowerCase(),
+    );
+    if (!oldItem) {
+      res.status(400).json({ error: "You don't own that subname" });
+      return;
+    }
+
+    if (
+      items.some(
+        (i) =>
+          i.mintedBy?.toLowerCase() === sponsorAddress.toLowerCase(),
+      )
+    ) {
+      res
+        .status(403)
+        .json({ error: "You have already used your sponsored swap" });
+      return;
+    }
+
+    // Burn + mint are added in the next task. For now respond with a preview
+    // so we can inspect the inherited records during dev.
+    res.status(501).json({
+      error: "Not implemented yet",
+      preview: {
+        sponsor: sponsorAddress,
+        oldName: oldItem.name,
+        oldRecords: { texts: oldItem.texts, addresses: oldItem.addresses },
+        newName: `${label}.${PARENT_NAME}`,
+      },
+    });
   } catch (err: unknown) {
     console.error("Swap error:", err);
     const message =
