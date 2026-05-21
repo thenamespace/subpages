@@ -377,11 +377,20 @@ export default async function handler(
     }
 
     // ----- broadcast burn, wait, then mint -----
+    // Pass an explicit nonce to each writeContract because viem's internal
+    // nonce lookup can race the receipt propagation between Alchemy read
+    // replicas, producing "replacement transaction underpriced" errors when
+    // two consecutive txs end up requesting the same nonce.
+    const burnNonce = await publicClient.getTransactionCount({
+      address: sponsorAccount.address,
+      blockTag: "pending",
+    });
     const burnTx = await walletClient.writeContract({
       abi: burnAbi,
       address: PARENT_REGISTRY_ADDRESS!,
       functionName: "burn",
       args: [body.oldNode],
+      nonce: burnNonce,
     });
     const burnReceipt = await publicClient.waitForTransactionReceipt({
       hash: burnTx,
@@ -400,6 +409,7 @@ export default async function handler(
       functionName: mintParams.functionName,
       args: mintParams.args,
       value: mintParams.value,
+      nonce: burnNonce + 1,
     });
     const mintReceipt = await publicClient.waitForTransactionReceipt({
       hash: mintTx,
@@ -444,6 +454,7 @@ export default async function handler(
         address: PARENT_REGISTRY_ADDRESS!,
         functionName: "transferFrom",
         args: [sponsorAccount.address, body.owner, newTokenId],
+        nonce: burnNonce + 2,
       });
     } catch (err) {
       console.error("TRANSFER FAILED AFTER MINT", { burnTx, mintTx, body, err });
