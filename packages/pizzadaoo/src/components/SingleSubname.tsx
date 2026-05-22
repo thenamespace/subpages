@@ -44,7 +44,9 @@ export const SingleSubname = ({
   alreadySwapped = false,
 }: {
   subname: Subname;
-  onUpdate: () => void;
+  // Called after a record update (no arg) or a rename (the new full name,
+  // so the parent can poll the indexer for it).
+  onUpdate: (renamedTo?: string) => void;
   alreadySwapped?: boolean;
 }) => {
   const publicClient = usePublicClient({ chainId: LISTING_CHAIN_ID });
@@ -426,7 +428,7 @@ export const SingleSubname = ({
               className: "tech-toasty",
               type: "success",
             });
-            onUpdate();
+            onUpdate(name);
           }}
         />
       )}
