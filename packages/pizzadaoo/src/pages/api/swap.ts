@@ -14,13 +14,10 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
-import { namehash, normalize } from "viem/ens";
+import { normalize } from "viem/ens";
 import axios from "axios";
-import {
-  ChainName,
-  createMintClient,
-  type EnsRecords,
-} from "@namespacesdk/mint-manager";
+import { ChainName, type EnsRecords } from "@namespacesdk/mint-manager";
+import { buildSponsoredMintTx } from "../../utils/sponsoredMint";
 
 // ---------- env ----------
 const wallet_key = process.env.WALLET_KEY as Hash | undefined;
@@ -29,15 +26,11 @@ const base_rpc =
   (process.env.NEXT_PUBLIC_ALCHEMY_KEY
     ? `https://base-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_KEY}`
     : "https://mainnet.base.org");
-const PARENT_NAME = process.env.PARENT_NAME || "enscomponent.eth.eth";
+const PARENT_NAME = process.env.PARENT_NAME || "pizzaday.eth";
 const PARENT_REGISTRY_ADDRESS = process.env.PARENT_REGISTRY_ADDRESS as
   | Address
   | undefined;
 
-const mintClient = createMintClient({
-  mintSource: "pizzadaoo-swap",
-  cursomRpcUrls: { [base.id]: base_rpc },
-});
 const publicClient = createPublicClient({
   transport: http(base_rpc),
   chain: base,
@@ -319,7 +312,11 @@ export default async function handler(
       addresses: mappedAddresses,
     };
 
-    // ----- mint params (used for simulation + broadcast) -----
+    // ----- mint params: mint directly to the user, no transfer step -----
+    // buildSponsoredMintTx calls the mint-manager API with an explicit `owner`
+    // so the NFT lands on the user from the mint event itself — the indexer
+    // records the correct owner immediately and there's no transferFrom to
+    // lag or fail.
     const sponsorAccount = privateKeyToAccount(wallet_key);
     const walletClient = createWalletClient({
       transport: http(base_rpc),
@@ -327,17 +324,18 @@ export default async function handler(
       account: sponsorAccount,
     });
 
-    let mintParams;
+    let mintTxParams;
     try {
-      mintParams = await mintClient.getMintTransactionParameters({
-        minterAddress: sponsorAccount.address,
+      mintTxParams = await buildSponsoredMintTx({
         label,
         parentName: PARENT_NAME,
+        minterAddress: sponsorAccount.address,
         owner: body.owner,
         records,
+        mintSource: "pizzadaoo-swap",
       });
     } catch (err) {
-      console.error("getMintTransactionParameters failed:", err);
+      console.error("buildSponsoredMintTx failed:", err);
       res.status(500).json({ error: "Could not build mint params" });
       return;
     }
@@ -361,11 +359,11 @@ export default async function handler(
 
     try {
       await publicClient.simulateContract({
-        abi: mintParams.abi,
-        address: mintParams.contractAddress,
-        functionName: mintParams.functionName,
-        args: mintParams.args,
-        value: mintParams.value,
+        abi: mintTxParams.abi,
+        address: mintTxParams.address,
+        functionName: mintTxParams.functionName,
+        args: mintTxParams.args,
+        value: mintTxParams.value,
         account: sponsorAccount,
       });
     } catch (err) {
@@ -404,16 +402,16 @@ export default async function handler(
     }
 
     const mintTx = await walletClient.writeContract({
-      abi: mintParams.abi,
-      address: mintParams.contractAddress,
-      functionName: mintParams.functionName,
-      args: mintParams.args,
-      value: mintParams.value,
+      abi: mintTxParams.abi,
+      address: mintTxParams.address,
+      functionName: mintTxParams.functionName,
+      args: mintTxParams.args,
+      value: mintTxParams.value,
       nonce: burnNonce + 1,
     });
     const mintReceipt = await publicClient.waitForTransactionReceipt({
       hash: mintTx,
-      confirmations: 2,
+      confirmations: 1,
     });
     if (mintReceipt.status !== "success") {
       // Burn already happened — user is left without a name. Log loudly so
@@ -427,75 +425,9 @@ export default async function handler(
       return;
     }
 
-    // ----- transfer the freshly minted NFT to the user -----
-    // The Namespace SDK silently ignores the `owner` param: the mint puts the
-    // NFT on the minter (= sponsor wallet). We must `transferFrom` to make the
-    // user the on-chain owner. See airdrop.mjs for the same fix.
-    const transferAbi = [
-      {
-        type: "function",
-        name: "transferFrom",
-        stateMutability: "nonpayable",
-        inputs: [
-          { name: "from", type: "address" },
-          { name: "to", type: "address" },
-          { name: "tokenId", type: "uint256" },
-        ],
-        outputs: [],
-      },
-    ] as const;
-    const newNode = namehash(`${label}.${PARENT_NAME}`);
-    const newTokenId = BigInt(newNode);
-
-    // Retry the transfer write — Alchemy's read replicas can lag the mint
-    // receipt and reject gas estimation with ERC721NonexistentToken (0x7e273289)
-    // even though the token exists on the canonical state. Five attempts with
-    // 1.5s spacing covers the typical 2-3s propagation window.
-    let transferTx: Hex | undefined;
-    let lastErr: unknown;
-    for (let i = 0; i < 5; i++) {
-      try {
-        transferTx = await walletClient.writeContract({
-          abi: transferAbi,
-          address: PARENT_REGISTRY_ADDRESS!,
-          functionName: "transferFrom",
-          args: [sponsorAccount.address, body.owner, newTokenId],
-          nonce: burnNonce + 2,
-        });
-        break;
-      } catch (err) {
-        lastErr = err;
-        await new Promise((r) => setTimeout(r, 1500));
-      }
-    }
-    if (!transferTx) {
-      console.error("TRANSFER FAILED AFTER MINT", { burnTx, mintTx, body, err: lastErr });
-      res.status(500).json({
-        error: "Mint succeeded but transfer failed — contact support",
-        burnTx,
-        mintTx,
-      });
-      return;
-    }
-    const transferReceipt = await publicClient.waitForTransactionReceipt({
-      hash: transferTx,
-      confirmations: 1,
-    });
-    if (transferReceipt.status !== "success") {
-      console.error("TRANSFER REVERTED AFTER MINT", { burnTx, mintTx, transferTx, body });
-      res.status(500).json({
-        error: "Transfer reverted after mint — contact support",
-        burnTx,
-        mintTx,
-        transferTx,
-      });
-      return;
-    }
-
     res.status(200).json({
       burnTx,
       mintTx,
-      transferTx,
       name: `${label}.${PARENT_NAME}`,
     });
   } catch (err: unknown) {

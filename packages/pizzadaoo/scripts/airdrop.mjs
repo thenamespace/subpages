@@ -8,24 +8,61 @@
 //   owner = 0xd5Ba400e732b3d769aA75fc67649Ef4849774bb1
 //   label = "happy"
 //
+// Mints the subname DIRECTLY to <owner> by calling the mint-manager API with
+// an explicit `owner` field — no mint-to-sponsor-then-transfer, so the
+// Namespace indexer records the right owner immediately.
+//
 // Reads WALLET_KEY, BASE_RPC_URL, NEXT_PUBLIC_ALCHEMY_KEY, PARENT_NAME from .env.
 
 import { config } from "dotenv";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import axios from "axios";
 import {
   createPublicClient,
   createWalletClient,
   http,
   isAddress,
   namehash,
+  toHex,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
-import {
-  ChainName,
-  createMintClient,
-} from "@namespacesdk/mint-manager";
+import { ChainName } from "@namespacesdk/mint-manager";
+import { convertEnsRecordsToResolverData } from "@namespacesdk/mint-manager/dist/utils.js";
+
+const MINT_MANAGER_API =
+  "https://mint-manager.namespace.ninja/api/v1/minting-parameters";
+const L2_MINT_CONTROLLER = "0xa8e61891626f86ae6397217823701183de947c7d";
+
+const mintAbi = [
+  {
+    type: "function",
+    name: "mint",
+    stateMutability: "payable",
+    inputs: [
+      {
+        name: "context",
+        type: "tuple",
+        components: [
+          { name: "owner", type: "address" },
+          { name: "label", type: "string" },
+          { name: "parentNode", type: "bytes32" },
+          { name: "price", type: "uint256" },
+          { name: "fee", type: "uint256" },
+          { name: "paymentReceiver", type: "address" },
+          { name: "expiry", type: "uint256" },
+          { name: "signatureExpiry", type: "uint256" },
+          { name: "verifiedMinter", type: "address" },
+        ],
+      },
+      { name: "signature", type: "bytes" },
+      { name: "resolverData", type: "bytes[]" },
+      { name: "extraData", type: "bytes" },
+    ],
+    outputs: [],
+  },
+];
 
 const here = dirname(fileURLToPath(import.meta.url));
 config({ path: resolve(here, "..", ".env") });
@@ -38,7 +75,6 @@ if (WALLET_KEY && !WALLET_KEY.startsWith("0x")) {
   WALLET_KEY = "0x" + WALLET_KEY;
 }
 const PARENT_NAME = process.env.PARENT_NAME || "enscomponent.eth";
-const PARENT_REGISTRY_ADDRESS = process.env.PARENT_REGISTRY_ADDRESS;
 const BASE_RPC =
   process.env.BASE_RPC_URL ||
   (process.env.NEXT_PUBLIC_ALCHEMY_KEY
@@ -58,137 +94,75 @@ const account = privateKeyToAccount(WALLET_KEY);
 const publicClient = createPublicClient({ transport: http(BASE_RPC), chain: base });
 const walletClient = createWalletClient({ transport: http(BASE_RPC), chain: base, account });
 
-const mintClient = createMintClient({
-  mintSource: "pizzadaoo-airdrop",
-  cursomRpcUrls: { [base.id]: BASE_RPC },
-});
-
 const label = argLabel.toLowerCase();
 
 async function main() {
   console.log("Minting", `${label}.${PARENT_NAME}`, "→", argOwner);
   console.log("Sponsor (minter):", account.address);
 
-  const available = await mintClient.isL2SubnameAvailable(
-    `${label}.${PARENT_NAME}`,
-    base.id,
-  );
-  if (!available) {
-    console.error("That name is already taken. Pick another label.");
+  // Ask the mint-manager API for signed params, owner = the recipient.
+  const { data } = await axios.post(MINT_MANAGER_API, {
+    label,
+    parentName: PARENT_NAME,
+    minterAddress: account.address,
+    owner: argOwner,
+    expiryInYears: 1,
+  });
+  const { content, signature } = data;
+
+  if (content.owner.toLowerCase() !== argOwner.toLowerCase()) {
+    console.error("API did not honor owner; got", content.owner);
     process.exit(1);
   }
 
-  const params = await mintClient.getMintTransactionParameters({
-    minterAddress: account.address,
-    label,
-    parentName: PARENT_NAME,
-    owner: argOwner,
-    records: {
+  const resolverData = convertEnsRecordsToResolverData(
+    `${label}.${PARENT_NAME}`,
+    {
       texts: [
-        {
-          key: "avatar",
-          value: "https://avatars.namespace.ninja/pizzadaoo.png",
-        },
+        { key: "avatar", value: "https://avatars.namespace.ninja/pizzadaoo.png" },
       ],
       addresses: [
         { value: argOwner, chain: ChainName.Ethereum },
         { value: argOwner, chain: ChainName.Base },
       ],
     },
-  });
+  );
 
-  // simulate first so we get a clean error if the contract will revert
+  const mintArgs = [content, signature, resolverData, toHex("pizzadaoo-airdrop")];
+  const value = BigInt(content.fee) + BigInt(content.price);
+
+  // simulate first so we get a clean revert reason before broadcasting
   await publicClient.simulateContract({
-    abi: params.abi,
-    address: params.contractAddress,
-    functionName: params.functionName,
-    args: params.args,
-    value: params.value,
+    abi: mintAbi,
+    address: L2_MINT_CONTROLLER,
+    functionName: "mint",
+    args: mintArgs,
+    value,
     account,
   });
 
-  // Explicit nonce avoids the "replacement transaction underpriced" race
-  // when consecutive writeContract calls hit different Alchemy read replicas.
-  const mintNonce = await publicClient.getTransactionCount({
-    address: account.address,
-    blockTag: "pending",
-  });
   const tx = await walletClient.writeContract({
-    abi: params.abi,
-    address: params.contractAddress,
-    functionName: params.functionName,
-    args: params.args,
-    value: params.value,
-    nonce: mintNonce,
+    abi: mintAbi,
+    address: L2_MINT_CONTROLLER,
+    functionName: "mint",
+    args: mintArgs,
+    value,
   });
   console.log("tx:", tx);
 
-  const receipt = await publicClient.waitForTransactionReceipt({ hash: tx, confirmations: 1 });
+  const receipt = await publicClient.waitForTransactionReceipt({
+    hash: tx,
+    confirmations: 1,
+  });
   if (receipt.status !== "success") {
     console.error("tx reverted on-chain");
     process.exit(1);
   }
-  console.log("✓ minted to sponsor (intermediate). Transferring to", argOwner);
 
-  if (!PARENT_REGISTRY_ADDRESS) {
-    console.error(
-      "PARENT_REGISTRY_ADDRESS missing — cannot transfer. Add it to .env (it's already in .env.example).",
-    );
-    process.exit(1);
-  }
-
-  // The token id on the child ERC-721 registry is uint256(namehash(fullName)).
+  // sanity check: the NFT should be owned by the recipient straight away
   const tokenId = BigInt(namehash(`${label}.${PARENT_NAME}`));
-  const transferAbi = [
-    {
-      type: "function",
-      name: "transferFrom",
-      stateMutability: "nonpayable",
-      inputs: [
-        { name: "from", type: "address" },
-        { name: "to", type: "address" },
-        { name: "tokenId", type: "uint256" },
-      ],
-      outputs: [],
-    },
-  ];
-
-  // Retry simulate briefly — Alchemy's read replica can lag the mint receipt,
-  // causing a spurious ERC721NonexistentToken (0x7e273289) on the first try.
-  for (let i = 0; i < 5; i++) {
-    try {
-      await publicClient.simulateContract({
-        abi: transferAbi,
-        address: PARENT_REGISTRY_ADDRESS,
-        functionName: "transferFrom",
-        args: [account.address, argOwner, tokenId],
-        account,
-      });
-      break;
-    } catch (err) {
-      if (i === 4) throw err;
-      await new Promise((r) => setTimeout(r, 1500));
-    }
-  }
-
-  const transferTx = await walletClient.writeContract({
-    abi: transferAbi,
-    address: PARENT_REGISTRY_ADDRESS,
-    functionName: "transferFrom",
-    args: [account.address, argOwner, tokenId],
-    nonce: mintNonce + 1,
-  });
-  console.log("transfer tx:", transferTx);
-
-  const transferReceipt = await publicClient.waitForTransactionReceipt({
-    hash: transferTx,
-    confirmations: 1,
-  });
-  if (transferReceipt.status !== "success") {
-    console.error("transfer reverted on-chain");
-    process.exit(1);
-  }
   console.log(`✓ airdropped ${label}.${PARENT_NAME} -> ${argOwner}`);
+  console.log("  tokenId:", tokenId.toString());
 }
 
 main().catch((err) => {
