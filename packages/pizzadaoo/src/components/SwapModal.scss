@@ -1,14 +1,108 @@
-// SwapModal — rendered inside SideModal on the My Subnames page.
+// SwapModal — centered popup dialog, portalled to document.body.
 // Visual language: pizza-tech (yellow accent, black base, mono previews).
+@keyframes swapOverlayIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes swapCardIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.94) translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.swap-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+
+  &__backdrop {
+    position: absolute;
+    inset: 0;
+    // Scrim strong enough to fully isolate the dialog from the records UI.
+    background-color: rgba(0, 0, 0, 0.62);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    animation: swapOverlayIn 0.2s ease-out;
+  }
+}
+
 .swap-modal {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding: 4px 4px 24px;
+  width: 100%;
+  max-width: 460px;
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 28px 28px 28px;
   color: #fff;
+  background: #0c0c0c;
+  border: 1px solid rgba(255, 184, 25, 0.45);
+  border-radius: 20px;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(0, 0, 0, 0.4);
+  animation: swapCardIn 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+
+  // Corner close affordance — 44px touch target.
+  &__close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.7);
+    transition:
+      color 0.2s ease,
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+
+    &:hover:not(:disabled) {
+      color: #fff;
+      border-color: rgba(255, 184, 25, 0.55);
+      background-color: rgba(255, 184, 25, 0.1);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $yellow;
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+  }
 
   &__header {
     text-align: center;
+    padding: 4px 32px 0;
   }
 
   &__eyebrow {
@@ -38,9 +132,9 @@
   &__compare {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
-    align-items: stretch;
-    gap: 10px;
-    padding: 14px 12px;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
     border: 1px solid rgba(255, 184, 25, 0.35);
     border-radius: 16px;
     background:
@@ -55,8 +149,11 @@
   &__name {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
     min-width: 0;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
   }
 
   &__name-label {
@@ -71,9 +168,11 @@
       "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
       monospace;
     font-size: 14px;
-    word-break: break-all;
-    line-height: 1.3;
+    line-height: 1.35;
     color: rgba(255, 255, 255, 0.85);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &__name--old &__name-value {
@@ -100,10 +199,15 @@
   }
 
   &__arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     align-self: center;
+    width: 24px;
+    height: 24px;
     font-size: 18px;
+    line-height: 1;
     color: $yellow;
-    padding: 0 2px;
   }
 
   // Input field block.
@@ -295,8 +399,22 @@
 }
 
 @media (max-width: 600px) {
+  .swap-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
   .swap-modal {
     gap: 16px;
+    max-width: 100%;
+    max-height: 92dvh;
+    padding: 24px 18px;
+    border-radius: 22px 22px 0 0;
+    border-bottom: none;
+
+    &__header {
+      padding: 4px 28px 0;
+    }
 
     &__title {
       font-size: 22px;
@@ -304,14 +422,13 @@
 
     &__compare {
       grid-template-columns: 1fr;
-      gap: 8px;
-      padding: 12px;
+      gap: 10px;
+      padding: 14px;
     }
 
     &__arrow {
       transform: rotate(90deg);
-      align-self: center;
-      padding: 2px 0;
+      justify-self: center;
     }
 
     &__actions {
@@ -327,7 +444,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .swap-overlay__backdrop,
   .swap-modal {
+    animation: none;
+  }
+
+  .swap-modal {
+    &__close,
     &__availability,
     &__cancel,
     &__error-retry {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useAccount, useSignMessage, useSwitchChain } from "wagmi";
 import { normalise } from "@ensdomains/ensjs/utils";
 import { Hex, namehash } from "viem";
@@ -60,11 +61,18 @@ export const SwapModal = ({ oldSubname, onClose, onSuccess }: Props) => {
     };
   }, []);
 
+  // SSR guard — the dialog portals into document.body, a browser-only API.
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Autofocus the input on mount — single-purpose modal.
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
+    if (!isClient) return;
     inputRef.current?.focus();
-  }, []);
+  }, [isClient]);
 
   const checkAvailable = async (value: string) => {
     try {
@@ -198,11 +206,71 @@ export const SwapModal = ({ oldSubname, onClose, onSuccess }: Props) => {
     error: "Couldn't check availability. Try again.",
   };
 
-  return (
-    <div className="swap-modal" role="document">
-      <header className="swap-modal__header">
+  // Lock page scroll and wire Escape-to-close while the dialog is open.
+  // Mirrors SideModal — but don't allow dismissal mid-transaction.
+  const busyRef = useRef(busy);
+  busyRef.current = busy;
+  useEffect(() => {
+    if (!isClient) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !busyRef.current) {
+        onClose();
+      }
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isClient, onClose]);
+
+  if (!isClient) {
+    return null; // Render nothing on the server side.
+  }
+
+  return createPortal(
+    <div
+      className="swap-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="swap-modal-title"
+    >
+      <div
+        className="swap-overlay__backdrop"
+        aria-hidden="true"
+        onClick={() => {
+          if (!busy) onClose();
+        }}
+      />
+      <div className="swap-modal" role="document">
+        <button
+          type="button"
+          className="swap-modal__close"
+          aria-label="Close"
+          onClick={onClose}
+          disabled={busy}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M3 3l10 10M13 3L3 13"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+        <header className="swap-modal__header">
         <p className="swap-modal__eyebrow">Rename your name</p>
-        <h2 className="swap-modal__title">Pick a new label</h2>
+        <h2 className="swap-modal__title" id="swap-modal-title">
+          Pick a new label
+        </h2>
         <p className="swap-modal__lede">
           We&rsquo;ll burn your current name and mint the new one to your
           wallet. One signature, gas&rsquo;s on us.
@@ -340,6 +408,8 @@ export const SwapModal = ({ oldSubname, onClose, onSuccess }: Props) => {
               : "Sign & swap"}
         </PlainBtn>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body,
   );
 };
