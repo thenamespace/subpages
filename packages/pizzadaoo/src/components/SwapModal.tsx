@@ -197,6 +197,12 @@ export const SwapModal = ({ oldSubname, onClose, onSuccess }: Props) => {
   const canSubmit =
     label.length > 0 && availability === "available" && !busy;
   const newFullName = label ? `${label}.${SWAP_PARENT_NAME}` : "";
+  // Some errors can't be fixed by retrying — don't dangle a useless button.
+  const isTerminalError =
+    !!error &&
+    (/already used your sponsored swap/i.test(error) ||
+      /already (taken|own)/i.test(error) ||
+      /don.?t own that subname/i.test(error));
 
   const availabilityCopy: Record<Availability, string> = {
     idle: "Type a new label above.",
@@ -374,13 +380,17 @@ export const SwapModal = ({ oldSubname, onClose, onSuccess }: Props) => {
       {error && !busy && (
         <div className="swap-modal__error" role="alert">
           <p className="swap-modal__error-msg">{error}</p>
-          <button
-            type="button"
-            className="swap-modal__error-retry"
-            onClick={handleSwap}
-          >
-            Try again
-          </button>
+          {/* Retrying a spent-swap or already-taken error just fails again —
+              only offer retry for transient failures. */}
+          {!isTerminalError && (
+            <button
+              type="button"
+              className="swap-modal__error-retry"
+              onClick={handleSwap}
+            >
+              Try again
+            </button>
+          )}
         </div>
       )}
 

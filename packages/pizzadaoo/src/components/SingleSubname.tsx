@@ -41,9 +41,11 @@ const opResolver = getL2NamespaceContracts(LISTING_CHAIN_ID).resolver
 export const SingleSubname = ({
   subname,
   onUpdate,
+  alreadySwapped = false,
 }: {
   subname: Subname;
   onUpdate: () => void;
+  alreadySwapped?: boolean;
 }) => {
   const publicClient = usePublicClient({ chainId: LISTING_CHAIN_ID });
   const { data: walletClient } = useWalletClient({ chainId: LISTING_CHAIN_ID });
@@ -70,8 +72,13 @@ export const SingleSubname = ({
   const [swapping, setSwapping] = useState(false);
   const [swappedTo, setSwappedTo] = useState<string | null>(null);
 
+  // Offer the rename only for names under the swap parent, and only if the
+  // wallet hasn't already spent its one sponsored swap (or just did, in this
+  // session). `alreadySwapped` is also true for the swap-result name itself.
   const canSwap =
-    subname.name.endsWith(`.${SWAP_PARENT_NAME}`) && !swappedTo;
+    subname.name.endsWith(`.${SWAP_PARENT_NAME}`) &&
+    !swappedTo &&
+    !alreadySwapped;
   // Avatar src lives in state so onError can fall back to a known-good
   // URL — the raw value is attacker-controllable (any subname owner can
   // set their `avatar` text record to an arbitrary URL).
@@ -397,6 +404,15 @@ export const SingleSubname = ({
             You&apos;re now <strong>{swappedTo}</strong>. The list will refresh.
           </p>
         )}
+        {!canSwap &&
+          !swappedTo &&
+          !swapping &&
+          alreadySwapped &&
+          subname.name.endsWith(`.${SWAP_PARENT_NAME}`) && (
+            <p className="swap-used-note">
+              You&apos;ve used your free rename.
+            </p>
+          )}
       </div>
 
       {swapping && (

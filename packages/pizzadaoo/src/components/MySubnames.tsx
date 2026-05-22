@@ -120,6 +120,13 @@ export const MySubnames = () => {
 
   const filterApplied = searchFilter.length > 0;
 
+  // The wallet has used its one sponsored swap if it owns any name produced
+  // by the swap flow. Drives whether the Rename action is offered at all.
+  const alreadySwapped = useMemo(
+    () => subnames.items.some((i) => i.mintSource === "pizzadaoo-swap"),
+    [subnames.items],
+  );
+
   const visibleSubnames = useMemo(() => {
     if (searchFilter.length === 0) {
       return subnames.items;
@@ -135,6 +142,7 @@ export const MySubnames = () => {
           <SingleSubname
             onUpdate={() => refreshSubnames()}
             subname={selectedSubname}
+            alreadySwapped={alreadySwapped}
           />
         </SideModal>
       )}
