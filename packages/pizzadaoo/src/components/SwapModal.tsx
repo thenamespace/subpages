@@ -357,19 +357,17 @@ export const SwapModal = ({ oldSubname, onClose, onSuccess }: Props) => {
           role="status"
           aria-live="polite"
         >
-          <Spinner />
-          <div className="swap-modal__progress-text">
-            <p className="swap-modal__progress-title">
-              {phase === "signing"
-                ? "Confirm in your wallet…"
-                : "Swapping on Base…"}
-            </p>
-            <p className="swap-modal__progress-sub">
-              {phase === "signing"
-                ? "Sign the message to authorize the rename."
-                : "Burning the old name and minting the new one. Hang tight — usually 4–10 seconds."}
-            </p>
-          </div>
+          <Spinner size="big" />
+          <p className="swap-modal__progress-title">
+            {phase === "signing"
+              ? "Confirm in your wallet…"
+              : "Swapping on Base…"}
+          </p>
+          <p className="swap-modal__progress-sub">
+            {phase === "signing"
+              ? "Sign the message to authorize the rename."
+              : "Burning the old name and minting the new one. Hang tight — usually 4–10 seconds."}
+          </p>
         </div>
       )}
 
