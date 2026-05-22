@@ -401,6 +401,17 @@ export default async function handler(
       return;
     }
 
+    // Pad the gas limit by 50%. The mint makes an internal resolver call per
+    // record; under EIP-150's 63/64 rule a bare estimate can starve those
+    // sub-calls and revert the whole mint with gasUsed just under the limit.
+    const mintGasEstimate = await publicClient.estimateContractGas({
+      abi: mintTxParams.abi,
+      address: mintTxParams.address,
+      functionName: mintTxParams.functionName,
+      args: mintTxParams.args,
+      value: mintTxParams.value,
+      account: sponsorAccount,
+    });
     const mintTx = await walletClient.writeContract({
       abi: mintTxParams.abi,
       address: mintTxParams.address,
@@ -408,6 +419,7 @@ export default async function handler(
       args: mintTxParams.args,
       value: mintTxParams.value,
       nonce: burnNonce + 1,
+      gas: (mintGasEstimate * BigInt(3)) / BigInt(2),
     });
     const mintReceipt = await publicClient.waitForTransactionReceipt({
       hash: mintTx,

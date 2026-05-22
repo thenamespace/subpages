@@ -141,12 +141,23 @@ async function main() {
     account,
   });
 
+  // Pad gas 50% — the mint's internal resolver calls can be starved by the
+  // EIP-150 63/64 rule if we send only the bare estimate.
+  const gasEstimate = await publicClient.estimateContractGas({
+    abi: mintAbi,
+    address: L2_MINT_CONTROLLER,
+    functionName: "mint",
+    args: mintArgs,
+    value,
+    account,
+  });
   const tx = await walletClient.writeContract({
     abi: mintAbi,
     address: L2_MINT_CONTROLLER,
     functionName: "mint",
     args: mintArgs,
     value,
+    gas: (gasEstimate * 3n) / 2n,
   });
   console.log("tx:", tx);
 
