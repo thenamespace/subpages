@@ -305,7 +305,10 @@ export const MintForm = () => {
       <div className="mint-form d-flex flex-column justify-content-end p-4">
         <Image src={pizzaChar} className="pizza-mascot" alt="PizzaDao" />
         <div className="form-tech-container">
-          {mintStep === MintSteps.Start && (
+          {mintStep === MintSteps.Start && mintState.waitingWallet && (
+            <WalletConfirmation fullName={fullName} />
+          )}
+          {mintStep === MintSteps.Start && !mintState.waitingWallet && (
             <>
               <div className="form-header mb-2">
                 <h1>PizzaDAO</h1>
@@ -506,6 +509,22 @@ export const SuccessScreen = ({
           </button>
         )}
       </div>
+    </div>
+  );
+};
+
+const WalletConfirmation = ({ fullName }: { fullName: string }) => {
+  return (
+    <div
+      className="tx-pending d-flex flex-column align-items-center"
+      role="status"
+      aria-live="polite"
+    >
+      <Spinner size="big" />
+      <p className="tx-pending__title">Confirm in your wallet</p>
+      <p className="tx-pending__sub">
+        Approve the registration of <strong>{fullName}</strong>.
+      </p>
     </div>
   );
 };
