@@ -115,17 +115,32 @@ async function main() {
     process.exit(1);
   }
 
-  const resolverData = convertEnsRecordsToResolverData(
-    `${label}.${PARENT_NAME}`,
-    {
-      texts: [
-        { key: "avatar", value: "https://avatars.namespace.ninja/pizzadaoo.png" },
-      ],
-      addresses: [
-        { value: argOwner, chain: ChainName.Ethereum },
-        { value: argOwner, chain: ChainName.Base },
-      ],
-    },
+  const fullName = `${label}.${PARENT_NAME}`;
+
+  // ENSIP-19 default-address coinType: any EVM chain that isn't otherwise
+  // listed will fall through to this record. 0x80000000 | 0 = 2147483648.
+  const ENSIP19_DEFAULT_COIN_TYPE = 2147483648;
+
+  // Texts: just set `name` to the subname itself for now. Add more entries
+  // here (e.g. avatar, description, url, com.twitter, com.github) if you want
+  // the airdropped name to ship with a richer profile.
+  const texts = [{ key: "name", value: fullName }];
+
+  const resolverData = convertEnsRecordsToResolverData(fullName, {
+    texts,
+    addresses: [
+      { value: argOwner, chain: ChainName.Ethereum },
+      { value: argOwner, chain: ChainName.Base },
+      // ENSIP-19 default address — fallback for any EVM chain not listed above.
+      { value: argOwner, chain: ENSIP19_DEFAULT_COIN_TYPE },
+    ],
+  });
+
+  console.log(
+    `  records: name="${fullName}", addr(eth/base/default)=${argOwner}`,
+  );
+  console.log(
+    "  (extend `texts` in scripts/airdrop.mjs to add avatar/description/url/socials)",
   );
 
   const mintArgs = [content, signature, resolverData, toHex("pizzadaoo-airdrop")];
