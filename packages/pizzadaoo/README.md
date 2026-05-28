@@ -24,7 +24,7 @@ pnpm dev          # also: pnpm build && pnpm start, pnpm lint
 
 ## Environment variables
 
-`NEXT_PUBLIC_*` vars are inlined into the browser bundle and also readable on the server in Next.js, so the parent name lives in a single variable. `WALLET_KEY` is server-only — never expose it.
+The swap parent is hardcoded to `enscomponent.eth` in `src/components/Listing.tsx`, `src/pages/api/swap.ts`, and `scripts/airdrop.mjs`. Flip those constants when the prod parent is finalized. `WALLET_KEY` is server-only — never expose it.
 
 ### Required to load the app
 
@@ -32,7 +32,6 @@ pnpm dev          # also: pnpm build && pnpm start, pnpm lint
 |---|---|---|
 | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | WalletConnect Cloud project id | Required. App fails to start without it. Get one at <https://cloud.walletconnect.com>. Don't reuse someone else's id in production. |
 | `NEXT_PUBLIC_ALCHEMY_KEY` | Alchemy API key for Base + Ethereum RPCs | Optional. Without it the app falls back to viem's rate-limited public RPC, fine for light dev but flaky under load. |
-| `NEXT_PUBLIC_PARENT_NAME` | The parent name the rename flow targets | Optional — defaults to `pizzaday.eth`. Override locally to point at a staging parent. Must match the listing registered in list-manager. Inlined at build time, so restart `next dev` after changing it. |
 
 ### Required for `/api/swap` (rename route)
 
@@ -40,16 +39,15 @@ Skip if you're only using the package as a registration UI for the existing four
 
 | Var | What | Notes |
 |---|---|---|
-| `WALLET_KEY` | Private key of the sponsor wallet | Required. This wallet must (a) own the child-registry NFT for `NEXT_PUBLIC_PARENT_NAME` (so it can call `burn`), and (b) be on the listing's mint whitelist (so it can call `mint`). Never commit. Never ship to the client. |
+| `WALLET_KEY` | Private key of the sponsor wallet | Required. This wallet must (a) own the child-registry NFT for the swap parent (so it can call `burn`), and (b) be on the listing's mint whitelist (so it can call `mint`). Never commit. Never ship to the client. |
 | `BASE_RPC_URL` | Full Base RPC URL | Optional. Falls back to `https://base-mainnet.g.alchemy.com/v2/$NEXT_PUBLIC_ALCHEMY_KEY` if set, else `https://mainnet.base.org`. |
-| `PARENT_REGISTRY_ADDRESS` | Address of the child-registry contract on Base for `NEXT_PUBLIC_PARENT_NAME` | Required. This is the per-parent ERC-721 registry that exposes `burn()`. Look it up via list-manager: `GET https://list-manager.namespace.ninja/api/v1/listing/network/MAINNET/name/<NEXT_PUBLIC_PARENT_NAME>` → `l2Metadata.registryAddress`. |
+| `PARENT_REGISTRY_ADDRESS` | Child-registry contract on Base for the swap parent | Required. This is the ERC-721 registry that exposes `burn()`. Look it up via list-manager: `GET https://list-manager.namespace.ninja/api/v1/listing/network/MAINNET/name/enscomponent.eth` → `l2Metadata.registryAddress`. |
 
 A complete `.env`:
 
 ```bash
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=<yours>
 NEXT_PUBLIC_ALCHEMY_KEY=<yours>
-NEXT_PUBLIC_PARENT_NAME=pizzaday.eth
 
 WALLET_KEY=0x<sponsor wallet pk>
 BASE_RPC_URL=
@@ -65,7 +63,7 @@ The user owns an airdropped `*.pizzaday.eth` subname and wants a different label
 2. **`/api/swap`** does the following, in order, all on Base:
    1. Validates the body, rate-limits per-IP and per-address, recovers the EIP-191 signature.
    2. Checks eligibility via the Namespace indexer:
-      - the user must currently own at least one subname under `NEXT_PUBLIC_PARENT_NAME`;
+      - the user must currently own at least one subname under the swap parent;
       - none of those subnames may have `mintSource === "pizzadaoo-swap"` (the marker we set when minting the swap result — used to enforce one rename per wallet, ever, without any storage layer).
    3. Builds records for the new name by inheriting from the old subname's records, with sensible fallbacks if the indexer doesn't expose any.
    4. Calls the Namespace mint-manager API directly with an explicit `owner = body.owner` (the SDK hard-codes `owner = minterAddress`, which would force a separate `transferFrom` after the mint — and the indexer lags that Transfer event by seconds-to-minutes). Mint-manager returns signed mint params.
@@ -90,7 +88,7 @@ node scripts/airdrop.mjs <label> [owner]
 # defaults: label=happy, owner=0xd5Ba400e732b3d769aA75fc67649Ef4849774bb1
 ```
 
-It reads `WALLET_KEY`, `NEXT_PUBLIC_PARENT_NAME`, `BASE_RPC_URL` / `NEXT_PUBLIC_ALCHEMY_KEY` from `.env` and submits a single `mint()` tx with `owner = <recipient>` — no transfer step, no indexer lag.
+It reads `WALLET_KEY`, `BASE_RPC_URL` / `NEXT_PUBLIC_ALCHEMY_KEY` from `.env` (parent is hardcoded in the script) and submits a single `mint()` tx with `owner = <recipient>` — no transfer step, no indexer lag.
 
 Re-minting burned names works: the registry's `_register` only blocks if a name has a current owner, and `burn()` zeros it out — so a previously-burned name is fully available again.
 
@@ -99,7 +97,7 @@ Re-minting burned names works: the registry's `_register` only blocks if a name 
 The sponsor wallet needs **two** authorities on the child registry:
 
 1. **Mint whitelist** — added to the listing's `whitelist.wallets` array via list-manager. Without this, the mint controller rejects the tx.
-2. **Registry NFT owner** — owns the parent-name NFT on the child registry. This is the only address whose `burn()` call passes the `registryTokenOwner` modifier. To make a wallet the registry owner, the current owner calls `transferFrom` of the parent-name NFT to the new wallet (the token id is `uint256(namehash(NEXT_PUBLIC_PARENT_NAME))`).
+2. **Registry NFT owner** — owns the parent-name NFT on the child registry. This is the only address whose `burn()` call passes the `registryTokenOwner` modifier. To make a wallet the registry owner, the current owner calls `transferFrom` of the parent-name NFT to the new wallet (the token id is `uint256(namehash(<parent>))`).
 
 ## Project layout
 
