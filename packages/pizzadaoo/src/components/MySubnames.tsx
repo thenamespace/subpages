@@ -106,19 +106,41 @@ export const MySubnames = () => {
     };
   }, [address, selectedQuery]);
 
-  const refreshSubnames = async () => {
+  // Re-fetch the owner's subnames. When `expectedName` is given (after a
+  // rename) the indexer may lag the on-chain mint by a few seconds, so we
+  // poll until the new name shows up — keeping the current list visible
+  // meanwhile rather than flashing a skeleton.
+  const refreshSubnames = async (expectedName?: string) => {
     if (!address) {
       return;
     }
-    const res = await fetchSubnames(address);
-    setSubnames({
-      fetching: false,
-      items: res.subnames,
-      totalItems: res.totalItems,
-    });
+    const maxAttempts = expectedName ? 8 : 1;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const res = await fetchSubnames(address);
+      const settled =
+        !expectedName ||
+        res.subnames.some((s) => s.name === expectedName) ||
+        attempt === maxAttempts - 1;
+      if (settled) {
+        setSubnames({
+          fetching: false,
+          items: res.subnames,
+          totalItems: res.totalItems,
+        });
+        return;
+      }
+      await new Promise((r) => setTimeout(r, 2000));
+    }
   };
 
   const filterApplied = searchFilter.length > 0;
+
+  // The wallet has used its one sponsored swap if it owns any name produced
+  // by the swap flow. Drives whether the Rename action is offered at all.
+  const alreadySwapped = useMemo(
+    () => subnames.items.some((i) => i.mintSource === "pizzadaoo-swap"),
+    [subnames.items],
+  );
 
   const visibleSubnames = useMemo(() => {
     if (searchFilter.length === 0) {
@@ -133,8 +155,16 @@ export const MySubnames = () => {
       {selectedSubname !== undefined && (
         <SideModal open={true} onClose={() => setSelectedSubname(undefined)}>
           <SingleSubname
-            onUpdate={() => refreshSubnames()}
+            onUpdate={(renamedTo) => {
+              if (renamedTo) {
+                // The viewed name was burned by the rename — close the
+                // detail panel and poll the indexer for the new name.
+                setSelectedSubname(undefined);
+              }
+              void refreshSubnames(renamedTo);
+            }}
             subname={selectedSubname}
+            alreadySwapped={alreadySwapped}
           />
         </SideModal>
       )}

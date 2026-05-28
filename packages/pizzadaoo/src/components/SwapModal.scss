@@ -1,0 +1,459 @@
+// SwapModal — centered popup dialog, portalled to document.body.
+// Visual language: pizza-tech (yellow accent, black base, mono previews).
+@keyframes swapOverlayIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes swapCardIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.94) translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.swap-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+
+  &__backdrop {
+    position: absolute;
+    inset: 0;
+    // Scrim strong enough to fully isolate the dialog from the records UI.
+    background-color: rgba(0, 0, 0, 0.62);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    animation: swapOverlayIn 0.2s ease-out;
+  }
+}
+
+.swap-modal {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 460px;
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 28px 28px 28px;
+  color: #fff;
+  background: #0c0c0c;
+  border: 1px solid rgba(255, 184, 25, 0.45);
+  border-radius: 20px;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(0, 0, 0, 0.4);
+  animation: swapCardIn 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+
+  // Corner close affordance — 44px touch target.
+  &__close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.7);
+    transition:
+      color 0.2s ease,
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+
+    &:hover:not(:disabled) {
+      color: #fff;
+      border-color: rgba(255, 184, 25, 0.55);
+      background-color: rgba(255, 184, 25, 0.1);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $yellow;
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+  }
+
+  &__header {
+    text-align: center;
+    padding: 4px 32px 0;
+  }
+
+  &__eyebrow {
+    margin: 0 0 6px;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: $yellow;
+  }
+
+  &__title {
+    margin: 0 0 8px;
+    font-size: 26px;
+    line-height: 1.15;
+    color: #fff;
+  }
+
+  &__lede {
+    margin: 0 auto;
+    max-width: 320px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  // From -> To comparison block.
+  &__compare {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid rgba(255, 184, 25, 0.35);
+    border-radius: 16px;
+    background:
+      radial-gradient(
+        120% 100% at 50% 0%,
+        rgba(255, 184, 25, 0.08),
+        transparent 60%
+      ),
+      rgba(255, 255, 255, 0.02);
+  }
+
+  &__name {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  &__name-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  &__name-value {
+    font-family:
+      "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      monospace;
+    font-size: 14px;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, 0.85);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__name--old &__name-value {
+    color: rgba(255, 255, 255, 0.55);
+    text-decoration: line-through;
+    text-decoration-color: rgba(255, 107, 107, 0.55);
+    text-decoration-thickness: 1px;
+  }
+
+  &__name--new &__name-value {
+    color: $yellow;
+  }
+
+  &__name-input {
+    color: #29d398;
+  }
+
+  &__name-parent {
+    color: rgba(255, 184, 25, 0.85);
+  }
+
+  &__name-placeholder {
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  &__arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    width: 24px;
+    height: 24px;
+    font-size: 18px;
+    line-height: 1;
+    color: $yellow;
+  }
+
+  // Input field block.
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__field-label {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0;
+  }
+
+  &__input-wrap {
+    position: relative;
+  }
+
+  // Reserve vertical space so the layout never shifts as state changes.
+  &__availability {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    min-height: 20px;
+    margin: 4px 2px 0;
+    font-size: 12px;
+    line-height: 1.3;
+    transition: color 0.2s ease;
+
+    &.is-idle {
+      color: rgba(255, 255, 255, 0.4);
+    }
+    &.is-checking {
+      color: $yellow;
+    }
+    &.is-available {
+      color: #29d398;
+    }
+    &.is-unavailable {
+      color: #ff6b6b;
+    }
+    &.is-error {
+      color: #ff6b6b;
+    }
+  }
+
+  &__avail-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #29d398;
+    box-shadow: 0 0 6px rgba(41, 211, 152, 0.7);
+    flex-shrink: 0;
+  }
+
+  &__note {
+    margin: 6px 2px 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  // Busy state — centered big-gear layout, mirrors MintForm's "Baking your
+  // name" tx-pending screen so the swap feels consistent with new mints.
+  &__progress {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0;
+    padding: 24px 16px 20px;
+    border: 1px solid rgba(255, 184, 25, 0.5);
+    border-radius: 14px;
+    background: rgba(255, 184, 25, 0.06);
+  }
+
+  &__progress-title {
+    margin: 18px 0 6px;
+    font-size: 18px;
+    color: $yellow;
+    line-height: 1.3;
+  }
+
+  &__progress-sub {
+    margin: 0;
+    max-width: 280px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.65);
+  }
+
+  // Inline error region with retry — persistent (unlike toasts).
+  &__error {
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 107, 107, 0.5);
+    border-radius: 14px;
+    background: rgba(255, 107, 107, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  &__error-msg {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #ff8585;
+    word-break: break-word;
+  }
+
+  &__error-retry {
+    align-self: flex-start;
+    appearance: none;
+    -webkit-appearance: none;
+    font: inherit;
+    cursor: pointer;
+    color: $yellow;
+    background: transparent;
+    border: 1px solid rgba(255, 184, 25, 0.55);
+    border-radius: 50px;
+    font-size: 13px;
+    padding: 7px 18px;
+    min-height: 38px;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: rgba(255, 184, 25, 0.12);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $yellow;
+      outline-offset: 2px;
+    }
+  }
+
+  // Actions row — cancel (secondary) + Sign & swap (primary).
+  &__actions {
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  &__cancel {
+    appearance: none;
+    -webkit-appearance: none;
+    font: inherit;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.75);
+    border-radius: 50px;
+    font-size: 14px;
+    padding: 10px 22px;
+    min-height: 44px;
+    transition:
+      color 0.2s ease,
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+
+    &:hover:not(:disabled) {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.45);
+      background-color: rgba(255, 255, 255, 0.04);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $yellow;
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+
+  &__submit {
+    flex: 1;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 600px) {
+  .swap-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .swap-modal {
+    gap: 16px;
+    max-width: 100%;
+    max-height: 92dvh;
+    padding: 24px 18px;
+    border-radius: 22px 22px 0 0;
+    border-bottom: none;
+
+    &__header {
+      padding: 4px 28px 0;
+    }
+
+    &__title {
+      font-size: 22px;
+    }
+
+    &__compare {
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    &__arrow {
+      transform: rotate(90deg);
+      justify-self: center;
+    }
+
+    &__actions {
+      flex-direction: column-reverse;
+      align-items: stretch;
+    }
+
+    &__cancel,
+    &__submit {
+      width: 100%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swap-overlay__backdrop,
+  .swap-modal {
+    animation: none;
+  }
+
+  .swap-modal {
+    &__close,
+    &__availability,
+    &__cancel,
+    &__error-retry {
+      transition: none;
+    }
+  }
+}
