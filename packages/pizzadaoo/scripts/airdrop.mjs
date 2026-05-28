@@ -12,7 +12,7 @@
 // an explicit `owner` field — no mint-to-sponsor-then-transfer, so the
 // Namespace indexer records the right owner immediately.
 //
-// Reads WALLET_KEY, BASE_RPC_URL, NEXT_PUBLIC_ALCHEMY_KEY, PARENT_NAME from .env.
+// Reads WALLET_KEY, BASE_RPC_URL, NEXT_PUBLIC_ALCHEMY_KEY, NEXT_PUBLIC_PARENT_NAME from .env.
 
 import { config } from "dotenv";
 import { fileURLToPath } from "node:url";
@@ -74,7 +74,7 @@ let WALLET_KEY = process.env.WALLET_KEY;
 if (WALLET_KEY && !WALLET_KEY.startsWith("0x")) {
   WALLET_KEY = "0x" + WALLET_KEY;
 }
-const PARENT_NAME = process.env.PARENT_NAME || "enscomponent.eth";
+const PARENT_NAME = process.env.NEXT_PUBLIC_PARENT_NAME || "pizzaday.eth";
 const BASE_RPC =
   process.env.BASE_RPC_URL ||
   (process.env.NEXT_PUBLIC_ALCHEMY_KEY

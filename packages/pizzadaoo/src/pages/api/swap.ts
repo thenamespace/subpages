@@ -26,7 +26,7 @@ const base_rpc =
   (process.env.NEXT_PUBLIC_ALCHEMY_KEY
     ? `https://base-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_KEY}`
     : "https://mainnet.base.org");
-const PARENT_NAME = process.env.PARENT_NAME || "pizzaday.eth";
+const PARENT_NAME = process.env.NEXT_PUBLIC_PARENT_NAME || "pizzaday.eth";
 const PARENT_REGISTRY_ADDRESS = process.env.PARENT_REGISTRY_ADDRESS as
   | Address
   | undefined;

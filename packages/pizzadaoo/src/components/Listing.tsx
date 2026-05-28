@@ -38,9 +38,9 @@ export const PIZZAMAFIA_ETH: Listing = {
 };
 
 // The parent used by the sponsored burn-and-reissue flow.
-// Driven by env so we can flip enscomponent.eth (testing) <-> pizzaday.eth (prod).
+// Driven by env so a staging parent can be swapped in locally.
 export const SWAP_PARENT_NAME =
-  process.env.NEXT_PUBLIC_PARENT_NAME || "enscomponent.eth";
+  process.env.NEXT_PUBLIC_PARENT_NAME || "pizzaday.eth";
 
 export const PIZZADAY_ETH: Listing = {
   fullName: SWAP_PARENT_NAME,

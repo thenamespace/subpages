@@ -13,7 +13,7 @@ export interface SwapRecords {
 export interface SwapRequest {
   owner: Address;
   oldNode: Hex;          // namehash(oldFullName)
-  oldFullName: string;   // e.g. "alice.enscomponent.eth"
+  oldFullName: string;   // e.g. "alice.pizzaday.eth"
   newLabel: string;      // e.g. "bob"
   expiry: string;        // bigint as decimal string
   signature: Hex;
