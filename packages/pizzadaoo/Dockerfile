@@ -13,6 +13,12 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
+# NEXT_PUBLIC_* vars are inlined into the client bundle at build time, so they
+# must exist BEFORE `npm run build`. They arrive as a --build-arg from CI and
+# are promoted to an ENV so Next.js can read them during the build below.
+ARG NEXT_PUBLIC_ALCHEMY_KEY
+ENV NEXT_PUBLIC_ALCHEMY_KEY=$NEXT_PUBLIC_ALCHEMY_KEY
+
 # Build the Next.js app
 RUN npm run build
 
@@ -20,4 +26,4 @@ RUN npm run build
 EXPOSE 3000
 
 # Start the application
-CMD ["yarn", "start"]
+CMD ["npm", "run", "start"]
