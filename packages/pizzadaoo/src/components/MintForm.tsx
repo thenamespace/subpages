@@ -22,6 +22,11 @@ import {
 } from "@namespacesdk/mint-manager";
 import { debounce } from "../utils/debounce";
 import { getTxErrorMessage, isUserRejection } from "../utils/txError";
+import {
+  checkEligibility,
+  type EligibilityResult,
+} from "../utils/eligibility";
+import { mainnet } from "wagmi/chains";
 
 // Lazily created so the SDK is not initialised (and does not log) at module
 // import time during SSR/build.
@@ -70,6 +75,10 @@ export const MintForm = () => {
   });
   const [mintedName, setMintedName] = useState<string | null>(null);
   const [mintError, setMintError] = useState<string | null>(null);
+  const [eligibility, setEligibility] = useState<EligibilityResult>({
+    status: "idle",
+  });
+  const mainnetClient = usePublicClient({ chainId: mainnet.id });
 
   const mountedRef = useRef(true);
   useEffect(() => {
@@ -78,6 +87,29 @@ export const MintForm = () => {
       mountedRef.current = false;
     };
   }, []);
+
+  // Re-run the eligibility check whenever the user connects a wallet, changes
+  // accounts, or switches the selected parent. Surfaces gate-specific errors
+  // (whitelist / token-gate) before they hit the Register button.
+  useEffect(() => {
+    let cancelled = false;
+    if (!address) {
+      setEligibility({ status: "idle" });
+      return;
+    }
+    setEligibility({ status: "checking" });
+    void (async () => {
+      const result = await checkEligibility(
+        selectedPizzaName.fullName,
+        address,
+        { mainnet: mainnetClient, base: publicClient },
+      );
+      if (!cancelled) setEligibility(result);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [address, selectedPizzaName.fullName, mainnetClient, publicClient]);
 
   const checkAvailable = async (value: string) => {
     try {
@@ -291,10 +323,13 @@ export const MintForm = () => {
   const needsChainSwitch = Boolean(address) && isWrongChain;
   const isBusy = mintState.waitingWallet || mintState.waitingTx;
   const fullName = `${searchLabel}.${selectedPizzaName.fullName}`;
+  const isGateBlocking =
+    eligibility.status === "ineligible" || eligibility.status === "checking";
   const mintBtnDisabled =
     searchLabel.length === 0 ||
     availability !== "available" ||
-    isBusy;
+    isBusy ||
+    isGateBlocking;
 
   const registerLabel = mintState.waitingWallet
     ? "Confirm in wallet…"
@@ -363,6 +398,7 @@ export const MintForm = () => {
                 status={availability}
                 hasInput={searchLabel.length > 0}
                 fullName={fullName}
+                eligibility={eligibility}
               />
 
               <div className="mt-2">
@@ -424,11 +460,33 @@ const AvailabilityHint = ({
   status,
   hasInput,
   fullName,
+  eligibility,
 }: {
   status: AvailabilityStatus;
   hasInput: boolean;
   fullName: string;
+  eligibility: EligibilityResult;
 }) => {
+  // Eligibility takes priority — if the wallet can't mint here at all there's
+  // no point inviting them to check names. Detailed copy lives in
+  // instructionText above; here we keep it short ("Wallet not whitelisted",
+  // "You don't hold a Rare Pizzas Box").
+  if (eligibility.status === "ineligible" && eligibility.reason) {
+    return (
+      <p className="availability is-unavailable" aria-live="polite">
+        <span className="avail-dot" aria-hidden="true" />
+        {eligibility.reason}
+      </p>
+    );
+  }
+  if (eligibility.status === "checking") {
+    return (
+      <p className="availability is-checking" aria-live="polite">
+        Checking your wallet…
+      </p>
+    );
+  }
+
   // Reserve the row height so the layout never shifts as state changes.
   let content: React.ReactNode = " ";
   let tone = "";
@@ -451,12 +509,12 @@ const AvailabilityHint = ({
     content = (
       <>
         <span className="avail-dot" aria-hidden="true" />
-        That name isn&apos;t available
+        Already taken
       </>
     );
     tone = "is-unavailable";
   } else if (status === "error") {
-    content = "Couldn't check — try a different name";
+    content = "Couldn't check that name";
     tone = "is-error";
   }
 
