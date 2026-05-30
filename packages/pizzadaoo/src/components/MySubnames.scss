@@ -105,6 +105,39 @@
             white-space: nowrap;
         }
 
+        &__syncing {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+            font-size: 12px;
+            line-height: 1;
+            letter-spacing: 0.02em;
+            text-transform: lowercase;
+            color: $green;
+            opacity: 0.85;
+        }
+
+        &__syncing-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: $green;
+            animation: subname-syncing-pulse 1.1s ease-in-out infinite;
+        }
+
+        @keyframes subname-syncing-pulse {
+            0%,
+            100% {
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.15);
+            }
+        }
+
         &__chevron {
             margin-left: auto;
             font-size: 22px;
