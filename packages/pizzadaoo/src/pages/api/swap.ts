@@ -307,6 +307,17 @@ export default async function handler(
       );
     }
 
+    // ENSIP-19 default-address coinType (0x80000000): the fallback any EVM
+    // chain falls through to when it has no explicit record. The remint mints
+    // to body.owner, so point the default at the owner — mirrors what the
+    // initial airdrop sets (scripts/airdrop.mjs) so renamed names resolve on
+    // every EVM chain, not just eth/base.
+    const ENSIP19_DEFAULT_COIN_TYPE = 2147483648;
+    mappedAddresses.push({
+      value: body.owner,
+      chain: ENSIP19_DEFAULT_COIN_TYPE,
+    });
+
     const records: EnsRecords = {
       texts: finalTexts,
       addresses: mappedAddresses,

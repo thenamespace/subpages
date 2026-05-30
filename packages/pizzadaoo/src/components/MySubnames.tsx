@@ -70,6 +70,9 @@ export const MySubnames = () => {
     items: [],
     totalItems: 0,
   });
+  // Name of the optimistically-inserted rename result still awaiting the
+  // indexer. Drives the "syncing…" badge on that row.
+  const [syncingName, setSyncingName] = useState<string | null>(null);
 
   const selectedQuery = router.query.selected;
 
@@ -106,10 +109,34 @@ export const MySubnames = () => {
     };
   }, [address, selectedQuery]);
 
+  // Optimistically reflect a successful rename before the indexer catches
+  // up: prepend the new name (carrying over avatar/addresses/texts, which
+  // the swap preserves on-chain) and drop the burned old one. Count is
+  // unchanged — burn 1, mint 1. Marking it as a swap result also flips
+  // `alreadySwapped` immediately, so the Rename action disappears at once.
+  const applyOptimisticRename = (source: Subname, newName: string) => {
+    setSubnames((prev) => ({
+      fetching: false,
+      totalItems: prev.totalItems,
+      items: [
+        {
+          ...source,
+          name: newName,
+          label: newName.split(".")[0],
+          mintSource: "pizzadaoo-swap",
+        },
+        ...prev.items.filter((s) => s.name !== source.name),
+      ],
+    }));
+    setSyncingName(newName);
+  };
+
   // Re-fetch the owner's subnames. When `expectedName` is given (after a
   // rename) the indexer may lag the on-chain mint by a few seconds, so we
-  // poll until the new name shows up — keeping the current list visible
-  // meanwhile rather than flashing a skeleton.
+  // poll until the new name shows up, then adopt the indexer's truth and
+  // clear the syncing badge. If it never shows within the window, we keep
+  // the optimistic row (the name IS on-chain) and just drop the badge —
+  // reverting to stale indexer data would wrongly hide the rename.
   const refreshSubnames = async (expectedName?: string) => {
     if (!address) {
       return;
@@ -117,20 +144,21 @@ export const MySubnames = () => {
     const maxAttempts = expectedName ? 8 : 1;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const res = await fetchSubnames(address);
-      const settled =
-        !expectedName ||
-        res.subnames.some((s) => s.name === expectedName) ||
-        attempt === maxAttempts - 1;
-      if (settled) {
+      const found = !expectedName || res.subnames.some((s) => s.name === expectedName);
+      if (found) {
         setSubnames({
           fetching: false,
           items: res.subnames,
           totalItems: res.totalItems,
         });
+        setSyncingName(null);
         return;
       }
-      await new Promise((r) => setTimeout(r, 2000));
+      if (attempt < maxAttempts - 1) {
+        await new Promise((r) => setTimeout(r, 2000));
+      }
     }
+    setSyncingName(null);
   };
 
   const filterApplied = searchFilter.length > 0;
@@ -157,8 +185,12 @@ export const MySubnames = () => {
           <SingleSubname
             onUpdate={(renamedTo) => {
               if (renamedTo) {
-                // The viewed name was burned by the rename — close the
-                // detail panel and poll the indexer for the new name.
+                // The viewed name was burned and the new one minted. Reflect
+                // it in the list immediately, then close the detail panel and
+                // poll the indexer to reconcile.
+                if (selectedSubname) {
+                  applyOptimisticRename(selectedSubname, renamedTo);
+                }
                 setSelectedSubname(undefined);
               }
               void refreshSubnames(renamedTo);
@@ -229,6 +261,19 @@ export const MySubnames = () => {
                 >
                   <SubnameAvatar subname={subname} />
                   <span className="txt">{subname.name}</span>
+                  {subname.name === syncingName && (
+                    <span
+                      className="subname-item__syncing"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      <span
+                        className="subname-item__syncing-dot"
+                        aria-hidden="true"
+                      />
+                      syncing…
+                    </span>
+                  )}
                   <span className="subname-item__chevron" aria-hidden="true">
                     ›
                   </span>
