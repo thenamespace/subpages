@@ -1,6 +1,6 @@
 "use client";
 
-import { PARENT_NAME } from "@/lib/config";
+import { LABEL_MIN_LENGTH, PARENT_NAME } from "@/lib/config";
 import { cn } from "@/lib/cn";
 import type { LabelError } from "@/lib/normalize";
 import type { Availability } from "@/hooks/useAvailability";
@@ -19,6 +19,8 @@ export interface LabelInputProps {
   /** The normalised `label.evmaverick.eth`, or null while invalid. */
   fullName: string | null;
   disabled: boolean;
+  /** Sits opposite the label, e.g. the quota. */
+  meta?: React.ReactNode;
 }
 
 /**
@@ -42,6 +44,7 @@ export function LabelInput({
   labelError,
   fullName,
   disabled,
+  meta,
 }: LabelInputProps) {
   const { status, isBad, inputProps, focusFromFrame } = useNameFieldStatus({
     value,
@@ -57,12 +60,15 @@ export function LabelInput({
 
   return (
     <div className="flex flex-col gap-2">
-      <label
-        htmlFor="label"
-        className="font-display text-ink-300 text-[10px] uppercase tracking-[0.14em]"
-      >
-        Choose your name
-      </label>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <label
+          htmlFor="label"
+          className="font-display text-ink-200 text-[10px] uppercase tracking-[0.14em]"
+        >
+          Your name
+        </label>
+        {meta}
+      </div>
 
       <div
         // The suffix is part of the field visually, so clicking it should
@@ -184,7 +190,7 @@ function detail(status: NameStatus) {
     case "invalid":
       return status.message;
     default:
-      return "This is how your name will read.";
+      return `At least ${LABEL_MIN_LENGTH} characters. No spaces or dots.`;
   }
 }
 

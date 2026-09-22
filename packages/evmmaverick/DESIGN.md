@@ -98,11 +98,13 @@ rendered art look like a rendering mistake rather than depth.
 | --- | --- |
 | `PixelButton` | Three variants, one primary per view. Disabled uses a token, not opacity. Loading shows a stepped square, never a spinning circle. |
 | `PixelPanel` | Solid border, hard shadow, scanline overlay under 4% alpha. |
-| `LabelInput` | Suffix `.evmaverick.eth` rendered outside the field so it can't be deleted. Spaces are stripped on type and paste. Below it, a fixed-height name plate spells out the full name and stamps the verdict (WAIT, FREE, TAKEN, SHORT, NOPE, RETRY). "Too short" waits for a pause or blur; the loader only shows after 500ms. |
-| `QuotaPips` | One pip per NFT, filled = claimed. Decorative; the sentence beside it is the accessible label. |
+| `LabelInput` | Suffix `.evmaverick.eth` rendered outside the field so it can't be deleted. Spaces are stripped on type and paste. Below it, a fixed-height name plate spells out the full name, shows the naming rules until something is typed, and stamps the verdict (WAIT, FREE, TAKEN, SHORT, NOPE, RETRY). "Too short" waits for a pause or blur; the loader only shows after 500ms. |
+| `QuotaPips` | One pip per NFT, filled = claimed. Sits opposite the field's label rather than on its own row. Decorative; the count beside it is the accessible label. |
 | `gateNotice` | Every blocked state in one place. A plain function, not a component — the caller needs to know whether anything is blocking. |
 | `PixelDialog` | The one modal in the flow, used for record editing. Claim errors and the pending note render inside it, never behind it. |
-| `SuccessCard` | Pixel tick rather than the lion, which already sits in the hero above. |
+| `SuccessCard` | Pixel tick rather than the lion, which already sits in the hero above. Buttons stack full width, primary on top; with no claims left, Manage records becomes the primary. |
+| `WalletButton` (header) | A quiet bordered button, not RainbowKit's amber default. The card owns the one primary action on the page. |
+| `HeaderNav` (header) | Each page links to the other in a quiet 40px text link, never to itself. Amber stays reserved for the card. |
 
 The record editor comes from `@thenamespace/ens-components`, themed onto our
 palette through `.ens-scope` (see `src/app/ens-theme.css`) and shown in

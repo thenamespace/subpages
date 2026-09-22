@@ -130,121 +130,121 @@ export function ManageView({ preview }: { preview: boolean }) {
 
   return (
     <>
-    <PixelPanel className="w-full max-w-lg p-6 sm:p-8">
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-2">
-          <h2 className="font-display text-amber-300 text-xs uppercase">
-            Your names
-          </h2>
-          <p className="text-ink-300 max-w-[52ch] text-sm leading-relaxed">
-            Pick one to set its avatar, addresses and other records.
-          </p>
-        </div>
+      <PixelPanel className="w-full max-w-lg p-6 sm:p-8">
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <h2 className="font-display text-amber-300 text-xs uppercase">
+              Your names
+            </h2>
+            <p className="text-ink-300 max-w-[52ch] text-sm leading-relaxed">
+              Pick one to set its avatar, addresses and other records.
+            </p>
+          </div>
 
-        {listStatus === "loading" && (
-          <p className="text-ink-400 text-sm">Loading your names…</p>
+          {listStatus === "loading" && (
+            <p className="text-ink-400 text-sm">Loading your names…</p>
+          )}
+
+          {listStatus === "error" && (
+            <div className="flex flex-col gap-3">
+              <p role="alert" className="text-rose-400 text-sm leading-relaxed">
+                {current?.error}
+              </p>
+              <PixelButton
+                variant="secondary"
+                onClick={() => setNonce((n) => n + 1)}
+              >
+                Try again
+              </PixelButton>
+            </div>
+          )}
+
+          {names.length === 0 && listStatus === "ready" && (
+            <div className="flex flex-col gap-4">
+              <p className="text-ink-300 text-sm leading-relaxed">
+                This wallet doesn&apos;t hold any {PARENT_NAME} names yet.
+              </p>
+              {/* A button, not a button inside a link: nested interactive
+                  elements give keyboard users two tab stops for one action. */}
+              <PixelButton className="w-full" onClick={() => router.push("/")}>
+                Claim a name
+              </PixelButton>
+            </div>
+          )}
+
+          {names.length > 0 && (
+            <ul className="flex flex-col gap-2">
+              {names.map((n) => (
+                <li key={n.name}>
+                  <button
+                    type="button"
+                    onClick={() => openName(n)}
+                    className="group border-edge bg-raised hover:border-amber-400 flex w-full cursor-pointer items-center gap-3 border-2 px-4 py-3 text-left transition-colors duration-150"
+                  >
+                    <span className="text-ink-100 min-w-0 flex-1 truncate text-sm">
+                      {n.name}
+                    </span>
+                    <span className="font-display text-ink-400 group-hover:text-amber-300 shrink-0 text-[10px] uppercase tracking-[0.14em] transition-colors duration-150">
+                      Edit
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </PixelPanel>
+
+      <PixelDialog
+        open={Boolean(selected)}
+        onOpenChange={(next) => {
+          if (!next) closeName();
+        }}
+        title={selected?.name ?? ""}
+        description="All changes save in one transaction."
+      >
+        {recordState?.status === "loading" && (
+          <p className="text-ink-400 text-sm">Reading current records…</p>
         )}
 
-        {listStatus === "error" && (
+        {recordState?.status === "error" && (
           <div className="flex flex-col gap-3">
             <p role="alert" className="text-rose-400 text-sm leading-relaxed">
-              {current?.error}
+              Couldn&apos;t read this name&apos;s current records. The editor
+              stays closed so a blank form can&apos;t overwrite records that are
+              already set.
             </p>
+            <p className="text-ink-400 text-xs">{recordState.message}</p>
             <PixelButton
               variant="secondary"
-              onClick={() => setNonce((n) => n + 1)}
+              onClick={() => selected && openName(selected)}
             >
               Try again
             </PixelButton>
           </div>
         )}
 
-        {names.length === 0 && listStatus === "ready" && (
-          <div className="flex flex-col gap-4">
-            <p className="text-ink-300 text-sm leading-relaxed">
-              This wallet doesn&apos;t hold any {PARENT_NAME} names yet.
-            </p>
-            {/* A button, not a button inside a link: nested interactive
-                elements give keyboard users two tab stops for one action. */}
-            <PixelButton className="w-full" onClick={() => router.push("/")}>
-              Claim a name
-            </PixelButton>
-          </div>
+        {recordState?.status === "ready" && selected && (
+          <EnsScope>
+            <EnsRecordsForm
+              name={selected.name}
+              existingRecords={recordState.records}
+              // Enables avatar and header uploads. The library authenticates
+              // with a SIWE signature against the name, which is why this can
+              // only be offered here: on the claim page the name does not exist
+              // on-chain yet, so there is no ownership to prove.
+              avatarUploadDomain={
+                typeof window === "undefined" ? undefined : window.location.hostname
+              }
+              onCancel={closeName}
+              onRecordsUpdated={() => {
+                setNonce((n) => n + 1);
+                openName(selected);
+              }}
+            />
+          </EnsScope>
         )}
-
-        {names.length > 0 && (
-          <ul className="flex flex-col gap-2">
-            {names.map((n) => (
-              <li key={n.name}>
-                <button
-                  type="button"
-                  onClick={() => openName(n)}
-                  className="group border-edge bg-raised hover:border-amber-400 flex w-full cursor-pointer items-center gap-3 border-2 px-4 py-3 text-left transition-colors duration-150"
-                >
-                  <span className="text-ink-100 min-w-0 flex-1 truncate text-sm">
-                    {n.name}
-                  </span>
-                  <span className="font-display text-ink-400 group-hover:text-amber-300 shrink-0 text-[10px] uppercase tracking-[0.14em] transition-colors duration-150">
-                    Edit
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </PixelPanel>
-
-    <PixelDialog
-      open={Boolean(selected)}
-      onOpenChange={(next) => {
-        if (!next) closeName();
-      }}
-      title={selected?.name ?? ""}
-      description="All changes save in one transaction."
-    >
-      {recordState?.status === "loading" && (
-        <p className="text-ink-400 text-sm">Reading current records…</p>
-      )}
-
-      {recordState?.status === "error" && (
-        <div className="flex flex-col gap-3">
-          <p role="alert" className="text-rose-400 text-sm leading-relaxed">
-            Couldn&apos;t read this name&apos;s current records. The editor
-            stays closed so a blank form can&apos;t overwrite records that are
-            already set.
-          </p>
-          <p className="text-ink-400 text-xs">{recordState.message}</p>
-          <PixelButton
-            variant="secondary"
-            onClick={() => selected && openName(selected)}
-          >
-            Try again
-          </PixelButton>
-        </div>
-      )}
-
-      {recordState?.status === "ready" && selected && (
-        <EnsScope>
-          <EnsRecordsForm
-            name={selected.name}
-            existingRecords={recordState.records}
-            // Enables avatar and header uploads. The library authenticates
-            // with a SIWE signature against the name, which is why this can
-            // only be offered here: on the claim page the name does not exist
-            // on-chain yet, so there is no ownership to prove.
-            avatarUploadDomain={
-              typeof window === "undefined" ? undefined : window.location.hostname
-            }
-            onCancel={closeName}
-            onRecordsUpdated={() => {
-              setNonce((n) => n + 1);
-              openName(selected);
-            }}
-          />
-        </EnsScope>
-      )}
-    </PixelDialog>
+      </PixelDialog>
     </>
   );
 }

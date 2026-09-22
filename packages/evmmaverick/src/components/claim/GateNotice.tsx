@@ -113,9 +113,9 @@ function Notice({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <h2 className="font-display text-amber-300 text-xs uppercase">
+        <h2 className="font-display text-ink-100 text-xs uppercase">
           {title}
         </h2>
         {/* Capped measure — full-width body text is exhausting to read. */}

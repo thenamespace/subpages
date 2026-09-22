@@ -89,18 +89,8 @@ export const PixelButton = forwardRef<HTMLButtonElement, PixelButtonProps>(
  */
 function PixelSpinner() {
   return (
-    <span
-      aria-hidden
-      className="relative inline-block size-3 shrink-0"
-      style={{ animation: "pixel-spin 640ms steps(4) infinite" }}
-    >
+    <span aria-hidden className="animate-pixel-spin relative inline-block size-3 shrink-0">
       <span className="absolute left-0 top-0 size-1.5 bg-current" />
-      <style>{`
-        @keyframes pixel-spin {
-          0%   { transform: rotate(0deg);   }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
     </span>
   );
 }

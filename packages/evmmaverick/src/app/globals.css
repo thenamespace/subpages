@@ -245,6 +245,19 @@
   }
 }
 
+@layer utilities {
+  /* PixelButton's loading spinner: four blocks chasing each other around a
+     square. Steps(4), never a blur. */
+  @keyframes pixel-spin {
+    0%   { transform: rotate(0deg);   }
+    100% { transform: rotate(360deg); }
+  }
+
+  .animate-pixel-spin {
+    animation: pixel-spin 640ms steps(4) infinite;
+  }
+}
+
 @layer components {
   /* RainbowKit's theme object covers colour, radius and font (see
      providers.tsx). Only the weight and tracking of its button need nudging

@@ -14,7 +14,7 @@ import { useAvailability } from "@/hooks/useAvailability";
 import { useListing } from "@/hooks/useListing";
 import { useMint } from "@/hooks/useMint";
 import { useQuota } from "@/hooks/useQuota";
-import { PARENT_NAME } from "@/lib/config";
+import { GATE_TOKEN_NAME, PARENT_NAME } from "@/lib/config";
 import { validateLabel } from "@/lib/normalize";
 import { playRoar, preloadRoar, unlockAudio } from "@/lib/roar";
 import { useSoundContext } from "@/components/SoundProvider";
@@ -116,7 +116,7 @@ export function ClaimCard({ preview }: { preview: PreviewState | null }) {
         {step === "success" ? (
           <motion.div key="success" exit={{ opacity: 0 }}>
             <SuccessCard
-              name={mintState.mintedName ?? `yourname.evmaverick.eth`}
+              name={mintState.mintedName ?? `yourname.${PARENT_NAME}`}
               txHash={mintState.txHash}
               canClaimMore={quota.remaining > 0}
               onClaimAnother={handleClaimAnother}
@@ -133,24 +133,24 @@ export function ClaimCard({ preview }: { preview: PreviewState | null }) {
             {blocked ?? (
               <>
                 {!isConnected && !preview ? (
-                  <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-5">
                     <div className="flex flex-col gap-2">
-                      <h2 className="font-display text-amber-300 text-xs uppercase">
+                      <h2 className="font-display text-ink-100 text-xs uppercase">
                         Connect to claim
                       </h2>
                       <p className="text-ink-300 max-w-[52ch] text-sm leading-relaxed">
-                        We check your wallet for an EVMavericks NFT. One name
-                        per NFT — hold three, claim three.
+                        We&apos;ll check your wallet for an {GATE_TOKEN_NAME} NFT.
                       </p>
                     </div>
-                    <PixelButton onClick={() => openConnectModal?.()}>
+                    <PixelButton
+                      onClick={() => openConnectModal?.()}
+                      className="w-full"
+                    >
                       Connect wallet
                     </PixelButton>
                   </div>
                 ) : (
                   <>
-                    <QuotaPips quota={quota} />
-
                     {/* A real form, so Enter submits from the field natively. */}
                     <form
                       noValidate
@@ -167,6 +167,7 @@ export function ClaimCard({ preview }: { preview: PreviewState | null }) {
                         labelError={labelError}
                         fullName={label ? `${label}.${PARENT_NAME}` : null}
                         disabled={isBusy}
+                        meta={<QuotaPips quota={quota} />}
                       />
 
                       <div className="flex flex-col gap-3">

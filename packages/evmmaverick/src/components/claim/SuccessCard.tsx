@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { ROAR_DURATION_MS } from "@/lib/roar";
@@ -62,7 +62,7 @@ export function SuccessCard({
       <motion.svg
         aria-hidden
         viewBox="0 0 12 12"
-        className="size-12 text-jade-400"
+        className="size-10 text-jade-400"
         initial={{ scale: 0.7, opacity: 0 }}
         animate={{ scale: [0.7, 1.1, 1], opacity: 1 }}
         transition={{ duration: 0.28, ease: "linear", times: [0, 0.6, 1] }}
@@ -74,32 +74,40 @@ export function SuccessCard({
         />
       </motion.svg>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         <p className="font-display text-jade-400 text-[10px] uppercase tracking-[0.14em]">
           Claimed
         </p>
-        {/* Breaks on the dot rather than mid-label on narrow screens. */}
-        <h2 className="font-display text-amber-300 text-sm leading-relaxed break-all">
-          {name}
+        {/* Prefers breaking at the dots on narrow screens; `break-all` is
+            only the backstop for a label too long to fit on its own. */}
+        <h2 className="font-display text-amber-300 text-sm leading-relaxed break-all sm:text-base">
+          {name.split(".").map((part, i, parts) => (
+            <Fragment key={i}>
+              {part}
+              {i < parts.length - 1 && <>.<wbr /></>}
+            </Fragment>
+          ))}
         </h2>
-        <p className="text-ink-300 mx-auto max-w-[46ch] text-sm leading-relaxed">
-          It already resolves to your wallet. Change its avatar and records any
-          time from Manage records.
+        <p className="text-ink-300 mx-auto max-w-[40ch] text-sm leading-relaxed text-balance">
+          It resolves to your wallet now. Add an avatar and records whenever
+          you like.
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-3">
-        <PixelButton
-          variant="secondary"
-          onClick={() => router.push("/manage")}
-        >
-          Manage records
-        </PixelButton>
+      {/* Primary first. When there's nothing left to claim, managing the
+          name is the next step, so it takes the primary slot. */}
+      <div className="flex w-full flex-col gap-3">
         {canClaimMore && (
           <PixelButton variant="primary" onClick={onClaimAnother}>
             Claim another
           </PixelButton>
         )}
+        <PixelButton
+          variant={canClaimMore ? "secondary" : "primary"}
+          onClick={() => router.push("/manage")}
+        >
+          Manage records
+        </PixelButton>
       </div>
 
       {txHash && (
