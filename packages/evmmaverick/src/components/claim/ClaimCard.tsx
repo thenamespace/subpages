@@ -15,6 +15,7 @@ import { useListing } from "@/hooks/useListing";
 import { useMint } from "@/hooks/useMint";
 import { useQuota } from "@/hooks/useQuota";
 import { labelErrorMessage, validateLabel } from "@/lib/normalize";
+import { unlockAudio } from "@/lib/roar";
 import { __resetListingCache } from "@/lib/listing";
 import type { PreviewState } from "@/lib/preview";
 
@@ -67,6 +68,17 @@ export function ClaimCard({ preview }: { preview: PreviewState | null }) {
     onRetry: handleRetry,
   });
 
+  // Browsers only grant audio permission during a user gesture, and the roar
+  // plays minutes later when the transaction confirms. Creating the context
+  // here, on the click, is what makes that legal.
+  const startMint = useCallback(
+    (value: string) => {
+      unlockAudio();
+      void mint(value);
+    },
+    [mint],
+  );
+
   const isBusy = step === "signing" || step === "pending";
   const canSubmit =
     Boolean(label) &&
@@ -118,7 +130,7 @@ export function ClaimCard({ preview }: { preview: PreviewState | null }) {
                     <LabelInput
                       value={raw}
                       onChange={setRaw}
-                      onSubmit={() => canSubmit && label && void mint(label)}
+                      onSubmit={() => canSubmit && label && startMint(label)}
                       availability={availability}
                       validationError={validationError}
                       disabled={isBusy}
@@ -126,7 +138,7 @@ export function ClaimCard({ preview }: { preview: PreviewState | null }) {
 
                     <div className="flex flex-col gap-3">
                       <PixelButton
-                        onClick={() => label && void mint(label)}
+                        onClick={() => label && startMint(label)}
                         disabled={!canSubmit}
                         loading={isBusy}
                         className="w-full"

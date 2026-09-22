@@ -4,6 +4,7 @@ import { RainbowKitProvider, darkTheme } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { WagmiProvider } from "wagmi";
+import { SoundProvider } from "@/components/SoundProvider";
 import { wagmiConfig } from "@/lib/wagmi";
 import "@rainbow-me/rainbowkit/styles.css";
 
@@ -46,7 +47,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider theme={pixelTheme} modalSize="compact">
-          {children}
+          <SoundProvider>{children}</SoundProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
