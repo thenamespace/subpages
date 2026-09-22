@@ -39,7 +39,20 @@ export function unlockAudio() {
   if (!Ctor) return;
   try {
     ctx ??= new Ctor();
-    if (ctx.state === "suspended") void ctx.resume();
+    // Only a fresh or suspended context needs work; a running one is done.
+    if (ctx.state !== "running") {
+      // `resume()` rejects rather than throws, so the catch below can't see it.
+      void ctx.resume().catch(() => {});
+      // Older iOS WebKit only unlocks a context that actually starts a source
+      // inside the gesture; resume() alone leaves it mute. One silent frame.
+      const primer = ctx.createBufferSource();
+      primer.buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+      primer.connect(ctx.destination);
+      // Detached once it has actually run; disconnecting before the audio
+      // thread processes the start can defeat the unlock on iOS.
+      primer.onended = () => primer.disconnect();
+      primer.start();
+    }
   } catch {
     // Audio is a garnish. If the context won't start, the mint still worked.
     ctx = null;
@@ -89,9 +102,10 @@ export async function playRoar({ volume = 0.5 }: RoarOptions = {}) {
   const context = ctx;
 
   // A context can drop back to suspended while the transaction is pending
-  // (backgrounded tab, OS audio change). The claim click already granted
-  // permission, so resuming here is allowed.
-  if (context.state === "suspended") {
+  // (backgrounded tab, OS audio change) — or to iOS's non-standard
+  // "interrupted" after switching to a wallet app. The claim click already
+  // granted permission, so resuming here is allowed.
+  if (context.state !== "running") {
     try {
       await context.resume();
     } catch {
@@ -112,6 +126,11 @@ export async function playRoar({ volume = 0.5 }: RoarOptions = {}) {
     const gain = context.createGain();
     gain.gain.value = volume;
     source.connect(gain).connect(context.destination);
+    // One-shot nodes; detach them so nothing lingers once the roar ends.
+    source.onended = () => {
+      source.disconnect();
+      gain.disconnect();
+    };
     source.start();
   } catch {
     // Nothing to recover; the claim itself succeeded.
