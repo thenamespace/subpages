@@ -9,6 +9,7 @@ import { EnsRecordsForm } from "@/components/ens/client";
 import { EnsScope } from "@/components/ens/EnsScope";
 import { PixelButton } from "@/components/ui/PixelButton";
 import { PixelPanel } from "@/components/ui/PixelPanel";
+import { PixelDialog } from "@/components/ui/PixelDialog";
 import { fetchOwnedNames, type OwnedName } from "@/lib/ownedNames";
 import { readRecords } from "@/lib/readRecords";
 import { EMPTY_RECORDS, type FormRecords } from "@/lib/records";
@@ -124,56 +125,8 @@ export function ManageView({ preview }: { preview: boolean }) {
     );
   }
 
-  if (selected) {
-    return (
-      <PixelPanel className="w-full max-w-2xl p-5 sm:p-7">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-amber-300 text-xs break-all uppercase">
-            {selected.name}
-          </h2>
-          <PixelButton variant="ghost" onClick={closeName}>
-            All names
-          </PixelButton>
-        </div>
-
-        {recordState?.status === "loading" && (
-          <p className="text-ink-400 text-sm">Reading current records…</p>
-        )}
-
-        {recordState?.status === "error" && (
-          <div className="flex flex-col gap-3">
-            <p className="text-rose-400 text-sm leading-relaxed">
-              Couldn&apos;t read this name&apos;s current records, so the editor
-              stays closed — opening it blank would risk clearing records that
-              are already set.
-            </p>
-            <p className="text-ink-500 text-xs">{recordState.message}</p>
-            <PixelButton variant="secondary" onClick={() => openName(selected)}>
-              Try again
-            </PixelButton>
-          </div>
-        )}
-
-        {recordState?.status === "ready" && (
-          <EnsScope>
-            <EnsRecordsForm
-              name={selected.name}
-              existingRecords={recordState.records}
-              onCancel={closeName}
-              onRecordsUpdated={() => {
-                // Re-read after a save so the list and the next open reflect
-                // what actually landed on-chain.
-                setNonce((n) => n + 1);
-                openName(selected);
-              }}
-            />
-          </EnsScope>
-        )}
-      </PixelPanel>
-    );
-  }
-
   return (
+    <>
     <PixelPanel className="w-full max-w-lg p-6 sm:p-8">
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-2">
@@ -234,5 +187,57 @@ export function ManageView({ preview }: { preview: boolean }) {
         )}
       </div>
     </PixelPanel>
+
+    <PixelDialog
+      open={Boolean(selected)}
+      onOpenChange={(next) => {
+        if (!next) closeName();
+      }}
+      title={selected?.name ?? ""}
+      description="All changes save in one transaction."
+    >
+      {recordState?.status === "loading" && (
+        <p className="text-ink-400 text-sm">Reading current records…</p>
+      )}
+
+      {recordState?.status === "error" && (
+        <div className="flex flex-col gap-3">
+          <p className="text-rose-400 text-sm leading-relaxed">
+            Couldn&apos;t read this name&apos;s current records, so the editor
+            stays closed — opening it blank would risk clearing records that
+            are already set.
+          </p>
+          <p className="text-ink-500 text-xs">{recordState.message}</p>
+          <PixelButton
+            variant="secondary"
+            onClick={() => selected && openName(selected)}
+          >
+            Try again
+          </PixelButton>
+        </div>
+      )}
+
+      {recordState?.status === "ready" && selected && (
+        <EnsScope>
+          <EnsRecordsForm
+            name={selected.name}
+            existingRecords={recordState.records}
+            // Enables avatar and header uploads. The library authenticates
+            // with a SIWE signature against the name, which is why this can
+            // only be offered here: on the claim page the name does not exist
+            // on-chain yet, so there is no ownership to prove.
+            avatarUploadDomain={
+              typeof window === "undefined" ? undefined : window.location.hostname
+            }
+            onCancel={closeName}
+            onRecordsUpdated={() => {
+              setNonce((n) => n + 1);
+              openName(selected);
+            }}
+          />
+        </EnsScope>
+      )}
+    </PixelDialog>
+    </>
   );
 }

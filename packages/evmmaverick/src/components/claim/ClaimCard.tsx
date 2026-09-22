@@ -16,7 +16,7 @@ import { useMint } from "@/hooks/useMint";
 import { useQuota } from "@/hooks/useQuota";
 import { PARENT_NAME } from "@/lib/config";
 import { labelErrorMessage, validateLabel } from "@/lib/normalize";
-import { unlockAudio } from "@/lib/roar";
+import { preloadRoar, unlockAudio } from "@/lib/roar";
 import { RecordsStep } from "./RecordsStep";
 import { EMPTY_RECORDS, toMintRecords, type FormRecords } from "@/lib/records";
 import { __resetListingCache } from "@/lib/listing";
@@ -82,6 +82,8 @@ export function ClaimCard({ preview }: { preview: PreviewState | null }) {
   const startMint = useCallback(
     (value: string) => {
       unlockAudio();
+      // Decode while the transaction is in flight so the roar is instant.
+      preloadRoar();
       void mint(value, toMintRecords(records));
     },
     [mint, records],
@@ -133,66 +135,65 @@ export function ClaimCard({ preview }: { preview: PreviewState | null }) {
                   </div>
                 ) : (
                   <>
-                    {stage === "records" ? (
-                      <RecordsStep
-                        records={records}
-                        onRecordsChange={setRecords}
-                        onBack={() => setStage("name")}
-                        onContinue={() => label && startMint(label)}
-                        busy={isBusy}
-                        fullName={`${label ?? "yourname"}.${PARENT_NAME}`}
-                      />
-                    ) : (
-                      <>
-                      <QuotaPips quota={quota} />
+                    <QuotaPips quota={quota} />
 
-                      <LabelInput
-                        value={raw}
-                        onChange={setRaw}
-                        onSubmit={() => canSubmit && setStage("records")}
-                        availability={availability}
-                        validationError={validationError}
-                        disabled={isBusy}
-                      />
+                    <LabelInput
+                      value={raw}
+                      onChange={setRaw}
+                      onSubmit={() => canSubmit && setStage("records")}
+                      availability={availability}
+                      validationError={validationError}
+                      disabled={isBusy}
+                    />
 
-                      <div className="flex flex-col gap-3">
-                        <PixelButton
-                          onClick={() => setStage("records")}
-                          disabled={!canSubmit}
-                          loading={isBusy}
-                          className="w-full"
+                    <div className="flex flex-col gap-3">
+                      <PixelButton
+                        onClick={() => setStage("records")}
+                        disabled={!canSubmit}
+                        loading={isBusy}
+                        className="w-full"
+                      >
+                        {step === "signing"
+                          ? "Confirm in wallet"
+                          : step === "pending"
+                            ? "Claiming…"
+                            : "Continue"}
+                      </PixelButton>
+
+                      {mintState.error && (
+                        <p
+                          role="alert"
+                          className="text-rose-400 text-xs leading-relaxed"
                         >
-                          {step === "signing"
-                            ? "Confirm in wallet"
-                            : step === "pending"
-                              ? "Claiming…"
-                              : "Continue"}
-                        </PixelButton>
+                          {mintState.error}
+                        </p>
+                      )}
 
-                        {mintState.error && (
-                          <p
-                            role="alert"
-                            className="text-rose-400 text-xs leading-relaxed"
-                          >
-                            {mintState.error}
-                          </p>
-                        )}
+                      {step === "pending" && (
+                        <p className="text-ink-400 text-center text-xs">
+                          Waiting for the transaction to confirm. Safe to leave
+                          this tab open.
+                        </p>
+                      )}
 
-                        {step === "pending" && (
-                          <p className="text-ink-400 text-center text-xs">
-                            Waiting for the transaction to confirm. Safe to leave
-                            this tab open.
-                          </p>
-                        )}
+                      {address && step === "idle" && (
+                        <p className="text-ink-500 text-center text-xs">
+                          Claiming to {address.slice(0, 6)}…{address.slice(-4)}
+                        </p>
+                      )}
+                    </div>
 
-                        {address && step === "idle" && (
-                          <p className="text-ink-500 text-center text-xs">
-                            Claiming to {address.slice(0, 6)}…{address.slice(-4)}
-                          </p>
-                        )}
-                      </div>
-                      </>
-                    )}
+                    {/* Overlays the form rather than replacing it, so the
+                        chosen name stays visible behind the editor. */}
+                    <RecordsStep
+                      open={stage === "records"}
+                      records={records}
+                      onRecordsChange={setRecords}
+                      onBack={() => setStage("name")}
+                      onContinue={() => label && startMint(label)}
+                      busy={isBusy}
+                      fullName={`${label ?? "yourname"}.${PARENT_NAME}`}
+                    />
                   </>
                 )}
               </>

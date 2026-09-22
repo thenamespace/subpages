@@ -3,6 +3,7 @@
 import { SelectRecordsForm } from "@/components/ens/client";
 import { EnsScope } from "@/components/ens/EnsScope";
 import { PixelButton } from "@/components/ui/PixelButton";
+import { PixelDialog } from "@/components/ui/PixelDialog";
 import { countRecords, type FormRecords } from "@/lib/records";
 
 /**
@@ -18,6 +19,7 @@ import { countRecords, type FormRecords } from "@/lib/records";
  * through the library's UI.
  */
 export function RecordsStep({
+  open,
   records,
   onRecordsChange,
   onBack,
@@ -25,6 +27,7 @@ export function RecordsStep({
   busy,
   fullName,
 }: {
+  open: boolean;
   records: FormRecords;
   onRecordsChange: (next: FormRecords) => void;
   onBack: () => void;
@@ -35,33 +38,35 @@ export function RecordsStep({
   const count = countRecords(records);
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-2">
-        <h2 className="font-display text-amber-300 text-xs uppercase">
-          Set up your profile
-        </h2>
-        <p className="text-ink-300 max-w-[52ch] text-sm leading-relaxed">
-          Optional, and free to skip — but adding it now costs one transaction
-          instead of two.{" "}
-          <span className="text-ink-400 break-all">{fullName}</span>
-        </p>
-      </div>
+    <PixelDialog
+      open={open}
+      // Closing mid-transaction would strand the user away from the progress,
+      // so the dialog is held open while a claim is in flight.
+      onOpenChange={(next) => {
+        if (!next && !busy) onBack();
+      }}
+      title={fullName}
+      description="Optional, and free to skip — but adding records now costs one transaction instead of two."
+    >
+      <div className="flex flex-col gap-5">
+        <EnsScope>
+          <SelectRecordsForm
+            records={records}
+            onRecordsUpdated={onRecordsChange}
+          />
+        </EnsScope>
 
-      <EnsScope className="-mx-1">
-        <SelectRecordsForm
-          records={records}
-          onRecordsUpdated={onRecordsChange}
-        />
-      </EnsScope>
-
-      <div className="flex flex-col gap-3">
-        <PixelButton onClick={onContinue} loading={busy} className="w-full">
-          {count > 0 ? `Claim with ${count} record${count === 1 ? "" : "s"}` : "Claim name"}
-        </PixelButton>
-        <PixelButton variant="ghost" onClick={onBack} disabled={busy}>
-          Back to name
-        </PixelButton>
+        <div className="flex flex-col gap-3">
+          <PixelButton onClick={onContinue} loading={busy} className="w-full">
+            {count > 0
+              ? `Claim with ${count} record${count === 1 ? "" : "s"}`
+              : "Claim name"}
+          </PixelButton>
+          <PixelButton variant="ghost" onClick={onBack} disabled={busy}>
+            Back to name
+          </PixelButton>
+        </div>
       </div>
-    </div>
+    </PixelDialog>
   );
 }

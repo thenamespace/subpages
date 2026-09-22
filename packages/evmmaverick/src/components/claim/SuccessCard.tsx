@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { useSoundContext } from "@/components/SoundProvider";
-import { playRoar } from "@/lib/roar";
+import { playRoar, ROAR_DURATION_MS } from "@/lib/roar";
 import { PixelButton } from "@/components/ui/PixelButton";
 import { shortAddress } from "@/lib/format";
 
@@ -34,7 +34,8 @@ export function SuccessCard({
     setRoaring(true);
     if (soundEnabled) playRoar();
 
-    const timer = setTimeout(() => setRoaring(false), 1400);
+    // Hold the visual for as long as the roar lasts.
+    const timer = setTimeout(() => setRoaring(false), ROAR_DURATION_MS);
     return () => clearTimeout(timer);
     // Deliberately runs once on mount: the success card only mounts when a
     // mint confirms, and toggling sound afterwards shouldn't re-trigger it.

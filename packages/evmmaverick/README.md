@@ -49,6 +49,14 @@ records live in our state and travel into the mint call. `/manage` uses
 `EnsRecordsForm`, which diffs against the current records and submits one
 `multicall` to the resolver.
 
+Both editors open in a modal (`PixelDialog`, built on Radix Dialog for the
+focus trap, Escape handling and scroll lock).
+
+**Avatar uploads** are enabled on `/manage` only. The library authenticates
+uploads with a SIWE signature against the name, so it needs a name that exists
+on-chain and belongs to you — which rules out the pre-claim step, where the
+name hasn't been minted yet. An avatar URL can still be pasted there.
+
 Two things about that library are worth knowing:
 
 - **It is write-only.** Nothing in it reads a name's current records, so
@@ -141,5 +149,17 @@ We never use the Base Account connector, so aliasing beats installing four
 packages nothing imports. The same file silences a `@metamask/sdk` warning
 about React Native's async-storage, which its single web+RN bundle references
 unconditionally.
+
+## Credits
+
+`public/roar.mp3` is trimmed from "Lion raring-sound1TamilNadu178.ogg" by
+தகவலுழவன், via Wikimedia Commons, released into the **public domain**
+worldwide by the copyright holder. Cut to the louder of the two roars in the
+original, normalised, mono, 24KB. No attribution is legally required; it is
+recorded here so nobody has to wonder where a shipped asset came from.
+
+If the file can't be fetched or decoded, `src/lib/roar.ts` falls back to a
+synthesised roar, so a blocked asset degrades to a lesser roar rather than
+silence.
 
 See [DESIGN.md](./DESIGN.md) for the colour, type and component schema.

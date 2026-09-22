@@ -1,9 +1,17 @@
 /**
- * A lion roar, synthesised.
+ * The roar.
  *
- * No audio file: a roar sample would be someone else's recording with its own
- * licence, and this page ships a pixel lion with no other assets. The Web
- * Audio graph below costs nothing to download and is tuned by ear.
+ * Primary source is `/roar.mp3` — a real lion, trimmed to the louder of the
+ * two roars in the original recording, normalised, mono, 16KB.
+ *
+ *   Source: "Lion raring-sound1TamilNadu178.ogg" by தகவலுழவன், via Wikimedia
+ *   Commons, released into the public domain worldwide by the copyright
+ *   holder. No attribution is legally required; it is here because it should
+ *   be obvious where a shipped asset came from.
+ *
+ * `synthRoar` below is the fallback for when the file can't be fetched or
+ * decoded, so a blocked asset degrades to a lesser roar rather than silence.
+ * Its shape, roughly:
  *
  * The shape of a real roar, roughly:
  *   - a low fundamental that sags in pitch as the breath runs out
@@ -75,6 +83,34 @@ function growlCurve(amount = 24) {
   return curve;
 }
 
+const ROAR_URL = "/roar.mp3";
+
+/** Decoded once, reused. `null` once a load has failed, so we stop retrying. */
+let sample: AudioBuffer | null | undefined;
+let loading: Promise<void> | null = null;
+
+/**
+ * Fetch and decode the sample. Called during the claim click alongside the
+ * context unlock, so the audio is already decoded by the time a transaction
+ * confirms and there is no gap before the roar.
+ */
+export function preloadRoar() {
+  if (sample !== undefined || loading || !ctx) return;
+  const context = ctx;
+  loading = (async () => {
+    try {
+      const res = await fetch(ROAR_URL);
+      if (!res.ok) throw new Error(String(res.status));
+      sample = await context.decodeAudioData(await res.arrayBuffer());
+    } catch {
+      // Fall back to the synthesised roar rather than failing loudly.
+      sample = null;
+    } finally {
+      loading = null;
+    }
+  })();
+}
+
 export interface RoarOptions {
   /** 0–1. Kept well below 1 by default; this fires without being asked for. */
   volume?: number;
@@ -84,8 +120,26 @@ export interface RoarOptions {
  * Play the roar. Safe to call when audio is unavailable or was never
  * unlocked — it returns silently rather than throwing into a success screen.
  */
-export function playRoar({ volume = 0.22 }: RoarOptions = {}) {
+export function playRoar({ volume = 0.5 }: RoarOptions = {}) {
   unlockAudio();
+  if (!ctx) return;
+
+  if (sample) {
+    const source = ctx.createBufferSource();
+    source.buffer = sample;
+    const gain = ctx.createGain();
+    gain.gain.value = volume;
+    source.connect(gain).connect(ctx.destination);
+    source.start();
+    return;
+  }
+
+  // Either still decoding or the file failed — synthesise instead.
+  synthRoar(volume * 0.45);
+}
+
+/** The fallback roar, built from oscillators. See the note at the top. */
+function synthRoar(volume: number) {
   if (!ctx) return;
 
   const t0 = ctx.currentTime;
@@ -169,4 +223,4 @@ export function playRoar({ volume = 0.22 }: RoarOptions = {}) {
   noise.stop(t0 + duration);
 }
 
-export const ROAR_DURATION_MS = 1500;
+export const ROAR_DURATION_MS = 1950;
