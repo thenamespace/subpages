@@ -60,7 +60,7 @@ export default async function Home({
         </main>
 
         <footer className="flex flex-col items-center gap-2 pb-2 text-center">
-          <p className="text-ink-500 text-xs">
+          <p className="text-ink-400 text-xs">
             Names are ENS subnames on Ethereum mainnet. You pay gas; the name is
             yours.
           </p>
@@ -68,7 +68,7 @@ export default async function Home({
             href="https://namespace.ninja"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-ink-600 hover:text-amber-300 text-xs transition-colors"
+            className="text-ink-400 hover:text-amber-300 text-xs underline underline-offset-4 transition-colors duration-150"
           >
             Powered by Namespace
           </a>

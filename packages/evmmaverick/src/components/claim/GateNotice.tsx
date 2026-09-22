@@ -123,7 +123,7 @@ function Notice({
           {body}
         </p>
         {detail && (
-          <p className="text-ink-500 max-w-[52ch] text-xs">{detail}</p>
+          <p className="text-ink-400 max-w-[52ch] text-xs">{detail}</p>
         )}
       </div>
       {action}

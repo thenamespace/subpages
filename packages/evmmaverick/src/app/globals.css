@@ -197,6 +197,41 @@
 }
 
 @layer utilities {
+  /* Name plate verdicts. Stepped, not eased: pixel type that scales smoothly
+     goes soft between whole pixels. */
+
+  /* A verdict is stamped onto the plate: lands big, bounces under, settles.
+     Only scale is animated; the tilt is a separate `rotate` utility, so it
+     stays put when motion is reduced. */
+  @keyframes stamp {
+    0%   { opacity: 0; transform: scale(1.35); }
+    50%  { opacity: 1; transform: scale(0.94); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .animate-stamp {
+    animation: stamp 200ms steps(3, end) both;
+  }
+
+  /* The WAIT stamp's cursor, an arcade "insert coin" blink. */
+  @keyframes cursor-blink {
+    0%, 49%   { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+  .animate-cursor-blink {
+    animation: cursor-blink 800ms steps(1, end) infinite;
+  }
+
+  /* Under reduced motion the stamp simply appears and the cursor holds
+     steady. Explicit, rather than relying on the global duration clamp. */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-stamp,
+    .animate-cursor-blink {
+      animation: none;
+    }
+  }
+}
+
+@layer utilities {
   @keyframes dialog-fade {
     from { opacity: 0; }
     to   { opacity: 1; }

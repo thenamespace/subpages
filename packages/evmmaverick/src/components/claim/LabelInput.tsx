@@ -2,35 +2,58 @@
 
 import { PARENT_NAME } from "@/lib/config";
 import { cn } from "@/lib/cn";
+import type { LabelError } from "@/lib/normalize";
 import type { Availability } from "@/hooks/useAvailability";
+import {
+  useNameFieldStatus,
+  type NameStatus,
+} from "@/hooks/useNameFieldStatus";
 
-interface LabelInputProps {
+export interface LabelInputProps {
   value: string;
   onChange: (value: string) => void;
-  onSubmit: () => void;
   availability: Availability;
-  /** Client-side validation message, shown before availability is consulted. */
-  validationError: string | null;
+  /** Raw validation result for the current value; the field decides when
+   *  it's fair to show it. `null` when valid or empty. */
+  labelError: LabelError | null;
+  /** The normalised `label.evmaverick.eth`, or null while invalid. */
+  fullName: string | null;
   disabled: boolean;
 }
 
 /**
- * The name field.
+ * The name field, with its name plate.
  *
  * `.evmaverick.eth` is rendered as a static suffix rather than left in the
  * input, so there's nothing to delete by accident and no ambiguity about what
  * the user is actually naming. 16px minimum font size — anything smaller and
  * iOS Safari zooms the viewport on focus.
+ *
+ * Under the field, a fixed-height arcade plate spells out the full
+ * NAME.EVMAVERICK.ETH as it's typed, and a verdict is stamped onto it: WAIT,
+ * FREE, TAKEN, SHORT, NOPE, RETRY. The status is always a word in a box,
+ * never colour alone. The plate is decorative; the same status is announced
+ * in words through a visually hidden live region.
  */
 export function LabelInput({
   value,
   onChange,
-  onSubmit,
   availability,
-  validationError,
+  labelError,
+  fullName,
   disabled,
 }: LabelInputProps) {
-  const hint = describe(availability, validationError, value);
+  const { status, isBad, inputProps, focusFromFrame } = useNameFieldStatus({
+    value,
+    onChange,
+    availability,
+    labelError,
+  });
+
+  const stamp = stampFor(status);
+  // Live preview of what's being claimed. Uses the normalised name once it's
+  // valid, so the plate shows what the registry will actually see.
+  const shown = fullName ?? `${value || "yourname"}.${PARENT_NAME}`;
 
   return (
     <div className="flex flex-col gap-2">
@@ -42,33 +65,26 @@ export function LabelInput({
       </label>
 
       <div
+        // The suffix is part of the field visually, so clicking it should
+        // behave like clicking the field. Mouse-only nicety: keyboard and
+        // screen-reader users reach the input directly.
+        onMouseDown={focusFromFrame}
         className={cn(
-          "flex items-stretch border-2 bg-raised transition-colors duration-150",
-          "focus-within:border-amber-400",
-          hint?.tone === "bad" ? "border-rose-600" : "border-edge-strong",
-          disabled && "opacity-100 border-ink-700 bg-ink-900",
+          "flex cursor-text items-stretch border-2 bg-raised transition-colors duration-150",
+          // An error keeps its border while the field is focused, so the
+          // problem stays visible as the user corrects it.
+          isBad
+            ? "border-rose-600"
+            : [
+                "border-edge-strong focus-within:border-amber-400",
+                "not-focus-within:hover:border-ink-500",
+              ],
+          disabled && "cursor-not-allowed border-ink-700 bg-ink-900",
         )}
       >
         <input
-          id="label"
-          name="label"
-          value={value}
+          {...inputProps}
           disabled={disabled}
-          autoComplete="off"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          inputMode="text"
-          placeholder="yourname"
-          aria-describedby="label-hint"
-          aria-invalid={hint?.tone === "bad" || undefined}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              onSubmit();
-            }
-          }}
           className={cn(
             // 16px floor: smaller and iOS zooms the page on focus.
             "min-w-0 flex-1 bg-transparent px-4 py-3.5 text-base",
@@ -78,53 +94,113 @@ export function LabelInput({
         />
         <span
           aria-hidden
-          className={cn(
-            "flex shrink-0 items-center border-l-2 border-edge-strong px-3",
-            "text-sm text-ink-400 select-none",
-          )}
+          className="text-ink-400 flex shrink-0 items-center border-l-2 border-inherit px-3 text-sm select-none"
         >
           .{PARENT_NAME}
         </span>
       </div>
 
-      {/* Reserved height stops the card jumping as hints appear and clear. */}
-      <p
-        id="label-hint"
-        role="status"
-        aria-live="polite"
-        className={cn(
-          "min-h-[1.25rem] text-xs",
-          hint?.tone === "bad" && "text-rose-400",
-          hint?.tone === "good" && "text-jade-400",
-          hint?.tone === "neutral" && "text-ink-400",
-        )}
+      {/* The plate. Fixed height, two fixed lines: nothing below it moves. */}
+      <div
+        aria-hidden
+        data-name-plate
+        className="border-edge bg-canvas flex h-16 items-center gap-3 border-2 px-3"
       >
-        {hint?.text ?? ""}
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <span
+            className={cn(
+              "font-display truncate text-[10px] uppercase leading-none",
+              value ? "text-amber-300" : "text-ink-500",
+            )}
+          >
+            {shown}
+          </span>
+          <span className="text-ink-400 truncate text-xs leading-none">
+            {detail(status)}
+          </span>
+        </div>
+
+        {/* Fixed-width stamp slot so the name's truncation point never
+            jumps as the verdict changes length. */}
+        <span className="grid w-[5.5rem] shrink-0 place-items-center">
+          {stamp && (
+            <span
+              key={status.kind}
+              className={cn(
+                "font-display border-2 px-1.5 py-1 text-[10px] leading-none uppercase",
+                status.kind !== "checking" && "animate-stamp -rotate-4",
+                stamp.className,
+              )}
+            >
+              {stamp.text}
+              {status.kind === "checking" && (
+                <span className="animate-cursor-blink ml-0.5 inline-block">
+                  _
+                </span>
+              )}
+            </span>
+          )}
+        </span>
+      </div>
+
+      {/* The accessible status, in words. The plate above is decorative. */}
+      <p id="label-hint" role="status" aria-live="polite" className="sr-only">
+        {announcement(status, fullName)}
       </p>
     </div>
   );
 }
 
-type Hint = { text: string; tone: "good" | "bad" | "neutral" };
-
-function describe(
-  availability: Availability,
-  validationError: string | null,
-  value: string,
-): Hint | null {
-  if (validationError) return { text: validationError, tone: "bad" };
-  if (value.length === 0) return null;
-
-  switch (availability.status) {
+function stampFor(status: NameStatus) {
+  switch (status.kind) {
     case "checking":
-      return { text: "Checking…", tone: "neutral" };
+      return { text: "Wait", className: "border-ink-600 text-ink-300" };
     case "available":
-      return { text: "Available.", tone: "good" };
+      return { text: "Free", className: "border-jade-400 text-jade-400" };
     case "taken":
-      return { text: "Already taken. Try another.", tone: "bad" };
-    case "error":
-      return { text: "Couldn't check that name. Try again.", tone: "bad" };
+      return { text: "Taken", className: "border-rose-400 text-rose-400" };
+    case "check-failed":
+      return { text: "Retry", className: "border-amber-400 text-amber-300" };
+    case "invalid":
+      return {
+        text: status.error === "too-short" ? "Short" : "Nope",
+        className: "border-rose-400 text-rose-400",
+      };
     default:
       return null;
+  }
+}
+
+function detail(status: NameStatus) {
+  switch (status.kind) {
+    case "checking":
+      return "Checking availability…";
+    case "available":
+      return "Yours to claim.";
+    case "taken":
+      return "Someone got here first. Try another.";
+    case "check-failed":
+      return "Couldn't check. Edit the name to retry.";
+    case "invalid":
+      return status.message;
+    default:
+      return "This is how your name will read.";
+  }
+}
+
+function announcement(status: NameStatus, fullName: string | null) {
+  switch (status.kind) {
+    case "checking":
+      return "Checking availability…";
+    case "available":
+      return `Available: ${fullName}`;
+    case "taken":
+      return "Taken. Try another name.";
+    case "check-failed":
+      return "Couldn't check this name. Edit it to try again.";
+    case "invalid":
+      return status.message;
+    default:
+      return "";
   }
 }

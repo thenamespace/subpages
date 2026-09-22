@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAccount, usePublicClient } from "wagmi";
 import { mainnet } from "wagmi/chains";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
@@ -32,6 +32,7 @@ export function ManageView({ preview }: { preview: boolean }) {
   const { address, isConnected } = useAccount();
   const client = usePublicClient({ chainId: mainnet.id });
   const { openConnectModal } = useConnectModal();
+  const router = useRouter();
 
   const [result, setResult] = useState<ListResult | null>(null);
   const [selected, setSelected] = useState<OwnedName | null>(null);
@@ -110,13 +111,15 @@ export function ManageView({ preview }: { preview: boolean }) {
     return (
       <PixelPanel className="w-full max-w-lg p-6 sm:p-8">
         <div className="flex flex-col gap-4">
-          <h2 className="font-display text-amber-300 text-xs uppercase">
-            Connect to manage
-          </h2>
-          <p className="text-ink-300 max-w-[52ch] text-sm leading-relaxed">
-            Your names and their records live on-chain. Connect the wallet that
-            holds them.
-          </p>
+          <div className="flex flex-col gap-2">
+            <h2 className="font-display text-amber-300 text-xs uppercase">
+              Connect to manage
+            </h2>
+            <p className="text-ink-300 max-w-[52ch] text-sm leading-relaxed">
+              Your names and their records live on-chain. Connect the wallet
+              that holds them.
+            </p>
+          </div>
           <PixelButton onClick={() => openConnectModal?.()}>
             Connect wallet
           </PixelButton>
@@ -128,7 +131,7 @@ export function ManageView({ preview }: { preview: boolean }) {
   return (
     <>
     <PixelPanel className="w-full max-w-lg p-6 sm:p-8">
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <h2 className="font-display text-amber-300 text-xs uppercase">
             Your names
@@ -139,12 +142,14 @@ export function ManageView({ preview }: { preview: boolean }) {
         </div>
 
         {listStatus === "loading" && (
-          <p className="text-ink-400 text-sm">Loading…</p>
+          <p className="text-ink-400 text-sm">Loading your names…</p>
         )}
 
         {listStatus === "error" && (
           <div className="flex flex-col gap-3">
-            <p className="text-rose-400 text-sm">{current?.error}</p>
+            <p role="alert" className="text-rose-400 text-sm leading-relaxed">
+              {current?.error}
+            </p>
             <PixelButton
               variant="secondary"
               onClick={() => setNonce((n) => n + 1)}
@@ -159,9 +164,11 @@ export function ManageView({ preview }: { preview: boolean }) {
             <p className="text-ink-300 text-sm leading-relaxed">
               This wallet doesn&apos;t hold any {PARENT_NAME} names yet.
             </p>
-            <Link href="/">
-              <PixelButton className="w-full">Claim one</PixelButton>
-            </Link>
+            {/* A button, not a button inside a link: nested interactive
+                elements give keyboard users two tab stops for one action. */}
+            <PixelButton className="w-full" onClick={() => router.push("/")}>
+              Claim a name
+            </PixelButton>
           </div>
         )}
 
@@ -172,12 +179,12 @@ export function ManageView({ preview }: { preview: boolean }) {
                 <button
                   type="button"
                   onClick={() => openName(n)}
-                  className="border-edge bg-raised hover:border-amber-400 flex w-full cursor-pointer items-center gap-3 border-2 p-3 text-left transition-colors duration-150"
+                  className="group border-edge bg-raised hover:border-amber-400 flex w-full cursor-pointer items-center gap-3 border-2 px-4 py-3 text-left transition-colors duration-150"
                 >
                   <span className="text-ink-100 min-w-0 flex-1 truncate text-sm">
                     {n.name}
                   </span>
-                  <span className="font-display text-ink-500 shrink-0 text-[9px] uppercase">
+                  <span className="font-display text-ink-400 group-hover:text-amber-300 shrink-0 text-[10px] uppercase tracking-[0.14em] transition-colors duration-150">
                     Edit
                   </span>
                 </button>
@@ -202,12 +209,12 @@ export function ManageView({ preview }: { preview: boolean }) {
 
       {recordState?.status === "error" && (
         <div className="flex flex-col gap-3">
-          <p className="text-rose-400 text-sm leading-relaxed">
-            Couldn&apos;t read this name&apos;s current records, so the editor
-            stays closed — opening it blank would risk clearing records that
-            are already set.
+          <p role="alert" className="text-rose-400 text-sm leading-relaxed">
+            Couldn&apos;t read this name&apos;s current records. The editor
+            stays closed so a blank form can&apos;t overwrite records that are
+            already set.
           </p>
-          <p className="text-ink-500 text-xs">{recordState.message}</p>
+          <p className="text-ink-400 text-xs">{recordState.message}</p>
           <PixelButton
             variant="secondary"
             onClick={() => selected && openName(selected)}

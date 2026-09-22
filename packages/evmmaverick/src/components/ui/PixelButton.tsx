@@ -27,6 +27,10 @@ export const PixelButton = forwardRef<HTMLButtonElement, PixelButtonProps>(
     ref,
   ) {
     const isDisabled = disabled || loading;
+    // Loading keeps the variant's colours so an in-flight action doesn't
+    // read as a disabled or failed one; only a truly disabled button greys out.
+    const showVariant = !disabled || loading;
+    const ghost = variant === "ghost";
 
     return (
       <button
@@ -36,34 +40,37 @@ export const PixelButton = forwardRef<HTMLButtonElement, PixelButtonProps>(
         className={cn(
           "font-display relative inline-flex items-center justify-center gap-2",
           "px-5 py-3.5 text-[11px] uppercase tracking-[0.12em] select-none",
-          "border-2 transition-[transform,box-shadow,background-color] duration-[70ms] ease-out",
+          "border-2 transition-[transform,box-shadow,background-color,border-color,color] duration-[70ms] ease-out",
           "focus-visible:outline-2 focus-visible:outline-offset-2",
-          !isDisabled && [
-            "cursor-pointer",
+          !isDisabled && "cursor-pointer",
+          loading && "cursor-wait",
+          // Depth and the press, for the raised variants only.
+          !ghost && !isDisabled && [
             "shadow-[4px_4px_0_var(--color-ink-950)]",
             "active:translate-x-[3px] active:translate-y-[3px]",
             "active:shadow-[1px_1px_0_var(--color-ink-950)]",
           ],
           variant === "primary" &&
-            !isDisabled && [
+            showVariant && [
               "bg-amber-400 text-ink-950 border-amber-200",
-              "hover:bg-amber-300",
+              !isDisabled && "hover:bg-amber-300",
             ],
           variant === "secondary" &&
-            !isDisabled && [
+            showVariant && [
               "bg-ink-800 text-ink-200 border-ink-600",
-              "hover:bg-ink-700 hover:border-ink-500",
+              !isDisabled && "hover:bg-ink-700 hover:border-ink-500",
             ],
-          variant === "ghost" &&
-            !isDisabled && [
-              "bg-transparent text-ink-300 border-transparent shadow-none",
-              "hover:text-amber-300 active:translate-x-0 active:translate-y-0",
-              "active:shadow-none",
-            ],
-          isDisabled && [
-            "cursor-not-allowed bg-ink-800 text-ink-400 border-ink-700",
-            "shadow-none",
+          ghost && [
+            "bg-transparent border-transparent",
+            showVariant ? "text-ink-300" : "text-ink-500",
+            !isDisabled && "hover:text-amber-300",
           ],
+          !ghost &&
+            !showVariant && [
+              "cursor-not-allowed bg-ink-800 text-ink-400 border-ink-700",
+            ],
+          !ghost && loading && "shadow-[4px_4px_0_var(--color-ink-950)]",
+          ghost && disabled && "cursor-not-allowed",
           className,
         )}
         {...props}

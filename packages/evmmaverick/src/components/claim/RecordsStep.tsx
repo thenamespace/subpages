@@ -5,13 +5,14 @@ import { EnsScope } from "@/components/ens/EnsScope";
 import { PixelButton } from "@/components/ui/PixelButton";
 import { PixelDialog } from "@/components/ui/PixelDialog";
 import { countRecords, type FormRecords } from "@/lib/records";
+import type { MintStep } from "@/hooks/useMint";
 
 /**
  * Optional profile step, shown between picking a name and claiming it.
  *
  * Setting records at mint time is one transaction; setting them afterwards is
- * a second one, so it's worth offering here — but never worth blocking on,
- * hence the prominent skip.
+ * a second one, so it's worth offering here — but never worth blocking on:
+ * with no records set, the primary action is simply "Claim name".
  *
  * `SelectRecordsForm` is fully controlled and does no transacting of its own,
  * so the records live here and travel into the mint call. Its `actionButtons`
@@ -24,7 +25,8 @@ export function RecordsStep({
   onRecordsChange,
   onBack,
   onContinue,
-  busy,
+  step,
+  error,
   fullName,
 }: {
   open: boolean;
@@ -32,10 +34,13 @@ export function RecordsStep({
   onRecordsChange: (next: FormRecords) => void;
   onBack: () => void;
   onContinue: () => void;
-  busy: boolean;
+  step: MintStep;
+  /** The mint error. Shown here too, since the dialog covers the card's. */
+  error: string | null;
   fullName: string;
 }) {
   const count = countRecords(records);
+  const busy = step === "signing" || step === "pending";
 
   return (
     <PixelDialog
@@ -46,7 +51,7 @@ export function RecordsStep({
         if (!next && !busy) onBack();
       }}
       title={fullName}
-      description="Optional, and free to skip — but adding records now costs one transaction instead of two."
+      description="Optional. Records you add now go into the claim transaction, so you only pay gas once."
     >
       <div className="flex flex-col gap-5">
         <EnsScope>
@@ -70,10 +75,27 @@ export function RecordsStep({
 
         <div className="flex flex-col gap-3">
           <PixelButton onClick={onContinue} loading={busy} className="w-full">
-            {count > 0
-              ? `Claim with ${count} record${count === 1 ? "" : "s"}`
-              : "Claim name"}
+            {step === "signing"
+              ? "Confirm in wallet"
+              : step === "pending"
+                ? "Claiming…"
+                : count > 0
+                  ? `Claim with ${count} record${count === 1 ? "" : "s"}`
+                  : "Claim name"}
           </PixelButton>
+
+          {error && (
+            <p role="alert" className="text-rose-400 text-xs leading-relaxed">
+              {error}
+            </p>
+          )}
+
+          {step === "pending" && (
+            <p className="text-ink-400 text-center text-xs">
+              Waiting for the transaction to confirm. This can take a minute.
+            </p>
+          )}
+
           <PixelButton variant="ghost" onClick={onBack} disabled={busy}>
             Back to name
           </PixelButton>

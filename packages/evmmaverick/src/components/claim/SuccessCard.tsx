@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
-import { useSoundContext } from "@/components/SoundProvider";
-import { playRoar, playRoarNow, ROAR_DURATION_MS } from "@/lib/roar";
+import { ROAR_DURATION_MS } from "@/lib/roar";
 import { PixelButton } from "@/components/ui/PixelButton";
 import { shortAddress } from "@/lib/format";
 
@@ -20,26 +19,22 @@ export function SuccessCard({
   onClaimAnother: () => void;
 }) {
   const router = useRouter();
-  const { enabled: soundEnabled } = useSoundContext();
+  // Visual only. The sound is played by ClaimCard when the mint's receipt
+  // confirms, so a preview or a re-mount of this card stays silent.
   const [roaring, setRoaring] = useState(false);
   // The card can re-render for reasons that have nothing to do with the mint
-  // (quota refresh, a parent state change). Without this guard the roar fires
-  // again on each one.
-  const roared = useRef(false);
+  // (quota refresh, a parent state change). Without this guard the flash
+  // replays on each one.
+  const flashed = useRef(false);
 
   useEffect(() => {
-    if (roared.current) return;
-    roared.current = true;
+    if (flashed.current) return;
+    flashed.current = true;
 
     setRoaring(true);
-    if (soundEnabled) playRoar();
-
     // Hold the visual for as long as the roar lasts.
     const timer = setTimeout(() => setRoaring(false), ROAR_DURATION_MS);
     return () => clearTimeout(timer);
-    // Deliberately runs once on mount: the success card only mounts when a
-    // mint confirms, and toggling sound afterwards shouldn't re-trigger it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -87,23 +82,11 @@ export function SuccessCard({
         <h2 className="font-display text-amber-300 text-sm leading-relaxed break-all">
           {name}
         </h2>
-        <p className="text-ink-400 max-w-[46ch] text-sm leading-relaxed">
-          It resolves to your wallet already. Set an avatar and other records
-          any time from the ENS manager.
+        <p className="text-ink-300 mx-auto max-w-[46ch] text-sm leading-relaxed">
+          It already resolves to your wallet. Change its avatar and records any
+          time from Manage records.
         </p>
       </div>
-
-      <button
-        type="button"
-        onClick={() => {
-          setRoaring(true);
-          void playRoarNow();
-          setTimeout(() => setRoaring(false), ROAR_DURATION_MS);
-        }}
-        className="font-display text-ink-400 hover:text-amber-300 cursor-pointer text-[9px] uppercase tracking-[0.14em] transition-colors"
-      >
-        ▶ Roar again
-      </button>
 
       <div className="flex flex-wrap items-center justify-center gap-3">
         <PixelButton
@@ -124,7 +107,7 @@ export function SuccessCard({
           href={`https://etherscan.io/tx/${txHash}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-ink-500 hover:text-amber-300 text-xs underline underline-offset-4 transition-colors"
+          className="text-ink-400 hover:text-amber-300 text-xs underline underline-offset-4 transition-colors duration-150"
         >
           Transaction {shortAddress(txHash, 10, 8)}
         </a>

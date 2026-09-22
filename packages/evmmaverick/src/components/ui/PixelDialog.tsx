@@ -51,13 +51,13 @@ export function PixelDialog({
             className,
           )}
         >
-          <div className="flex items-start justify-between gap-4 border-b-2 border-[var(--color-edge)] p-4 sm:p-5">
-            <div className="flex min-w-0 flex-col gap-1">
+          <div className="border-edge flex items-start justify-between gap-4 border-b-2 p-4 sm:p-5">
+            <div className="flex min-w-0 flex-col gap-2">
               <Dialog.Title className="font-display text-amber-300 text-xs break-all uppercase">
                 {title}
               </Dialog.Title>
               {description && (
-                <Dialog.Description className="text-ink-400 text-xs leading-relaxed">
+                <Dialog.Description className="text-ink-300 max-w-[52ch] text-xs leading-relaxed">
                   {description}
                 </Dialog.Description>
               )}
@@ -65,8 +65,11 @@ export function PixelDialog({
             <Dialog.Close
               aria-label="Close"
               className={cn(
-                "text-ink-400 hover:text-amber-300 grid size-8 shrink-0",
-                "cursor-pointer place-items-center transition-colors",
+                // 40px target around a 14px glyph, pulled into the header's
+                // padding so the glyph still lines up with the title.
+                "text-ink-400 hover:text-amber-300 focus-visible:text-amber-300",
+                "-mr-2 -mt-2.5 grid size-10 shrink-0 cursor-pointer place-items-center",
+                "transition-colors duration-150",
               )}
             >
               <svg viewBox="0 0 12 12" className="size-3.5" shapeRendering="crispEdges" aria-hidden>

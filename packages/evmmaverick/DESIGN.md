@@ -89,6 +89,7 @@ rendered art look like a rendering mistake rather than depth.
 - The success tick animates on discrete keyframes held at `linear`, not a
   smooth ease — a sprite that scales continuously goes soft between whole
   pixels.
+- The name plate's stamp and cursor use stepped keyframes too.
 - `prefers-reduced-motion` collapses every duration to 0.01ms.
 
 ## Components
@@ -97,23 +98,28 @@ rendered art look like a rendering mistake rather than depth.
 | --- | --- |
 | `PixelButton` | Three variants, one primary per view. Disabled uses a token, not opacity. Loading shows a stepped square, never a spinning circle. |
 | `PixelPanel` | Solid border, hard shadow, scanline overlay under 4% alpha. |
-| `LabelInput` | Suffix `.evmaverick.eth` rendered outside the field so it can't be deleted. Hint row has reserved height so the card doesn't jump. |
+| `LabelInput` | Suffix `.evmaverick.eth` rendered outside the field so it can't be deleted. Spaces are stripped on type and paste. Below it, a fixed-height name plate spells out the full name and stamps the verdict (WAIT, FREE, TAKEN, SHORT, NOPE, RETRY). "Too short" waits for a pause or blur; the loader only shows after 500ms. |
 | `QuotaPips` | One pip per NFT, filled = claimed. Decorative; the sentence beside it is the accessible label. |
 | `gateNotice` | Every blocked state in one place. A plain function, not a component — the caller needs to know whether anything is blocking. |
+| `PixelDialog` | The one modal in the flow, used for record editing. Claim errors and the pending note render inside it, never behind it. |
+| `SuccessCard` | Pixel tick rather than the lion, which already sits in the hero above. |
 
 The record editor comes from `@thenamespace/ens-components`, themed onto our
-palette through `.ens-scope` (see `src/app/ens-theme.css`). Everything else is
-hand-built: the page needs six components in a fully custom pixel
-aesthetic, and there is no modal, tooltip or toast anywhere in the flow — the
-places where a headless library actually earns its keep. Everything here is
-hand-built on plain elements.
-| `SuccessCard` | Pixel tick rather than the lion, which already sits in the hero above. |
+palette through `.ens-scope` (see `src/app/ens-theme.css`) and shown in
+`PixelDialog`. Everything else is hand-built on plain elements in the pixel
+aesthetic. There is no tooltip or toast anywhere in the flow.
+
+## Sound
+
+One sound: the roar (`public/roar.mp3`), played only after the claim
+transaction confirms. Nothing plays on load, click or record edits, and the
+header mute toggle is respected even if flipped mid-transaction.
 
 ## Accessibility
 
 One focus treatment, applied through `:focus-visible` and never removed: a
 2px iris outline at 2px offset. Real `<button>` elements throughout. The
-availability hint is an `aria-live="polite"` status; mint errors are
+availability status is a visually hidden `aria-live="polite"` status; mint errors are
 `role="alert"`. Errors carry text, not just colour. The decorative gradient
 is `pointer-events: none` so a full-bleed layer can't swallow clicks.
 

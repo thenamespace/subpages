@@ -165,8 +165,8 @@ worldwide by the copyright holder. Cut to the louder of the two roars in the
 original, normalised, mono, 24KB. No attribution is legally required; it is
 recorded here so nobody has to wonder where a shipped asset came from.
 
-If the file can't be fetched or decoded, `src/lib/roar.ts` falls back to a
-synthesised roar, so a blocked asset degrades to a lesser roar rather than
-silence.
+The roar is the page's only sound. It plays once, when a claim transaction
+confirms, and never on page load, previews, clicks or record edits. If the
+file can't be fetched or decoded, the claim is silent.
 
 See [DESIGN.md](./DESIGN.md) for the colour, type and component schema.

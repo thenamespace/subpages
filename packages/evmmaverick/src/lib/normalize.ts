@@ -6,15 +6,29 @@ export type LabelError =
   | "too-short"
   | "too-long"
   | "has-dot"
+  | "has-space"
   | "invalid";
 
 const MESSAGES: Record<LabelError, string> = {
   empty: "Pick a name.",
   "too-short": `At least ${LABEL_MIN_LENGTH} characters.`,
   "too-long": `At most ${LABEL_MAX_LENGTH} characters.`,
-  "has-dot": "No dots — you're only choosing the part before the name.",
+  "has-dot": "No dots. You're only choosing the part before the name.",
+  "has-space": "No spaces.",
   invalid: "That character isn't allowed in an ENS name.",
 };
+
+/**
+ * Every whitespace character, plus the invisible zero-width ones that paste in
+ * from chat apps and docs. ZWJ (U+200D) is deliberately left out: ENS allows it
+ * inside emoji sequences.
+ */
+export const WHITESPACE = /[\s\u200B\u2060\uFEFF]/gu;
+
+/** Remove whitespace, so a pasted "my name" becomes "myname". */
+export function stripWhitespace(value: string) {
+  return value.replace(WHITESPACE, "");
+}
 
 export function labelErrorMessage(error: LabelError) {
   return MESSAGES[error];
@@ -34,6 +48,12 @@ export function validateLabel(
   const trimmed = raw.trim();
 
   if (trimmed.length === 0) return { ok: false, error: "empty" };
+  // The input strips whitespace as it's typed or pasted, so this only guards
+  // other callers. Checked explicitly rather than trusting normalisation to
+  // reject every Unicode space.
+  if (stripWhitespace(trimmed) !== trimmed) {
+    return { ok: false, error: "has-space" };
+  }
   if (trimmed.includes(".")) return { ok: false, error: "has-dot" };
 
   let normalised: string;

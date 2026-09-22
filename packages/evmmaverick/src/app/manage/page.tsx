@@ -38,7 +38,7 @@ export default async function ManagePage({
 
         <main className="flex flex-1 flex-col items-center gap-8 py-4">
           <div className="flex flex-col items-center gap-3 text-center">
-            <h1 className="font-display text-amber-300 text-base leading-relaxed sm:text-lg">
+            <h1 className="font-display text-amber-300 text-base leading-relaxed sm:text-xl">
               Manage your names
             </h1>
             <p className="text-ink-300 mx-auto max-w-[46ch] text-sm leading-relaxed">
@@ -51,7 +51,7 @@ export default async function ManagePage({
 
           <Link
             href="/"
-            className="text-ink-500 hover:text-amber-300 text-xs underline underline-offset-4 transition-colors"
+            className="text-ink-400 hover:text-amber-300 text-xs underline underline-offset-4 transition-colors duration-150"
           >
             Back to claiming
           </Link>
