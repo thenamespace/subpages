@@ -237,9 +237,11 @@
     to   { opacity: 1; }
   }
 
+  /* Scale and fade only. Centring is done by PixelDialog's grid wrapper,
+     so this keyframe can own the panel's transform outright. */
   @keyframes dialog-in {
-    from { opacity: 0; transform: translate(-50%, -48%) scale(0.98); }
-    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    from { opacity: 0; transform: scale(0.96); }
+    to   { opacity: 1; transform: scale(1); }
   }
 }
 
