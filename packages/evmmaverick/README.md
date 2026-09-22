@@ -52,10 +52,17 @@ records live in our state and travel into the mint call. `/manage` uses
 Both editors open in a modal (`PixelDialog`, built on Radix Dialog for the
 focus trap, Escape handling and scroll lock).
 
-**Avatar uploads** are enabled on `/manage` only. The library authenticates
-uploads with a SIWE signature against the name, so it needs a name that exists
-on-chain and belongs to you — which rules out the pre-claim step, where the
-name hasn't been minted yet. An avatar URL can still be pasted there.
+**Avatar and header uploads** are enabled in both editors, and they are
+opt-in: without an upload context the components silently fall back to
+URL-only entry, which looks like a missing feature rather than a missing prop.
+
+- `SelectRecordsForm` needs `avatarUpload={{ ensName, siweDomain }}`
+- `EnsRecordsForm` needs `avatarUploadDomain` (bare hostname, no scheme or
+  trailing slash)
+
+The SIWE signature proves control of the connected wallet, not ownership of
+the name, so this works before the name is minted — the same way it does in
+the library's own registration form.
 
 Two things about that library are worth knowing:
 

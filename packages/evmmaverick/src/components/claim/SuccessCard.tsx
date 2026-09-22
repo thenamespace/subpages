@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { useSoundContext } from "@/components/SoundProvider";
-import { playRoar, ROAR_DURATION_MS } from "@/lib/roar";
+import { playRoar, playRoarNow, ROAR_DURATION_MS } from "@/lib/roar";
 import { PixelButton } from "@/components/ui/PixelButton";
 import { shortAddress } from "@/lib/format";
 
@@ -92,6 +92,18 @@ export function SuccessCard({
           any time from the ENS manager.
         </p>
       </div>
+
+      <button
+        type="button"
+        onClick={() => {
+          setRoaring(true);
+          void playRoarNow();
+          setTimeout(() => setRoaring(false), ROAR_DURATION_MS);
+        }}
+        className="font-display text-ink-400 hover:text-amber-300 cursor-pointer text-[9px] uppercase tracking-[0.14em] transition-colors"
+      >
+        ▶ Roar again
+      </button>
 
       <div className="flex flex-wrap items-center justify-center gap-3">
         <PixelButton

@@ -53,6 +53,18 @@ export function RecordsStep({
           <SelectRecordsForm
             records={records}
             onRecordsUpdated={onRecordsChange}
+            // Without this the editor silently degrades to URL-only entry —
+            // the upload UI is gated on having an upload context. The SIWE
+            // signature proves control of the wallet, not ownership of the
+            // name, which is why this works before the name is minted (the
+            // same way it does in the library's registration form).
+            avatarUpload={{
+              ensName: fullName,
+              siweDomain:
+                typeof window === "undefined"
+                  ? undefined
+                  : window.location.hostname,
+            }}
           />
         </EnsScope>
 

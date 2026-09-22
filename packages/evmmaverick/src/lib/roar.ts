@@ -123,19 +123,58 @@ export interface RoarOptions {
 export function playRoar({ volume = 0.5 }: RoarOptions = {}) {
   unlockAudio();
   if (!ctx) return;
+  const context = ctx;
 
-  if (sample) {
-    const source = ctx.createBufferSource();
-    source.buffer = sample;
-    const gain = ctx.createGain();
-    gain.gain.value = volume;
-    source.connect(gain).connect(ctx.destination);
-    source.start();
+  const emit = () => {
+    if (sample) {
+      const source = context.createBufferSource();
+      source.buffer = sample;
+      const gain = context.createGain();
+      gain.gain.value = volume;
+      source.connect(gain).connect(context.destination);
+      source.start();
+      return;
+    }
+    // Not decoded (or the file failed) — synthesise instead.
+    synthRoar(volume * 0.45);
+  };
+
+  // A context created outside a user gesture starts suspended, and playing
+  // into it is silent. Resuming first is what makes the roar audible when the
+  // success screen is reached without a fresh click — a preview link, a
+  // restored tab. If the page has never been interacted with at all the
+  // browser refuses, and nothing here can or should override that.
+  if (context.state === "suspended") {
+    void context
+      .resume()
+      .then(() => {
+        if (context.state === "running") emit();
+      })
+      .catch(() => {});
     return;
   }
 
-  // Either still decoding or the file failed — synthesise instead.
-  synthRoar(volume * 0.45);
+  emit();
+}
+
+/**
+ * Load the sample if it isn't already, then roar. Used by the replay control,
+ * where the click guarantees permission but the sample may never have been
+ * preloaded (nobody went through the claim flow in this tab).
+ */
+export async function playRoarNow(options?: RoarOptions) {
+  unlockAudio();
+  if (!ctx) return;
+  if (ctx.state === "suspended") {
+    try {
+      await ctx.resume();
+    } catch {
+      return;
+    }
+  }
+  preloadRoar();
+  if (loading) await loading;
+  playRoar(options);
 }
 
 /** The fallback roar, built from oscillators. See the note at the top. */
