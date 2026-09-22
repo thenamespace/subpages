@@ -38,6 +38,30 @@ A few consequences worth knowing before someone reports them as bugs:
   it. Submitting disables the button and the quota is re-read afterwards, but
   the race is not closed.
 
+## Editing records
+
+Records can be set **before claiming** (an optional profile step, which folds
+them into the mint so it stays one transaction) and **after**, at `/manage`.
+
+Both use `@thenamespace/ens-components`. The claim step uses
+`SelectRecordsForm`, which is fully controlled and does no transacting — the
+records live in our state and travel into the mint call. `/manage` uses
+`EnsRecordsForm`, which diffs against the current records and submits one
+`multicall` to the resolver.
+
+Two things about that library are worth knowing:
+
+- **It is write-only.** Nothing in it reads a name's current records, so
+  `src/lib/readRecords.ts` does that (one resolver lookup, one multicall). This
+  is load-bearing, not cosmetic: the form diffs against whatever it is handed,
+  so opening it after a failed read would show a blank form whose save would
+  clear records that were already set. A failed read therefore blocks the
+  editor instead of opening it empty.
+- **It themes through ~140 `--ns-*` variables.** `src/app/ens-theme.css` maps
+  every colour token onto our palette, scoped to `.ens-scope` so nothing leaks
+  onto the rest of the page. Its own dark theme is not usable: `[data-theme]`
+  only redefines legacy aliases that most components no longer read.
+
 ## Setup
 
 ```bash

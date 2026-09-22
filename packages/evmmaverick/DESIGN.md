@@ -101,7 +101,9 @@ rendered art look like a rendering mistake rather than depth.
 | `QuotaPips` | One pip per NFT, filled = claimed. Decorative; the sentence beside it is the accessible label. |
 | `gateNotice` | Every blocked state in one place. A plain function, not a component — the caller needs to know whether anything is blocking. |
 
-No component library. The page needs six components in a fully custom pixel
+The record editor comes from `@thenamespace/ens-components`, themed onto our
+palette through `.ens-scope` (see `src/app/ens-theme.css`). Everything else is
+hand-built: the page needs six components in a fully custom pixel
 aesthetic, and there is no modal, tooltip or toast anywhere in the flow — the
 places where a headless library actually earns its keep. Everything here is
 hand-built on plain elements.

@@ -14,8 +14,11 @@ import { useAvailability } from "@/hooks/useAvailability";
 import { useListing } from "@/hooks/useListing";
 import { useMint } from "@/hooks/useMint";
 import { useQuota } from "@/hooks/useQuota";
+import { PARENT_NAME } from "@/lib/config";
 import { labelErrorMessage, validateLabel } from "@/lib/normalize";
 import { unlockAudio } from "@/lib/roar";
+import { RecordsStep } from "./RecordsStep";
+import { EMPTY_RECORDS, toMintRecords, type FormRecords } from "@/lib/records";
 import { __resetListingCache } from "@/lib/listing";
 import type { PreviewState } from "@/lib/preview";
 
@@ -28,6 +31,9 @@ export function ClaimCard({ preview }: { preview: PreviewState | null }) {
   const { state: mintState, mint, reset } = useMint(registerLocalMint);
 
   const [raw, setRaw] = useState("");
+  // "name" -> pick a label, "records" -> optional profile before claiming.
+  const [stage, setStage] = useState<"name" | "records">("name");
+  const [records, setRecords] = useState<FormRecords>(EMPTY_RECORDS);
 
   // Validate on every keystroke but only surface the message once the user has
   // typed enough to have meant something — flagging "too short" at one
@@ -58,6 +64,8 @@ export function ClaimCard({ preview }: { preview: PreviewState | null }) {
   const handleClaimAnother = useCallback(() => {
     reset();
     setRaw("");
+    setStage("name");
+    setRecords(EMPTY_RECORDS);
   }, [reset]);
 
   // A node when something blocks claiming, null when the form should show.
@@ -74,9 +82,9 @@ export function ClaimCard({ preview }: { preview: PreviewState | null }) {
   const startMint = useCallback(
     (value: string) => {
       unlockAudio();
-      void mint(value);
+      void mint(value, toMintRecords(records));
     },
-    [mint],
+    [mint, records],
   );
 
   const isBusy = step === "signing" || step === "pending";
@@ -125,53 +133,66 @@ export function ClaimCard({ preview }: { preview: PreviewState | null }) {
                   </div>
                 ) : (
                   <>
-                    <QuotaPips quota={quota} />
+                    {stage === "records" ? (
+                      <RecordsStep
+                        records={records}
+                        onRecordsChange={setRecords}
+                        onBack={() => setStage("name")}
+                        onContinue={() => label && startMint(label)}
+                        busy={isBusy}
+                        fullName={`${label ?? "yourname"}.${PARENT_NAME}`}
+                      />
+                    ) : (
+                      <>
+                      <QuotaPips quota={quota} />
 
-                    <LabelInput
-                      value={raw}
-                      onChange={setRaw}
-                      onSubmit={() => canSubmit && label && startMint(label)}
-                      availability={availability}
-                      validationError={validationError}
-                      disabled={isBusy}
-                    />
+                      <LabelInput
+                        value={raw}
+                        onChange={setRaw}
+                        onSubmit={() => canSubmit && setStage("records")}
+                        availability={availability}
+                        validationError={validationError}
+                        disabled={isBusy}
+                      />
 
-                    <div className="flex flex-col gap-3">
-                      <PixelButton
-                        onClick={() => label && startMint(label)}
-                        disabled={!canSubmit}
-                        loading={isBusy}
-                        className="w-full"
-                      >
-                        {step === "signing"
-                          ? "Confirm in wallet"
-                          : step === "pending"
-                            ? "Claiming…"
-                            : "Claim name"}
-                      </PixelButton>
-
-                      {mintState.error && (
-                        <p
-                          role="alert"
-                          className="text-rose-400 text-xs leading-relaxed"
+                      <div className="flex flex-col gap-3">
+                        <PixelButton
+                          onClick={() => setStage("records")}
+                          disabled={!canSubmit}
+                          loading={isBusy}
+                          className="w-full"
                         >
-                          {mintState.error}
-                        </p>
-                      )}
+                          {step === "signing"
+                            ? "Confirm in wallet"
+                            : step === "pending"
+                              ? "Claiming…"
+                              : "Continue"}
+                        </PixelButton>
 
-                      {step === "pending" && (
-                        <p className="text-ink-400 text-center text-xs">
-                          Waiting for the transaction to confirm. Safe to leave
-                          this tab open.
-                        </p>
-                      )}
+                        {mintState.error && (
+                          <p
+                            role="alert"
+                            className="text-rose-400 text-xs leading-relaxed"
+                          >
+                            {mintState.error}
+                          </p>
+                        )}
 
-                      {address && step === "idle" && (
-                        <p className="text-ink-500 text-center text-xs">
-                          Claiming to {address.slice(0, 6)}…{address.slice(-4)}
-                        </p>
-                      )}
-                    </div>
+                        {step === "pending" && (
+                          <p className="text-ink-400 text-center text-xs">
+                            Waiting for the transaction to confirm. Safe to leave
+                            this tab open.
+                          </p>
+                        )}
+
+                        {address && step === "idle" && (
+                          <p className="text-ink-500 text-center text-xs">
+                            Claiming to {address.slice(0, 6)}…{address.slice(-4)}
+                          </p>
+                        )}
+                      </div>
+                      </>
+                    )}
                   </>
                 )}
               </>

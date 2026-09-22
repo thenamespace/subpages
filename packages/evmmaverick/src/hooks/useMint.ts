@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAccount, usePublicClient, useSwitchChain, useWalletClient } from "wagmi";
 import { mainnet } from "wagmi/chains";
-import { ChainName } from "@namespacesdk/mint-manager";
+import { ChainName, type EnsRecords } from "@namespacesdk/mint-manager";
 import { EXPIRY_IN_YEARS, PARENT_NAME } from "@/lib/config";
 import { getMintClient } from "@/lib/mintClient";
 import { getTxErrorMessage, isUserRejection } from "@/lib/txError";
@@ -46,7 +46,7 @@ export function useMint(onMinted: () => void) {
   const reset = useCallback(() => setState(INITIAL), []);
 
   const mint = useCallback(
-    async (label: string) => {
+    async (label: string, records?: EnsRecords) => {
       if (!address || !walletClient || !publicClient) return;
 
       const fullName = `${label}.${PARENT_NAME}`;
@@ -100,8 +100,17 @@ export function useMint(onMinted: () => void) {
           minterAddress: address,
           owner: address,
           expiryInYears: EXPIRY_IN_YEARS,
+          // The ETH address always points at the claimer. Anything the user
+          // set in the records step is merged on top, so they can override it
+          // deliberately but never end up with a name resolving nowhere.
           records: {
-            addresses: [{ value: address, chain: ChainName.Ethereum }],
+            ...records,
+            addresses: [
+              { value: address, chain: ChainName.Ethereum },
+              ...(records?.addresses ?? []).filter(
+                (a) => a.chain !== ChainName.Ethereum,
+              ),
+            ],
           },
         });
 

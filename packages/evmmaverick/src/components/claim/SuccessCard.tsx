@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { useSoundContext } from "@/components/SoundProvider";
 import { playRoar } from "@/lib/roar";
@@ -18,6 +19,7 @@ export function SuccessCard({
   canClaimMore: boolean;
   onClaimAnother: () => void;
 }) {
+  const router = useRouter();
   const { enabled: soundEnabled } = useSoundContext();
   const [roaring, setRoaring] = useState(false);
   // The card can re-render for reasons that have nothing to do with the mint
@@ -93,15 +95,9 @@ export function SuccessCard({
       <div className="flex flex-wrap items-center justify-center gap-3">
         <PixelButton
           variant="secondary"
-          onClick={() =>
-            window.open(
-              `https://app.ens.domains/${encodeURIComponent(name)}`,
-              "_blank",
-              "noopener",
-            )
-          }
+          onClick={() => router.push("/manage")}
         >
-          Manage name
+          Manage records
         </PixelButton>
         {canClaimMore && (
           <PixelButton variant="primary" onClick={onClaimAnother}>
