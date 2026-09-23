@@ -1,5 +1,3 @@
-import { mainnet } from "viem/chains";
-
 /**
  * Single source of truth for everything name- and gate-related.
  *
@@ -9,11 +7,14 @@ import { mainnet } from "viem/chains";
  * told to build against), `evmmaverick.eth` and `evmavericks.eth` (the name
  * the EVMavericks collection actually resolves) — so changing it is one edit
  * here and nothing else.
+ *
+ * Where subnames are minted is NOT configured here. It comes from the
+ * Namespace listing at runtime (see lib/nameChain.ts): an L1 listing mints
+ * mainnet ENS subnames, an L2 listing mints into Namespace's Base registry.
+ * Mint, availability and the records editor all follow it, so moving the
+ * listing between L1 and Base needs no code change.
  */
 export const PARENT_NAME = "evmaverick.eth";
-
-/** Chain the parent name lives on. L1 listing, so mainnet. */
-export const PARENT_CHAIN = mainnet;
 
 /**
  * EVMavericks, ERC-721 on Ethereum mainnet. Verified on-chain:

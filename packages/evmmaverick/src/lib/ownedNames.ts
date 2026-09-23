@@ -5,12 +5,15 @@ export interface OwnedName {
   name: string;
   label: string;
   texts?: Record<string, string>;
+  /** Chain the name was minted on: 1 for mainnet ENS, 8453 for Base L2. */
+  chainId: number;
 }
 
 interface IndexerNode {
   name?: string;
   label?: string;
   texts?: Record<string, string>;
+  chainId?: number;
 }
 
 const INDEXER = "https://indexer.namespace.ninja/api/v1/nodes";
@@ -45,6 +48,7 @@ export async function fetchOwnedNames(
         name,
         label: item.label ?? name.split(".")[0],
         texts: item.texts,
+        chainId: item.chainId ?? 1,
       });
     }
 

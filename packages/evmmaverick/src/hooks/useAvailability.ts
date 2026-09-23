@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { mainnet } from "wagmi/chains";
 import { PARENT_NAME } from "@/lib/config";
 import { getMintClient } from "@/lib/mintClient";
+import { resolveNameChain } from "@/lib/nameChain";
 
 export type Availability =
   | { status: "idle" }
@@ -38,9 +40,16 @@ export function useAvailability(label: string | null): Availability {
     const timer = setTimeout(() => {
       void (async () => {
         try {
-          const available = await getMintClient().isL1SubnameAvailable(
-            `${label}.${PARENT_NAME}`,
-          );
+          // L2 names live in their registry, not in mainnet ENS, so the SDK
+          // exposes a separate check that takes the registry's chain id. A
+          // listing that can't be read throws, which surfaces as RETRY.
+          const { chain } = await resolveNameChain();
+          const client = getMintClient();
+          const fullName = `${label}.${PARENT_NAME}`;
+          const available =
+            chain.id === mainnet.id
+              ? await client.isL1SubnameAvailable(fullName)
+              : await client.isL2SubnameAvailable(fullName, chain.id);
           if (!cancelled) {
             setVerdict({ label, status: available ? "available" : "taken" });
           }

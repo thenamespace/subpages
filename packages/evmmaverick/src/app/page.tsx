@@ -59,7 +59,7 @@ export default async function Home({
         </main>
 
         <footer className="text-ink-400 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 pb-2 text-center text-xs">
-          <span>ENS subnames on Ethereum mainnet</span>
+          <span>ENS subnames</span>
           <span aria-hidden className="text-ink-600">
             /
           </span>

@@ -2,18 +2,19 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAccount, usePublicClient } from "wagmi";
-import { mainnet } from "wagmi/chains";
+import { useAccount } from "wagmi";
+import { getPublicClient } from "wagmi/actions";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { EnsRecordsForm } from "@/components/ens/client";
-import { EnsScope } from "@/components/ens/EnsScope";
+import { RecordsEditor } from "@/components/manage/RecordsEditor";
 import { PixelButton } from "@/components/ui/PixelButton";
 import { PixelPanel } from "@/components/ui/PixelPanel";
 import { PixelDialog } from "@/components/ui/PixelDialog";
 import { fetchOwnedNames, type OwnedName } from "@/lib/ownedNames";
+import { L1_NAME_CHAIN, nameChainFor, type NameChain } from "@/lib/nameChain";
 import { readRecords } from "@/lib/readRecords";
 import { EMPTY_RECORDS, type FormRecords } from "@/lib/records";
 import { PARENT_NAME } from "@/lib/config";
+import { wagmiConfig } from "@/lib/wagmi";
 
 /**
  * Stored with the address it was fetched for. Comparing that against the
@@ -25,12 +26,11 @@ type ListResult = { address: string; names?: OwnedName[]; error?: string };
 
 type RecordState =
   | { status: "loading" }
-  | { status: "ready"; records: FormRecords }
+  | { status: "ready"; records: FormRecords; nameChain: NameChain }
   | { status: "error"; message: string };
 
 export function ManageView({ preview }: { preview: boolean }) {
   const { address, isConnected } = useAccount();
-  const client = usePublicClient({ chainId: mainnet.id });
   const { openConnectModal } = useConnectModal();
   const router = useRouter();
 
@@ -65,16 +65,37 @@ export function ManageView({ preview }: { preview: boolean }) {
   // Records are read before the editor opens. The form diffs against what it's
   // given, so opening it with a failed read would show a blank form whose
   // "save" wipes records that are actually set.
+  //
+  // Which chain to read from comes from where the indexer says the name was
+  // minted: mainnet ENS, or Namespace's Base resolver for L2 names. The editor
+  // gets the same chain and resolver, so reads and writes land in one place.
   const openName = useCallback(
     (name: OwnedName) => {
       setSelected(name);
-      if (preview || !client) {
-        setRecordState({ status: "ready", records: EMPTY_RECORDS });
+      if (preview) {
+        setRecordState({
+          status: "ready",
+          records: EMPTY_RECORDS,
+          nameChain: L1_NAME_CHAIN,
+        });
         return;
       }
       setRecordState({ status: "loading" });
-      readRecords(client, name.name)
-        .then((records) => setRecordState({ status: "ready", records }))
+      const nameChain = nameChainFor(name.chainId);
+      const client = getPublicClient(wagmiConfig, {
+        chainId: nameChain.chain.id,
+      });
+      if (!client) {
+        setRecordState({
+          status: "error",
+          message: `No client for ${nameChain.chain.name}`,
+        });
+        return;
+      }
+      readRecords(client, name.name, nameChain.resolver)
+        .then((records) =>
+          setRecordState({ status: "ready", records, nameChain }),
+        )
         .catch((err: unknown) =>
           setRecordState({
             status: "error",
@@ -83,7 +104,7 @@ export function ManageView({ preview }: { preview: boolean }) {
           }),
         );
     },
-    [client, preview],
+    [preview],
   );
 
   const closeName = useCallback(() => {
@@ -102,8 +123,8 @@ export function ManageView({ preview }: { preview: boolean }) {
 
   const names: OwnedName[] = preview
     ? [
-        { name: `roar.${PARENT_NAME}`, label: "roar" },
-        { name: `mane.${PARENT_NAME}`, label: "mane" },
+        { name: `roar.${PARENT_NAME}`, label: "roar", chainId: 1 },
+        { name: `mane.${PARENT_NAME}`, label: "mane", chainId: 1 },
       ]
     : (current?.names ?? []);
 
@@ -225,24 +246,16 @@ export function ManageView({ preview }: { preview: boolean }) {
         )}
 
         {recordState?.status === "ready" && selected && (
-          <EnsScope>
-            <EnsRecordsForm
-              name={selected.name}
-              existingRecords={recordState.records}
-              // Enables avatar and header uploads. The library authenticates
-              // with a SIWE signature against the name, which is why this can
-              // only be offered here: on the claim page the name does not exist
-              // on-chain yet, so there is no ownership to prove.
-              avatarUploadDomain={
-                typeof window === "undefined" ? undefined : window.location.hostname
-              }
-              onCancel={closeName}
-              onRecordsUpdated={() => {
-                setNonce((n) => n + 1);
-                openName(selected);
-              }}
-            />
-          </EnsScope>
+          <RecordsEditor
+            name={selected.name}
+            records={recordState.records}
+            nameChain={recordState.nameChain}
+            onCancel={closeName}
+            onUpdated={() => {
+              setNonce((n) => n + 1);
+              openName(selected);
+            }}
+          />
         )}
       </PixelDialog>
     </>

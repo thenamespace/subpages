@@ -1,11 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAccount, usePublicClient, useSwitchChain, useWalletClient } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
+import { getPublicClient, getWalletClient } from "wagmi/actions";
 import { mainnet } from "wagmi/chains";
 import { ChainName, type EnsRecords } from "@namespacesdk/mint-manager";
 import { EXPIRY_IN_YEARS, PARENT_NAME } from "@/lib/config";
 import { getMintClient } from "@/lib/mintClient";
+import { resolveNameChain, type NameChain } from "@/lib/nameChain";
+import { wagmiConfig } from "@/lib/wagmi";
 import { getTxErrorMessage, isUserRejection } from "@/lib/txError";
 
 export type MintStep = "idle" | "signing" | "pending" | "success";
@@ -25,10 +28,23 @@ const INITIAL: MintState = {
   error: null,
 };
 
+/**
+ * The chain the mint transaction lands on: mainnet for an L1 listing, the
+ * registry's chain (Base) for an L2 one. getListing is cached, so the extra
+ * round-trip only costs the first mint.
+ */
+async function resolveMintChain(): Promise<NameChain["chain"]> {
+  try {
+    return (await resolveNameChain()).chain;
+  } catch {
+    // Fall through to mainnet — the mint-manager's own pre-flight will still
+    // block an unlistable name with a readable error.
+    return mainnet;
+  }
+}
+
 export function useMint(onMinted: () => void) {
   const { address, chain } = useAccount();
-  const { data: walletClient } = useWalletClient({ chainId: mainnet.id });
-  const publicClient = usePublicClient({ chainId: mainnet.id });
   const { switchChainAsync } = useSwitchChain();
 
   const [state, setState] = useState<MintState>(INITIAL);
@@ -47,26 +63,46 @@ export function useMint(onMinted: () => void) {
 
   const mint = useCallback(
     async (label: string, records?: EnsRecords) => {
-      if (!address || !walletClient || !publicClient) return;
+      if (!address) return;
 
+      const mintChain = await resolveMintChain();
       const fullName = `${label}.${PARENT_NAME}`;
       setState({ step: "signing", mintedName: fullName, txHash: null, error: null });
 
-      // The gate NFT and the parent name are both on mainnet, so this is the
-      // only network hop in the whole flow.
-      if (chain?.id !== mainnet.id) {
+      // The mint lands on the listing's registry chain — mainnet for an L1
+      // listing, Base for an L2 one — regardless of the wallet's current
+      // network. The wallet must actually be on it before the clients are
+      // fetched: a hook-captured wallet client for a chain the wallet hasn't
+      // switched to is undefined, and returning silently here reads as
+      // "the button does nothing".
+      if (chain?.id !== mintChain.id) {
         try {
-          await switchChainAsync({ chainId: mainnet.id });
+          await switchChainAsync({ chainId: mintChain.id });
         } catch (err) {
           if (!mounted.current) return;
           setState({
             ...INITIAL,
             error: isUserRejection(err)
               ? null
-              : "Switch to Ethereum mainnet to claim.",
+              : `Switch to ${mintChain.name} to claim.`,
           });
           return;
         }
+      }
+
+      // Fresh clients for the chain the wallet is now on — not hook data
+      // captured before the switch.
+      const walletClient = await getWalletClient(wagmiConfig, {
+        chainId: mintChain.id,
+      });
+      const publicClient = getPublicClient(wagmiConfig, { chainId: mintChain.id });
+      if (!walletClient || !publicClient) {
+        if (!mounted.current) return;
+        setState({
+          ...INITIAL,
+          error: `Couldn't reach ${mintChain.name}. Try again.`,
+        });
+        return;
       }
 
       let request: Parameters<typeof walletClient.writeContract>[0];
@@ -159,7 +195,7 @@ export function useMint(onMinted: () => void) {
         setState({ ...INITIAL, error: getTxErrorMessage(err) });
       }
     },
-    [address, chain?.id, onMinted, publicClient, switchChainAsync, walletClient],
+    [address, chain?.id, onMinted, switchChainAsync],
   );
 
   return { state, mint, reset };

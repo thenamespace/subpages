@@ -21,6 +21,10 @@ export interface ListingConfig {
   /** Lower-cased for cheap comparison. */
   whitelistWallets: string[];
   tokenGates: TokenGate[];
+  /** "L1" mints mainnet ENS subnames; "L2" mints onto an offchain registry. */
+  type: "L1" | "L2" | null;
+  /** Set for L2 listings: the network the subname registry lives on. */
+  l2RegistryNetwork: string | null;
 }
 
 export type ListingResult =
@@ -64,6 +68,8 @@ export async function getListing(parentName: string): Promise<ListingResult> {
             a.toLowerCase(),
           ),
           tokenGates: data?.tokenGatedAccess ?? [],
+          type: data?.type === "L2" ? "L2" : data?.type === "L1" ? "L1" : null,
+          l2RegistryNetwork: data?.l2Metadata?.registryNetwork ?? null,
         },
       };
       return cached;

@@ -42,7 +42,7 @@ export default async function ManagePage({
               Manage your names
             </h1>
             <p className="text-ink-300 mx-auto max-w-[46ch] text-sm leading-relaxed">
-              Records are stored on Ethereum. Changes cost gas, and all of them
+              Records are stored onchain. Changes cost gas, and all of them
               save in one transaction.
             </p>
           </div>

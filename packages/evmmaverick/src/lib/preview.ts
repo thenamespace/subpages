@@ -53,6 +53,8 @@ const LISTED: ListingResult = {
         tokenNetwork: "MAINNET",
       },
     ],
+    type: "L1",
+    l2RegistryNetwork: null,
   },
 };
 

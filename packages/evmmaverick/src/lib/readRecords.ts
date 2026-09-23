@@ -1,4 +1,4 @@
-import { namehash, type PublicClient } from "viem";
+import { namehash, type Address, type PublicClient } from "viem";
 import type { FormRecords } from "./records";
 
 /**
@@ -10,11 +10,14 @@ import type { FormRecords } from "./records";
  * read load-bearing, not cosmetic, and it's why a failure here surfaces as an
  * error instead of an empty form.
  *
- * One resolver lookup, then a single multicall for every key at once.
+ * One resolver lookup, then a single multicall for every key at once. Pass
+ * `knownResolver` (with a client on that resolver's chain) for names that
+ * mainnet ENS can't locate, such as subnames in an L2 registry.
  */
 
 /** Text keys the ENS manager and most wallets surface. */
 export const TEXT_KEYS = [
+  "name",
   "avatar",
   "header",
   "description",
@@ -63,10 +66,11 @@ const resolverAbi = [
 ] as const;
 
 export async function readRecords(
-  client: PublicClient,
+  client: Pick<PublicClient, "getEnsResolver" | "multicall">,
   name: string,
+  knownResolver?: Address,
 ): Promise<FormRecords> {
-  const resolver = await client.getEnsResolver({ name });
+  const resolver = knownResolver ?? (await client.getEnsResolver({ name }));
   if (!resolver) {
     // No resolver means there is nothing to read and nothing to diff against.
     return { texts: [], addresses: [] };

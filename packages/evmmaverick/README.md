@@ -17,6 +17,22 @@ remaining = max(0, balanceOf(wallet) − subnames the wallet owns under the pare
 `balanceOf` comes from the EVMavericks contract on mainnet; the subname count
 comes from the Namespace indexer.
 
+## Where names live: mainnet or Base
+
+The gate is always read on mainnet, because that's where the NFT is. Where the
+*names* go is decided by the Namespace listing, read at runtime
+(`src/lib/nameChain.ts`), not by config:
+
+| Listing | Names minted on | Wallet signs on |
+| --- | --- | --- |
+| L1 | mainnet ENS | mainnet |
+| L2, registry on Base | Namespace's Base registry | Base (the app asks the wallet to switch) |
+
+Mint, the availability check and the records editor on `/manage` all follow
+the listing. For an existing name, `/manage` uses the chain the indexer
+recorded when it was minted, so a name stays editable even if the listing
+changes later. Moving the listing between L1 and Base needs no code change.
+
 **This is a UI lock, not enforcement.** The real gate is the token gate on the
 Namespace listing, which checks that the minter holds an EVMavericks NFT — it
 does not count how many names that wallet already has. So the quota can be
@@ -108,13 +124,13 @@ Enabled in development automatically. On a deployed build it needs
 ## Before this can go live
 
 1. **Confirm the parent name.** `PARENT_NAME` in `src/lib/config.ts` is
-   `evmaverick.eth`. That name currently resolves to nothing on mainnet.
-   `evmavericks.eth` — the name the collection actually uses — resolves to
+   `evmaverick.eth`, which is registered and resolves to `0xc9E6…e2c8`.
+   `evmavericks.eth`, the name the collection actually uses, resolves to
    `0x02C2…200a`. Whoever owns the name needs to settle which one this ships
    against. It's one constant.
-2. **Create the listing.** The parent must be listed on Namespace as an L1
-   listing with a token gate pointing at the EVMavericks contract. Until then
-   `list-manager` returns an empty body and the page shows "not open yet".
+2. **Create the listing.** L1 or L2 on Base (see above), with a token gate
+   pointing at the EVMavericks contract. Until then `list-manager` returns an
+   empty body and the page shows "not open yet".
 3. **Set `NEXT_PUBLIC_SITE_URL`** so OG and Twitter cards resolve to real URLs.
 
 ## Gate contract
