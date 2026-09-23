@@ -117,11 +117,14 @@
 }
 
 /* Its inputs sit below the 16px floor, which makes iOS Safari zoom the
-   viewport on focus. Same rule we apply to our own fields. */
+   viewport on focus. Same rule we apply to our own fields. !important because
+   some library selectors outrank this one (the address rows use
+   `.ns-text-records .ns-input__wrapper:has(.ns-chain-icon) .ns-input`), and a
+   floor that loses on specificity isn't a floor. */
 .ens-scope input,
 .ens-scope textarea,
 .ens-scope select {
-  font-size: max(16px, 1rem);
+  font-size: max(16px, 1rem) !important;
 }
 
 /* Focus treatment matches the rest of the page rather than the library's. */

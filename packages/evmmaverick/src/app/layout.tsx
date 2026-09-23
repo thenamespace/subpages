@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   ),
-  title: "EVMaverick Names",
+  title: { default: "EVMaverick Names", template: "%s · EVMaverick Names" },
   description:
     "Mint a free evmaverick.eth ENS name with your EVMavericks NFT.",
   openGraph: {
