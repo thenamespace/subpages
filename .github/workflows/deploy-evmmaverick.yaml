@@ -19,6 +19,17 @@ on:
 
 jobs:
   call-build:
+    name: build
+    # Build-time .env keyed by service. Matrices can read `vars` but not
+    # `secrets`, and these are NEXT_PUBLIC_ values that ship in the client
+    # bundle anyway, so they live in repository variables.
+    strategy:
+      matrix:
+        dotenv:
+          - subpages-evmmaverick: |
+              NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=${{ vars.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID }}
+              NEXT_PUBLIC_ALCHEMY_KEY=${{ vars.NEXT_PUBLIC_ALCHEMY_KEY }}
+              NEXT_PUBLIC_SITE_URL=https://evmmaverick.namespace.ninja
     uses: ./.github/workflows/build-and-push.yaml
     secrets: inherit
     permissions:
@@ -30,6 +41,4 @@ jobs:
       dockerfile: packages/evmmaverick/Dockerfile
       environment: ${{ inputs.environment }}
       ref: ${{ inputs.ref }}
-      # WalletConnect id and Alchemy key come from repo secrets, see build-and-push.
-      dotenv: |
-        NEXT_PUBLIC_SITE_URL=https://evmmaverick.namespace.ninja
+      dotenv: ${{ matrix.dotenv['subpages-evmmaverick'] }}

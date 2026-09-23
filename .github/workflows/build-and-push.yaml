@@ -40,7 +40,7 @@ on:
         type: string
         default: ""
       dotenv:
-        description: Optional non-secret .env content baked into the build (NEXT_PUBLIC_ vars)
+        description: Optional .env content baked into the build (NEXT_PUBLIC_ vars)
         required: false
         type: string
         default: ""
@@ -83,20 +83,13 @@ jobs:
         run: |
           echo "image_tag=$(git rev-parse --short HEAD)-${{ inputs.environment }}" >> $GITHUB_OUTPUT
 
-      # Callers cannot read secrets in `with:`, so the repo secrets shared by
-      # every Next app here are appended to the caller's dotenv at this point.
-      # They are NEXT_PUBLIC_ values and end up in the client bundle anyway.
       - name: Build and push Docker image
         env:
           REGISTRY: ${{ env.region }}-docker.pkg.dev/${{ env.project_id }}
           REPOSITORY: ${{ github.event.repository.name }}
           IMAGE_NAME: ${{ inputs.app_name }}
-          INPUT_DOTENV: ${{ inputs.dotenv }}
-          WALLETCONNECT_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID }}
-          ALCHEMY_KEY: ${{ secrets.NEXT_PUBLIC_ALCHEMY_KEY }}
+          DOTENV: ${{ inputs.dotenv }}
         run: |
-          DOTENV="$(printf '%s\nNEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=%s\nNEXT_PUBLIC_ALCHEMY_KEY=%s\n' \
-            "$INPUT_DOTENV" "$WALLETCONNECT_PROJECT_ID" "$ALCHEMY_KEY")"
           IMAGE="$REGISTRY/$REPOSITORY/$IMAGE_NAME:${{ steps.meta.outputs.image_tag }}"
           docker build -f ${{ inputs.dockerfile }} --build-arg DOTENV="$DOTENV" -t "$IMAGE" ${{ inputs.context }}
           docker push "$IMAGE"
