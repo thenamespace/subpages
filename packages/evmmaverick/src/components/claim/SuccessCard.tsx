@@ -10,11 +10,13 @@ import { shortAddress } from "@/lib/format";
 export function SuccessCard({
   name,
   txHash,
+  explorerUrl,
   canClaimMore,
   onClaimAnother,
 }: {
   name: string;
   txHash: string | null;
+  explorerUrl: string | null;
   canClaimMore: boolean;
   onClaimAnother: () => void;
 }) {
@@ -26,6 +28,12 @@ export function SuccessCard({
   // (quota refresh, a parent state change). Without this guard the flash
   // replays on each one.
   const flashed = useRef(false);
+  // The dialog that held focus unmounts on success, dropping focus to <body>
+  // and leaving screen readers silent. Landing it on the name announces it.
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus({ preventScroll: true });
+  }, []);
 
   useEffect(() => {
     if (flashed.current) return;
@@ -80,7 +88,11 @@ export function SuccessCard({
         </p>
         {/* Prefers breaking at the dots on narrow screens; `break-all` is
             only the backstop for a label too long to fit on its own. */}
-        <h2 className="font-display text-amber-300 text-sm leading-relaxed break-all sm:text-base">
+        <h2
+          ref={headingRef}
+          tabIndex={-1}
+          className="font-display text-amber-300 text-sm leading-relaxed break-all outline-none sm:text-base"
+        >
           {name.split(".").map((part, i, parts) => (
             <Fragment key={i}>
               {part}
@@ -110,9 +122,9 @@ export function SuccessCard({
         </PixelButton>
       </div>
 
-      {txHash && (
+      {txHash && explorerUrl && (
         <a
-          href={`https://etherscan.io/tx/${txHash}`}
+          href={`${explorerUrl}/tx/${txHash}`}
           target="_blank"
           rel="noopener noreferrer"
           className="text-ink-400 hover:text-amber-300 text-xs underline underline-offset-4 transition-colors duration-150"

@@ -121,6 +121,7 @@ export function ClaimCard({ preview }: { preview: PreviewState | null }) {
             <SuccessCard
               name={mintState.mintedName ?? `yourname.${PARENT_NAME}`}
               txHash={mintState.txHash}
+              explorerUrl={mintState.explorerUrl}
               canClaimMore={quota.remaining > 0}
               onClaimAnother={handleClaimAnother}
             />

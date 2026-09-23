@@ -18,6 +18,8 @@ export interface MintState {
   /** Frozen at submit so editing the input mid-flight can't rewrite history. */
   mintedName: string | null;
   txHash: `0x${string}` | null;
+  /** Explorer for the chain the mint landed on — Etherscan or Basescan. */
+  explorerUrl: string | null;
   error: string | null;
 }
 
@@ -25,6 +27,7 @@ const INITIAL: MintState = {
   step: "idle",
   mintedName: null,
   txHash: null,
+  explorerUrl: null,
   error: null,
 };
 
@@ -61,13 +64,19 @@ export function useMint(onMinted: () => void) {
 
   const reset = useCallback(() => setState(INITIAL), []);
 
-  const mint = useCallback(
+  const runMint = useCallback(
     async (label: string, records?: EnsRecords) => {
       if (!address) return;
 
       const mintChain = await resolveMintChain();
       const fullName = `${label}.${PARENT_NAME}`;
-      setState({ step: "signing", mintedName: fullName, txHash: null, error: null });
+      setState({
+        step: "signing",
+        mintedName: fullName,
+        txHash: null,
+        explorerUrl: mintChain.blockExplorers.default.url,
+        error: null,
+      });
 
       // The mint lands on the listing's registry chain — mainnet for an L1
       // listing, Base for an L2 one — regardless of the wallet's current
@@ -196,6 +205,23 @@ export function useMint(onMinted: () => void) {
       }
     },
     [address, chain?.id, onMinted, switchChainAsync],
+  );
+
+  // The button only disables once "signing" renders, and resolving the chain
+  // above is a network round-trip on the first mint. Without this guard a
+  // double click in that gap opens two wallet prompts.
+  const inFlight = useRef(false);
+  const mint = useCallback(
+    async (label: string, records?: EnsRecords) => {
+      if (inFlight.current) return;
+      inFlight.current = true;
+      try {
+        await runMint(label, records);
+      } finally {
+        inFlight.current = false;
+      }
+    },
+    [runMint],
   );
 
   return { state, mint, reset };
