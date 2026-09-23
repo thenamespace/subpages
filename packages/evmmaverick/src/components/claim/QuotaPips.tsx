@@ -24,7 +24,7 @@ export function QuotaPips({ quota }: { quota: Quota }) {
       ? "No EVMavericks NFT in this wallet."
       : quota.claimed > quota.held
         ? `${quota.claimed} claimed against ${quota.held} NFT${quota.held === 1 ? "" : "s"}.`
-        : `${quota.remaining} of ${quota.held} left`;
+        : `${quota.remaining} of ${quota.held} claims left.`;
 
   return (
     <div className="flex items-center gap-2">

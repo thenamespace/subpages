@@ -45,7 +45,7 @@ const CONTRACT_ERRORS: Record<string, string> = {
   MINTER_NOT_WHITELISTED: "This wallet isn't on the allowlist.",
   SUBNAME_TAKEN: "Someone just took that name. Try another.",
   SUBNAME_RESERVED: "That name is reserved.",
-  LISTING_EXPIRED: "Minting has closed for this name.",
+  LISTING_EXPIRED: "Claims have closed.",
   VERIFIED_MINTER_ADDRESS_REQUIRED: "This wallet needs to be verified first.",
   AlreadyRegistered: "Someone just took that name. Try another.",
 };

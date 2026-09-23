@@ -49,8 +49,9 @@ export default async function Home({
                 Claim your name
               </h1>
               <p className="text-ink-300 mx-auto max-w-[40ch] text-sm leading-relaxed text-balance">
-                One <span className="text-amber-200">.{PARENT_NAME}</span> name
-                for every {GATE_TOKEN_NAME} NFT you hold.
+                Mint a free{" "}
+                <span className="text-amber-200">.{PARENT_NAME}</span> ENS name
+                with your {GATE_TOKEN_NAME} NFT.
               </p>
             </div>
           </div>

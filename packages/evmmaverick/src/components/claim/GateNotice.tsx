@@ -18,21 +18,23 @@ export function gateNotice({
   quota,
   connected,
   onRetry,
+  onManage,
 }: {
   listing: ListingResult | null;
   quota: Quota;
   connected: boolean;
   onRetry: () => void;
+  onManage: () => void;
 }): React.ReactNode | null {
   if (listing === null) {
-    return <Notice title="Loading" body="Checking whether minting is open…" />;
+    return <Notice title="Loading" body="Checking whether claims are open…" />;
   }
 
   if (listing.state === "error") {
     return (
       <Notice
         title="Couldn't reach Namespace"
-        body="We can't confirm whether minting is open, so claiming is paused. This is usually brief."
+        body="Namespace didn't answer, so we can't tell whether claims are open. Give it a moment and try again."
         action={
           <PixelButton variant="secondary" onClick={onRetry}>
             Try again
@@ -46,7 +48,7 @@ export function gateNotice({
     return (
       <Notice
         title="Not open yet"
-        body={`${PARENT_NAME} hasn't been listed for minting. Once it is, ${GATE_TOKEN_NAME} holders can claim a name here.`}
+        body={`Claims for .${PARENT_NAME} haven't opened. When they do, you can claim your name here with any ${GATE_TOKEN_NAME} NFT.`}
       />
     );
   }
@@ -58,7 +60,7 @@ export function gateNotice({
       return (
         <Notice
           title="Couldn't check your wallet"
-          body="We read your NFT balance and your existing names before unlocking a claim. One of those didn't answer, so claiming is paused rather than letting you pay for a transaction that would fail."
+          body="Before you claim, we count your NFTs and the names you already own. One of those lookups failed. Claiming stays paused so you don't pay gas for a transaction that would fail."
           detail={quota.error}
           action={
             <PixelButton variant="secondary" onClick={onRetry}>
@@ -72,13 +74,13 @@ export function gateNotice({
       return (
         <Notice
           title={`No ${GATE_TOKEN_NAME} here`}
-          body={`Names are for ${GATE_TOKEN_NAME} holders. This wallet doesn't hold one — if yours is in a different wallet, switch to it.`}
+          body={`Names are for ${GATE_TOKEN_NAME} holders, and this wallet doesn't hold one. If your Maverick lives in another wallet, switch to it.`}
           action={
             <PixelButton
               variant="secondary"
               onClick={() => window.open(GATE_TOKEN_URL, "_blank", "noopener")}
             >
-              View collection
+              View on OpenSea
             </PixelButton>
           }
         />
@@ -88,11 +90,8 @@ export function gateNotice({
       return (
         <Notice
           title="All claimed"
-          body={
-            quota.claimed > quota.held
-              ? `You hold ${quota.held} ${GATE_TOKEN_NAME} and already own ${quota.claimed} names. Your names are yours to keep — there's just no claim left.`
-              : `One name per ${GATE_TOKEN_NAME}, and you've used all ${quota.held}. Pick up another NFT to claim another name.`
-          }
+          body="Every NFT in this wallet has its name. Set an avatar, addresses and other records on yours."
+          action={<PixelButton onClick={onManage}>Manage names</PixelButton>}
         />
       );
 

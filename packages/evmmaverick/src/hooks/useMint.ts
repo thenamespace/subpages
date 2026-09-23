@@ -183,7 +183,7 @@ export function useMint(onMinted: () => void) {
         if (receipt.status !== "success") {
           setState({
             ...INITIAL,
-            error: "The transaction reverted — the name wasn't claimed.",
+            error: "The transaction failed, so the name wasn't claimed. Try again.",
           });
           return;
         }

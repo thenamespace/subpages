@@ -29,18 +29,18 @@ export const metadata: Metadata = {
   ),
   title: "EVMaverick Names",
   description:
-    "Claim your evmaverick.eth name. One name per EVMavericks NFT.",
+    "Mint a free evmaverick.eth ENS name with your EVMavericks NFT.",
   openGraph: {
     title: "EVMaverick Names",
     description:
-      "Claim your evmaverick.eth name. One name per EVMavericks NFT.",
+      "Mint a free evmaverick.eth ENS name with your EVMavericks NFT.",
     images: ["/maverick-lion.png"],
   },
   twitter: {
     card: "summary",
     title: "EVMaverick Names",
     description:
-      "Claim your evmaverick.eth name. One name per EVMavericks NFT.",
+      "Mint a free evmaverick.eth ENS name with your EVMavericks NFT.",
     images: ["/maverick-lion.png"],
   },
   icons: { icon: "/maverick-lion.png" },

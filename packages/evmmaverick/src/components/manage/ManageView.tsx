@@ -13,7 +13,7 @@ import { fetchOwnedNames, type OwnedName } from "@/lib/ownedNames";
 import { L1_NAME_CHAIN, nameChainFor, type NameChain } from "@/lib/nameChain";
 import { readRecords } from "@/lib/readRecords";
 import { EMPTY_RECORDS, type FormRecords } from "@/lib/records";
-import { PARENT_NAME } from "@/lib/config";
+import { GATE_TOKEN_NAME, PARENT_NAME } from "@/lib/config";
 import { wagmiConfig } from "@/lib/wagmi";
 
 /**
@@ -133,12 +133,11 @@ export function ManageView({ preview }: { preview: boolean }) {
       <PixelPanel className="w-full max-w-lg p-6 sm:p-8">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <h2 className="font-display text-amber-300 text-xs uppercase">
+            <h2 className="font-display text-ink-100 text-xs uppercase">
               Connect to manage
             </h2>
             <p className="text-ink-300 max-w-[52ch] text-sm leading-relaxed">
-              Your names and their records live on-chain. Connect the wallet
-              that holds them.
+              Connect the wallet that holds your .{PARENT_NAME} names.
             </p>
           </div>
           <PixelButton onClick={() => openConnectModal?.()}>
@@ -154,7 +153,7 @@ export function ManageView({ preview }: { preview: boolean }) {
       <PixelPanel className="w-full max-w-lg p-6 sm:p-8">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <h2 className="font-display text-amber-300 text-xs uppercase">
+            <h2 className="font-display text-ink-100 text-xs uppercase">
               Your names
             </h2>
             <p className="text-ink-300 max-w-[52ch] text-sm leading-relaxed">
@@ -163,7 +162,11 @@ export function ManageView({ preview }: { preview: boolean }) {
           </div>
 
           {listStatus === "loading" && (
-            <p className="text-ink-400 text-sm">Loading your names…</p>
+            // Holds roughly two name rows so the panel doesn't jump when the
+            // list resolves — the same fixed-space rule the name plate follows.
+            <p className="text-ink-400 min-h-[7rem] text-sm">
+              Loading your names…
+            </p>
           )}
 
           {listStatus === "error" && (
@@ -183,7 +186,8 @@ export function ManageView({ preview }: { preview: boolean }) {
           {names.length === 0 && listStatus === "ready" && (
             <div className="flex flex-col gap-4">
               <p className="text-ink-300 text-sm leading-relaxed">
-                This wallet doesn&apos;t hold any {PARENT_NAME} names yet.
+                No .{PARENT_NAME} names in this wallet yet. If you hold an{" "}
+                {GATE_TOKEN_NAME} NFT, you can claim one for free.
               </p>
               {/* A button, not a button inside a link: nested interactive
                   elements give keyboard users two tab stops for one action. */}
@@ -231,9 +235,8 @@ export function ManageView({ preview }: { preview: boolean }) {
         {recordState?.status === "error" && (
           <div className="flex flex-col gap-3">
             <p role="alert" className="text-rose-400 text-sm leading-relaxed">
-              Couldn&apos;t read this name&apos;s current records. The editor
-              stays closed so a blank form can&apos;t overwrite records that are
-              already set.
+              Couldn&apos;t load this name&apos;s records. The editor stays
+              closed so an empty form can&apos;t wipe what&apos;s already set.
             </p>
             <p className="text-ink-400 text-xs">{recordState.message}</p>
             <PixelButton

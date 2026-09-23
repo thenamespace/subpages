@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useRouter } from "next/navigation";
 import { PixelPanel } from "@/components/ui/PixelPanel";
 import { PixelButton } from "@/components/ui/PixelButton";
 import { gateNotice } from "./GateNotice";
@@ -26,6 +27,7 @@ import type { PreviewState } from "@/lib/preview";
 export function ClaimCard({ preview }: { preview: PreviewState | null }) {
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
+  const router = useRouter();
 
   const listing = useListing(preview);
   const { quota, refresh, registerLocalMint } = useQuota(preview);
@@ -88,6 +90,7 @@ export function ClaimCard({ preview }: { preview: PreviewState | null }) {
     quota,
     connected: isConnected || Boolean(preview),
     onRetry: handleRetry,
+    onManage: () => router.push("/manage"),
   });
 
   // Browsers only grant audio permission during a user gesture, and the roar
@@ -139,7 +142,7 @@ export function ClaimCard({ preview }: { preview: PreviewState | null }) {
                         Connect to claim
                       </h2>
                       <p className="text-ink-300 max-w-[52ch] text-sm leading-relaxed">
-                        We&apos;ll check your wallet for an {GATE_TOKEN_NAME} NFT.
+                        Use the wallet that holds your {GATE_TOKEN_NAME} NFT.
                       </p>
                     </div>
                     <PixelButton

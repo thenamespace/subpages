@@ -13,7 +13,7 @@ const MESSAGES: Record<LabelError, string> = {
   empty: "Pick a name.",
   "too-short": `At least ${LABEL_MIN_LENGTH} characters.`,
   "too-long": `At most ${LABEL_MAX_LENGTH} characters.`,
-  "has-dot": "No dots. You're only choosing the part before the name.",
+  "has-dot": "No dots. Just the first part.",
   "has-space": "No spaces.",
   invalid: "That character isn't allowed in an ENS name.",
 };
