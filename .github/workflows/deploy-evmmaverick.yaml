@@ -1,0 +1,35 @@
+---
+name: Deploy - EVMavericks
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch, tag or SHA to build
+        required: false
+        type: string
+        default: "master"
+      environment:
+        description: Target environment
+        required: false
+        type: choice
+        options:
+          - prod
+        default: "prod"
+
+jobs:
+  call-build:
+    uses: ./.github/workflows/build-and-push.yaml
+    secrets: inherit
+    permissions:
+      contents: "read"
+      id-token: "write"
+    with:
+      app_name: subpages-evmmaverick
+      context: packages/evmmaverick
+      dockerfile: packages/evmmaverick/Dockerfile
+      environment: ${{ inputs.environment }}
+      ref: ${{ inputs.ref }}
+      # WalletConnect id and Alchemy key come from repo secrets, see build-and-push.
+      dotenv: |
+        NEXT_PUBLIC_SITE_URL=https://evmmaverick.namespace.ninja

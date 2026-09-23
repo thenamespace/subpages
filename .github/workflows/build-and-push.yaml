@@ -1,0 +1,118 @@
+---
+name: Workflow - Build and Push Docker Image
+
+# Reusable builder following the org deployment pattern (same as subname-dev
+# and namera-core): build the app image, push it to GCP Artifact Registry under
+# <repo>/<app_name>, then dispatch an image-tag-update event to
+# thenamespace/infra so it PRs the new tag into the helm values for ArgoCD.
+
+on:
+  workflow_call:
+    secrets:
+      REPOSITORY_DISPATCH_PAT:
+        required: true
+        description: "Triggers a PR creation in the infra repository"
+    inputs:
+      app_name:
+        description: App/image name, also the infra app directory name
+        required: true
+        type: string
+      infra_app:
+        description: App group directory under applications/apps in the infra repo
+        required: false
+        type: string
+        default: "subpages"
+      context:
+        description: Docker build context (each package here is self-contained)
+        required: true
+        type: string
+      dockerfile:
+        description: Path to the app's Dockerfile
+        required: true
+        type: string
+      environment:
+        required: false
+        type: string
+        default: "prod"
+      ref:
+        description: Branch, tag or SHA to build (empty = the calling workflow's ref)
+        required: false
+        type: string
+        default: ""
+      dotenv:
+        description: Optional non-secret .env content baked into the build (NEXT_PUBLIC_ vars)
+        required: false
+        type: string
+        default: ""
+
+env:
+  region: europe-west3
+  project_id: prod-9427
+  workload_identity_provider: projects/397196751430/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+      id-token: "write"
+    outputs:
+      image_tag: ${{ steps.meta.outputs.image_tag }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ env.project_id }}
+          workload_identity_provider: ${{ env.workload_identity_provider }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure docker for artifact registry
+        run: |
+          gcloud auth configure-docker ${{ env.region }}-docker.pkg.dev
+
+      - name: Get metadata for tags
+        id: meta
+        run: |
+          echo "image_tag=$(git rev-parse --short HEAD)-${{ inputs.environment }}" >> $GITHUB_OUTPUT
+
+      # Callers cannot read secrets in `with:`, so the repo secrets shared by
+      # every Next app here are appended to the caller's dotenv at this point.
+      # They are NEXT_PUBLIC_ values and end up in the client bundle anyway.
+      - name: Build and push Docker image
+        env:
+          REGISTRY: ${{ env.region }}-docker.pkg.dev/${{ env.project_id }}
+          REPOSITORY: ${{ github.event.repository.name }}
+          IMAGE_NAME: ${{ inputs.app_name }}
+          INPUT_DOTENV: ${{ inputs.dotenv }}
+          WALLETCONNECT_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID }}
+          ALCHEMY_KEY: ${{ secrets.NEXT_PUBLIC_ALCHEMY_KEY }}
+        run: |
+          DOTENV="$(printf '%s\nNEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=%s\nNEXT_PUBLIC_ALCHEMY_KEY=%s\n' \
+            "$INPUT_DOTENV" "$WALLETCONNECT_PROJECT_ID" "$ALCHEMY_KEY")"
+          IMAGE="$REGISTRY/$REPOSITORY/$IMAGE_NAME:${{ steps.meta.outputs.image_tag }}"
+          docker build -f ${{ inputs.dockerfile }} --build-arg DOTENV="$DOTENV" -t "$IMAGE" ${{ inputs.context }}
+          docker push "$IMAGE"
+
+  update-image-tag:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.REPOSITORY_DISPATCH_PAT }}
+          repository: thenamespace/infra
+          event-type: image-tag-update
+          client-payload: >-
+            {"repository": "${{ inputs.app_name }}",
+            "infra_app": "${{ inputs.infra_app }}",
+            "image_tag": "${{ needs.build-and-push.outputs.image_tag }}",
+            "environment": "${{ inputs.environment }}"}
