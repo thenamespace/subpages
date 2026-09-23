@@ -2,6 +2,7 @@
 
 import { RainbowKitProvider, darkTheme } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MotionConfig } from "motion/react";
 import { useState } from "react";
 import { WagmiProvider } from "wagmi";
 import { SoundProvider } from "@/components/SoundProvider";
@@ -47,7 +48,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider theme={pixelTheme} modalSize="compact">
-          <SoundProvider>{children}</SoundProvider>
+          {/* The stylesheet's reduced-motion clamp only reaches CSS
+              animations. Without this, motion/react's transforms (the
+              success card's entrance and tick) still run for users who
+              asked for less motion; opacity-only fades survive. */}
+          <MotionConfig reducedMotion="user">
+            <SoundProvider>{children}</SoundProvider>
+          </MotionConfig>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

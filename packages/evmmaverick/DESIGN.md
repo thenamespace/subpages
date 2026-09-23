@@ -90,7 +90,9 @@ rendered art look like a rendering mistake rather than depth.
   smooth ease — a sprite that scales continuously goes soft between whole
   pixels.
 - The name plate's stamp and cursor use stepped keyframes too.
-- `prefers-reduced-motion` collapses every duration to 0.01ms.
+- `prefers-reduced-motion` collapses every CSS duration to 0.01ms, and
+  `MotionConfig reducedMotion="user"` (in `providers.tsx`) drops the
+  transform half of every motion/react animation, leaving opacity fades.
 
 ## Components
 
@@ -103,8 +105,8 @@ rendered art look like a rendering mistake rather than depth.
 | `gateNotice` | Every blocked state in one place. A plain function, not a component — the caller needs to know whether anything is blocking. |
 | `PixelDialog` | The one modal in the flow, used for record editing. Claim errors and the pending note render inside it, never behind it. |
 | `SuccessCard` | Pixel tick rather than the lion, which already sits in the hero above. Buttons stack full width, primary on top; with no claims left, Manage records becomes the primary. |
-| `WalletButton` (header) | A quiet bordered button, not RainbowKit's amber default. The card owns the one primary action on the page. |
-| `HeaderNav` (header) | Each page links to the other in a quiet 40px text link, never to itself. Amber stays reserved for the card. |
+| `WalletButton` (header) | A quiet bordered button, not RainbowKit's amber default. The card owns the one primary action on the page. Wrong network reads in rose. |
+| `HeaderNav` (header) | Each page links to the other in a quiet 44px text link, never to itself. Amber stays reserved for the card. |
 
 The record editor comes from `@thenamespace/ens-components`, themed onto our
 palette through `.ens-scope` (see `src/app/ens-theme.css`) and shown in

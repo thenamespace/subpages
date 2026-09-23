@@ -25,8 +25,8 @@ export function SoundToggle({
       title={enabled ? "Sound on" : "Sound off"}
       className={cn(
         // Generous hit area around a small glyph — the visual size is 16px but
-        // the target is 40px, which is what a thumb actually needs.
-        "grid size-10 place-items-center",
+        // the target is 44px, which is what a thumb actually needs.
+        "grid size-11 place-items-center",
         "text-ink-400 transition-colors duration-150",
         "hover:text-amber-300 focus-visible:text-amber-300",
         "cursor-pointer",

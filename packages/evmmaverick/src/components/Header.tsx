@@ -49,10 +49,10 @@ function HeaderNav({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      // Same treatment as the sound toggle: a 40px grid box around small
+      // Same treatment as the sound toggle: a 44px grid box around small
       // display type, so the touch target doesn't depend on the text size.
       className={cn(
-        "font-display grid h-10 cursor-pointer place-items-center px-1 text-[10px] uppercase tracking-[0.14em]",
+        "font-display grid h-11 cursor-pointer place-items-center px-1 text-[10px] uppercase tracking-[0.14em]",
         "text-ink-400 hover:text-amber-300 transition-colors duration-150",
       )}
     >
@@ -92,16 +92,21 @@ function WalletButton() {
             // flash "Connect" for a wallet that is already connected.
             aria-hidden={!mounted || undefined}
             className={cn(
-              "border-edge-strong text-ink-200 cursor-pointer border-2 px-3 py-2 text-sm",
-              "hover:border-ink-500 hover:bg-raised transition-colors duration-150",
+              "cursor-pointer border-2 px-3 py-2.5 text-sm",
+              "hover:bg-raised transition-colors duration-150",
+              wrongChain
+                ? "border-rose-500 text-rose-300 hover:border-rose-400"
+                : "border-edge-strong text-ink-200 hover:border-ink-500",
               !mounted && "invisible",
             )}
           >
-            {wrongChain
-              ? "Wrong network"
-              : connected
-                ? account.displayName
-                : "Connect"}
+            <span className="block max-w-[9rem] truncate">
+              {wrongChain
+                ? "Wrong network"
+                : connected
+                  ? account.displayName
+                  : "Connect"}
+            </span>
           </button>
         );
       }}
