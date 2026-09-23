@@ -5,6 +5,10 @@ offset shadows. It comes out of the artwork rather than a mood board — every
 colour below was sampled from the pixel lion and converted to OKLCH so the
 ramps stay perceptually even.
 
+The site image has since moved to the low-poly lion (`public/evmavericks.png`).
+Its oranges sit in the same amber range, so the palette still holds. It is not
+pixel art, so it renders with normal smoothing, not `image-rendering: pixelated`.
+
 ## Where the colour came from
 
 Quantising the PFP to 16 colours gives the real palette. These are the pixels

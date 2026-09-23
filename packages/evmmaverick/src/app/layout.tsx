@@ -34,16 +34,16 @@ export const metadata: Metadata = {
     title: "EVMaverick Names",
     description:
       "Mint a free evmaverick.eth ENS name with your EVMavericks NFT.",
-    images: ["/maverick-lion.png"],
+    images: ["/evmavericks.png"],
   },
   twitter: {
     card: "summary",
     title: "EVMaverick Names",
     description:
       "Mint a free evmaverick.eth ENS name with your EVMavericks NFT.",
-    images: ["/maverick-lion.png"],
+    images: ["/evmavericks.png"],
   },
-  icons: { icon: "/maverick-lion.png" },
+  icons: { icon: "/evmavericks.png" },
 };
 
 export const viewport: Viewport = {

@@ -36,11 +36,11 @@ export default async function Home({
         <main className="flex flex-1 flex-col items-center justify-center gap-10 py-4">
           <div className="flex flex-col items-center gap-6 text-center">
             <Image
-              src="/maverick-lion.png"
-              alt={`${GATE_TOKEN_NAME} pixel lion`}
+              src="/evmavericks.png"
+              alt={`${GATE_TOKEN_NAME} lion`}
               width={96}
               height={96}
-              className="pixelated size-24"
+              className="size-24"
               priority
             />
 

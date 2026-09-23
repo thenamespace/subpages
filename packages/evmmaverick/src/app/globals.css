@@ -128,11 +128,6 @@
     outline: 2px solid var(--color-focus);
     outline-offset: 2px;
   }
-
-  /* The PFP and any sprite must not be smoothed by the browser. */
-  .pixelated {
-    image-rendering: pixelated;
-  }
 }
 
 @layer utilities {
