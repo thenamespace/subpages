@@ -1,0 +1,131 @@
+/* ---------------------------------------------------------------------------
+   Theme bridge for @thenamespace/ens-components.
+
+   The library themes through ~140 `--ns-*` custom properties and ships a
+   light, rounded, DM-Sans default. Rather than fight its stylesheets we
+   redefine the tokens its components actually consume, so its record editor
+   inherits our palette, our type and our square corners.
+
+   Scoped to `.ens-scope` rather than `:root` so the library's defaults can
+   never leak onto the rest of the page. Loaded AFTER its stylesheet.
+
+   Its dark theme is not usable as-is: `[data-theme="dark"]` only redefines
+   the legacy `--ns-color-*` aliases, while the components reference the raw
+   tokens (`--ns-surface`, `--ns-text`, …) which are never redefined for dark.
+   So the raw tokens are set here directly.
+--------------------------------------------------------------------------- */
+
+.ens-scope {
+  /* Type. The library otherwise pulls DM Sans/DM Mono from Google Fonts. */
+  --ns-font-family: var(--font-jetbrains), ui-monospace, monospace;
+  --ns-font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  /* Square, like everything else here. */
+  --ns-radius: 0px;
+  --ns-radius-sm: 0px;
+  --ns-radius-md: 0px;
+  --ns-radius-lg: 0px;
+  --ns-shadow: none;
+
+  /* Surfaces, darkest first — same layering rule as the rest of the page. */
+  --ns-bg: var(--color-ink-950);
+  --ns-surface: var(--color-ink-900);
+  --ns-surface-2: var(--color-ink-800);
+  --ns-surface-3: var(--color-ink-800);
+  --ns-surface-4: var(--color-ink-700);
+
+  /* Text. */
+  --ns-text: var(--color-ink-200);
+  --ns-text-2: var(--color-ink-300);
+  --ns-text-3: var(--color-ink-400);
+  --ns-text-faint: var(--color-ink-500);
+  --ns-text-faintest: var(--color-ink-600);
+  --ns-text-link: var(--color-amber-300);
+
+  /* Solid borders — on a dark surface an alpha-white border glows. */
+  --ns-border: var(--color-ink-700);
+  --ns-border-strong: var(--color-ink-600);
+  --ns-border-frame: var(--color-ink-700);
+
+  /* Controls take the mane amber. */
+  --ns-btn-bg: var(--color-amber-400);
+  --ns-btn-border: var(--color-amber-200);
+
+  /* Legacy aliases, set too so older components agree with the new ones. */
+  --ns-color-bg: var(--color-ink-950);
+  --ns-color-bg-darker: var(--color-ink-950);
+  --ns-color-bg-accent: var(--color-amber-400);
+  --ns-color-bg-accent-hover: var(--color-amber-300);
+  --ns-color-fg: var(--color-ink-200);
+  --ns-color-muted: var(--color-ink-400);
+  --ns-color-border: var(--color-ink-700);
+  --ns-color-primary: var(--color-amber-400);
+  --ns-color-primary-contrast: var(--color-ink-950);
+
+  /* Status colours reuse the cap's rainbow so nothing new enters the palette. */
+  --ns-alert-error-bg: oklch(0.710 0.101 17 / 0.12);
+  --ns-alert-error-border: var(--color-rose-600);
+  --ns-alert-error-text: var(--color-rose-400);
+  --ns-alert-success-bg: oklch(0.608 0.108 152 / 0.12);
+  --ns-alert-success-border: var(--color-jade-600);
+  --ns-alert-success-text: var(--color-jade-400);
+  --ns-alert-warning-bg: oklch(0.768 0.143 59 / 0.12);
+  --ns-alert-warning-border: var(--color-amber-600);
+  --ns-alert-warning-text: var(--color-amber-300);
+  --ns-alert-info-bg: oklch(0.607 0.086 301 / 0.12);
+  --ns-alert-info-border: var(--color-iris-600);
+  --ns-alert-info-text: var(--color-iris-400);
+
+  /* Palette families the library uses directly for backgrounds. Left alone,
+     these are what put a pale blue chip in the middle of a warm dark card. */
+  --ns-blue-100: var(--color-ink-800);
+  --ns-blue-600: var(--color-amber-500);
+  --ns-blue-700: var(--color-amber-600);
+  --ns-pink-100: var(--color-ink-800);
+  --ns-amber-200: var(--color-amber-200);
+  --ns-amber-300: var(--color-amber-300);
+  --ns-amber-600: var(--color-amber-600);
+
+  /* Status dots reuse the cap rainbow, same as the alerts above. */
+  --ns-ok: var(--color-jade-400);
+  --ns-dot-ok: var(--color-jade-400);
+  --ns-dot-bad: var(--color-rose-400);
+  --ns-dot-soon: var(--color-amber-400);
+
+  --ns-amber-700: var(--color-amber-700);
+  --ns-blue-300: var(--color-amber-300);
+  --ns-pink-600: var(--color-rose-600);
+  --ns-btn-fg: var(--color-ink-950);
+  --ns-rule: var(--color-ink-700);
+  --ns-size-meta: var(--color-ink-500);
+
+  /* Alert icons and close-button hovers, one per status. */
+  --ns-alert-error-icon: var(--color-rose-400);
+  --ns-alert-error-close-hover: oklch(0.710 0.101 17 / 0.2);
+  --ns-alert-success-icon: var(--color-jade-400);
+  --ns-alert-success-close-hover: oklch(0.608 0.108 152 / 0.2);
+  --ns-alert-warning-icon: var(--color-amber-400);
+  --ns-alert-warning-close-hover: oklch(0.768 0.143 59 / 0.2);
+  --ns-alert-info-icon: var(--color-iris-400);
+  --ns-alert-info-close-hover: oklch(0.607 0.086 301 / 0.2);
+
+  --ns-focus-ring: var(--color-focus);
+  --ns-name-ink: var(--color-ink-100);
+
+  color: var(--color-text);
+  font-family: var(--font-mono);
+}
+
+/* Its inputs sit below the 16px floor, which makes iOS Safari zoom the
+   viewport on focus. Same rule we apply to our own fields. */
+.ens-scope input,
+.ens-scope textarea,
+.ens-scope select {
+  font-size: max(16px, 1rem);
+}
+
+/* Focus treatment matches the rest of the page rather than the library's. */
+.ens-scope :focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}

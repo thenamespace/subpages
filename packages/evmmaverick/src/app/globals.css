@@ -1,0 +1,274 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   EVMaverick claim page — design tokens.
+
+   Every colour here was sampled from the project PFP (pixel lion, amber mane,
+   grey cap with a rainbow panel) and converted to OKLCH, so the ramps are
+   perceptually even and hue-locked. Raw hex never appears below this comment.
+
+   Ramps sit on fixed hues:
+     ink    h=50   warm neutrals, biased toward the amber so greys don't fight it
+     amber  h=58   the mane; the only brand colour, reserved for primary actions
+     accents        sampled from the cap's rainbow panel, one job each
+--------------------------------------------------------------------------- */
+
+@theme {
+  /* Surfaces — darkest is the page, each step up is a layer closer to the user */
+  --color-ink-950: oklch(0.145 0.012 50);
+  --color-ink-900: oklch(0.185 0.014 50);
+  --color-ink-800: oklch(0.235 0.016 50);
+  --color-ink-700: oklch(0.300 0.018 50);
+  --color-ink-600: oklch(0.380 0.018 50);
+  --color-ink-500: oklch(0.520 0.016 50);
+  --color-ink-400: oklch(0.640 0.014 50);
+  --color-ink-300: oklch(0.760 0.012 50);
+  --color-ink-200: oklch(0.866 0.020 60);
+  --color-ink-100: oklch(0.940 0.015 70);
+
+  /* Mane amber — 400 and 600 are the literal sampled pixels (#F69B4C, #C27839) */
+  --color-amber-100: oklch(0.925 0.045 70);
+  --color-amber-200: oklch(0.870 0.075 66);
+  --color-amber-300: oklch(0.820 0.105 62);
+  --color-amber-400: oklch(0.768 0.143 59);
+  --color-amber-500: oklch(0.700 0.140 58);
+  --color-amber-600: oklch(0.640 0.121 58);
+  --color-amber-700: oklch(0.560 0.105 56);
+  --color-amber-800: oklch(0.495 0.094 55);
+  --color-amber-900: oklch(0.380 0.065 50);
+  --color-amber-950: oklch(0.291 0.044 44);
+
+  /* Cap rainbow — each accent has exactly one job so none competes with amber */
+  --color-jade-400: oklch(0.760 0.110 152);
+  --color-jade-600: oklch(0.608 0.108 152);
+  --color-rose-400: oklch(0.770 0.110 17);
+  --color-rose-600: oklch(0.710 0.101 17);
+  --color-iris-400: oklch(0.700 0.110 301);
+  --color-iris-600: oklch(0.607 0.086 301);
+  --color-bone-300: oklch(0.967 0.099 106);
+
+  /* Semantic aliases — components reference these, never the ramps directly */
+  --color-canvas: var(--color-ink-950);
+  --color-panel: var(--color-ink-900);
+  --color-raised: var(--color-ink-800);
+  --color-edge: var(--color-ink-700);
+  --color-edge-strong: var(--color-ink-600);
+  --color-text: var(--color-ink-200);
+  --color-text-muted: var(--color-ink-300);
+  --color-text-dim: var(--color-ink-400);
+  --color-text-disabled: var(--color-ink-500);
+  --color-brand: var(--color-amber-400);
+  --color-brand-press: var(--color-amber-600);
+  --color-success: var(--color-jade-400);
+  --color-danger: var(--color-rose-400);
+  --color-focus: var(--color-iris-400);
+
+  /* Type. Press Start 2P for display only — it is unreadable under ~16px and
+     this page shows hex addresses. JetBrains Mono carries everything else. */
+  --font-display: var(--font-press-start), ui-monospace, monospace;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  /* 4px grid. Pixel UI has no half-steps — everything lands on the grid. */
+  --spacing: 4px;
+
+  /* Square by decree. Pixel art has no antialiased corners. */
+  --radius-none: 0px;
+
+  /* Hard offset shadows, zero blur — the arcade-cabinet read. This knowingly
+     departs from the usual layered-shadow rule: blurred shadows under a
+     pixel-rendered UI look like a mistake, not like depth. */
+  --shadow-pixel: 4px 4px 0 var(--color-ink-950);
+  --shadow-pixel-sm: 2px 2px 0 var(--color-ink-950);
+  --shadow-pixel-brand: 4px 4px 0 var(--color-amber-950);
+
+  /* Motion. Enter curve per the animation guidance; presses are near-instant
+     because an arcade button that eases feels broken. */
+  --ease-enter: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-radius: 0;
+  }
+
+  html {
+    background: var(--color-canvas);
+    /* Keeps the arcade grain from tiling visibly on short pages. */
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--color-canvas);
+    color: var(--color-text);
+    font-family: var(--font-mono);
+    /* Hex addresses must line up column-to-column when stacked. */
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Uppercase pixel labels need loosened tracking or they read as cramped. */
+  .font-display,
+  [data-display] {
+    font-family: var(--font-display);
+    letter-spacing: 0.06em;
+    line-height: 1.6;
+  }
+
+  ::selection {
+    background: var(--color-amber-400);
+    color: var(--color-ink-950);
+  }
+
+  /* One focus treatment everywhere, and it is never removed — only replaced. */
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  /* Scanline veil — 2px period so it stays crisp on 1x and 2x displays.
+     Kept under 4% alpha: visible as texture, never as stripes. */
+  .scanlines::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0 1px,
+      oklch(0 0 0 / 0.035) 1px 2px
+    );
+  }
+
+  /* Stepped "notched" corners — the pixel equivalent of a border radius. */
+  .notch-2 {
+    clip-path: polygon(
+      2px 0, calc(100% - 2px) 0, 100% 2px, 100% calc(100% - 2px),
+      calc(100% - 2px) 100%, 2px 100%, 0 calc(100% - 2px), 0 2px
+    );
+  }
+  .notch-4 {
+    clip-path: polygon(
+      4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px),
+      calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px
+    );
+  }
+}
+
+@layer utilities {
+  /* The roar. A hot amber wash that blooms from behind the card and burns
+     off, plus a short shake. Both are decorative and both are skipped under
+     prefers-reduced-motion by the global rule further down — a screen shake
+     is exactly what that setting exists to prevent. */
+  @keyframes roar-flash {
+    0%   { opacity: 0;    transform: scale(0.85); }
+    18%  { opacity: 0.75; transform: scale(1.02); }
+    100% { opacity: 0;    transform: scale(1.25); }
+  }
+
+  @keyframes roar-shake {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    12%      { transform: translate3d(-3px, 1px, 0); }
+    26%      { transform: translate3d(3px, -2px, 0); }
+    41%      { transform: translate3d(-2px, -1px, 0); }
+    57%      { transform: translate3d(2px, 2px, 0); }
+    73%      { transform: translate3d(-1px, 1px, 0); }
+    88%      { transform: translate3d(1px, 0, 0); }
+  }
+
+  .animate-roar-flash {
+    animation: roar-flash 1400ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .animate-roar-shake {
+    /* Steps keep the shake on whole pixels; a smooth shake blurs the sprite. */
+    animation: roar-shake 620ms steps(2, end) 1;
+  }
+}
+
+@layer utilities {
+  /* Name plate verdicts. Stepped, not eased: pixel type that scales smoothly
+     goes soft between whole pixels. */
+
+  /* A verdict is stamped onto the plate: lands big, bounces under, settles.
+     Only scale is animated; the tilt is a separate `rotate` utility, so it
+     stays put when motion is reduced. */
+  @keyframes stamp {
+    0%   { opacity: 0; transform: scale(1.35); }
+    50%  { opacity: 1; transform: scale(0.94); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .animate-stamp {
+    animation: stamp 200ms steps(3, end) both;
+  }
+
+  /* The WAIT stamp's cursor, an arcade "insert coin" blink. */
+  @keyframes cursor-blink {
+    0%, 49%   { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+  .animate-cursor-blink {
+    animation: cursor-blink 800ms steps(1, end) infinite;
+  }
+
+  /* Under reduced motion the stamp simply appears and the cursor holds
+     steady. Explicit, rather than relying on the global duration clamp. */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-stamp,
+    .animate-cursor-blink {
+      animation: none;
+    }
+  }
+}
+
+@layer utilities {
+  @keyframes dialog-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  /* Scale and fade only. Centring is done by PixelDialog's grid wrapper,
+     so this keyframe can own the panel's transform outright. */
+  @keyframes dialog-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+}
+
+@layer utilities {
+  /* PixelButton's loading spinner: four blocks chasing each other around a
+     square. Steps(4), never a blur. */
+  @keyframes pixel-spin {
+    0%   { transform: rotate(0deg);   }
+    100% { transform: rotate(360deg); }
+  }
+
+  .animate-pixel-spin {
+    animation: pixel-spin 640ms steps(4) infinite;
+  }
+}
+
+@layer components {
+  /* RainbowKit's theme object covers colour, radius and font (see
+     providers.tsx). Only the weight and tracking of its button need nudging
+     to sit level with the rest of the page. */
+  [data-rk] button {
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
