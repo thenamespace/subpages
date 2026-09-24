@@ -89,8 +89,8 @@ export function gateNotice({
     case "spent":
       return (
         <Notice
-          title="All claimed"
-          body="Every NFT in this wallet has its name. Set an avatar, addresses and other records on yours."
+          title="Already claimed"
+          body="You've already claimed your name. Set an avatar, addresses and other records on it."
           action={<PixelButton onClick={onManage}>Manage names</PixelButton>}
         />
       );

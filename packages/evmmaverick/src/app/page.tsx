@@ -49,9 +49,9 @@ export default async function Home({
                 Claim your name
               </h1>
               <p className="text-ink-300 mx-auto max-w-[40ch] text-sm leading-relaxed text-balance">
-                Mint a free{" "}
-                <span className="text-amber-200">.{PARENT_NAME}</span> ENS name
-                with your {GATE_TOKEN_NAME} NFT.
+                Free{" "}
+                <span className="text-amber-200">.{PARENT_NAME}</span> ENS
+                subnames for {GATE_TOKEN_NAME} holders.
               </p>
             </div>
           </div>
@@ -59,18 +59,22 @@ export default async function Home({
           <ClaimCard preview={preview} />
         </main>
 
-        <footer className="text-ink-400 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 pb-2 text-center text-xs">
-          <span>ENS subnames</span>
-          <span aria-hidden className="text-ink-600">
-            /
-          </span>
+        <footer className="flex justify-center pb-2">
           <a
             href="https://namespace.ninja"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-amber-300 underline underline-offset-4 transition-colors duration-150"
+            aria-label="Powered by Namespace"
+            className="text-ink-400 hover:text-ink-200 flex items-center gap-2 text-xs opacity-80 transition-[color,opacity] duration-150 hover:opacity-100"
           >
-            Powered by Namespace
+            <span>Powered by</span>
+            <Image
+              src="/namespace-logo.png"
+              alt=""
+              width={690}
+              height={106}
+              className="h-4 w-auto"
+            />
           </a>
         </footer>
 
