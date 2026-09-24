@@ -29,7 +29,7 @@ jobs:
           - subpages-evmmaverick: |
               NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=${{ vars.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID }}
               NEXT_PUBLIC_ALCHEMY_KEY=${{ vars.NEXT_PUBLIC_ALCHEMY_KEY }}
-              NEXT_PUBLIC_SITE_URL=https://evmmaverick.namespace.ninja
+              NEXT_PUBLIC_SITE_URL=https://evmavericks.namespace.ninja
     uses: ./.github/workflows/build-and-push.yaml
     secrets: inherit
     permissions:
