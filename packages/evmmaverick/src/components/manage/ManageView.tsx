@@ -9,6 +9,7 @@ import { RecordsEditor } from "@/components/manage/RecordsEditor";
 import { PixelButton } from "@/components/ui/PixelButton";
 import { PixelPanel } from "@/components/ui/PixelPanel";
 import { PixelDialog } from "@/components/ui/PixelDialog";
+import { SetPrimaryButton } from "@/components/claim/SetPrimaryButton";
 import { fetchOwnedNames, type OwnedName } from "@/lib/ownedNames";
 import { L1_NAME_CHAIN, nameChainFor, type NameChain } from "@/lib/nameChain";
 import { readRecords } from "@/lib/readRecords";
@@ -228,6 +229,14 @@ export function ManageView({ preview }: { preview: boolean }) {
         title={selected?.name ?? ""}
         description="All changes save in one transaction."
       >
+        {selected && (
+          <SetPrimaryButton
+            name={selected.name}
+            preview={preview}
+            className="mb-6"
+          />
+        )}
+
         {recordState?.status === "loading" && (
           <p className="text-ink-400 text-sm">Reading current records…</p>
         )}

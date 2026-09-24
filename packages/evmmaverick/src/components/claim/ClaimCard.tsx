@@ -89,6 +89,7 @@ export function ClaimCard({ preview }: { preview: PreviewState | null }) {
     listing,
     quota,
     connected: isConnected || Boolean(preview),
+    preview: Boolean(preview),
     onRetry: handleRetry,
     onManage: () => router.push("/manage"),
   });
@@ -124,6 +125,7 @@ export function ClaimCard({ preview }: { preview: PreviewState | null }) {
               explorerUrl={mintState.explorerUrl}
               canClaimMore={quota.remaining > 0}
               onClaimAnother={handleClaimAnother}
+              preview={Boolean(preview)}
             />
           </motion.div>
         ) : (
