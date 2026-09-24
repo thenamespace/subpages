@@ -4,6 +4,7 @@ import { PixelButton } from "@/components/ui/PixelButton";
 import { GATE_TOKEN_NAME, GATE_TOKEN_URL, PARENT_NAME } from "@/lib/config";
 import type { ListingResult } from "@/lib/listing";
 import type { Quota } from "@/lib/quota";
+import { AlreadyClaimed } from "./AlreadyClaimed";
 
 /**
  * Every blocked state, in one place, each saying why and what to do next.
@@ -17,12 +18,14 @@ export function gateNotice({
   listing,
   quota,
   connected,
+  preview,
   onRetry,
   onManage,
 }: {
   listing: ListingResult | null;
   quota: Quota;
   connected: boolean;
+  preview: boolean;
   onRetry: () => void;
   onManage: () => void;
 }): React.ReactNode | null {
@@ -87,13 +90,7 @@ export function gateNotice({
       );
 
     case "spent":
-      return (
-        <Notice
-          title="Already claimed"
-          body="You've already claimed your name. Set an avatar, addresses and other records on it."
-          action={<PixelButton onClick={onManage}>Manage names</PixelButton>}
-        />
-      );
+      return <AlreadyClaimed preview={preview} onManage={onManage} />;
 
     default:
       return null;

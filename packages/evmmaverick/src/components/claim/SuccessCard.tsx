@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import { ROAR_DURATION_MS } from "@/lib/roar";
 import { PixelButton } from "@/components/ui/PixelButton";
 import { shortAddress } from "@/lib/format";
+import { SetPrimaryButton } from "./SetPrimaryButton";
 
 export function SuccessCard({
   name,
@@ -13,12 +14,14 @@ export function SuccessCard({
   explorerUrl,
   canClaimMore,
   onClaimAnother,
+  preview = false,
 }: {
   name: string;
   txHash: string | null;
   explorerUrl: string | null;
   canClaimMore: boolean;
   onClaimAnother: () => void;
+  preview?: boolean;
 }) {
   const router = useRouter();
   // Visual only. The sound is played by ClaimCard when the mint's receipt
@@ -106,16 +109,21 @@ export function SuccessCard({
         </p>
       </div>
 
-      {/* Primary first. When there's nothing left to claim, managing the
-          name is the next step, so it takes the primary slot. */}
+      {/* Primary first. When there's nothing left to claim, making the new
+          name primary is the next step, so it takes the primary slot. */}
       <div className="flex w-full flex-col gap-3">
         {canClaimMore && (
           <PixelButton variant="primary" onClick={onClaimAnother}>
             Claim another
           </PixelButton>
         )}
-        <PixelButton
+        <SetPrimaryButton
+          name={name}
+          preview={preview}
           variant={canClaimMore ? "secondary" : "primary"}
+        />
+        <PixelButton
+          variant="secondary"
           onClick={() => router.push("/manage")}
         >
           Manage records
